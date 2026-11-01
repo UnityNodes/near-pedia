@@ -20,6 +20,7 @@ export const SOURCE_META: Record<string, SourceMeta> = {
   package:           { name: 'npm + crates.io packages', href: null, script: 'sync-packages' },
   github_repo:       { name: 'GitHub repositories',      href: null, script: 'sync-repos' },
   hos_proposal:      { name: 'House of Stake proposals', href: null, script: 'sync-hos' },
+  incident:          { name: 'Security incidents',       href: null, script: 'sync-incidents' },
 };
 
 export const BUCKET_CADENCE: Record<string, string> = {

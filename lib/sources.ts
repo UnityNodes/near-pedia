@@ -58,6 +58,7 @@ export async function getSourceInventory(): Promise<SourceInventory> {
     { type: 'package',           table: 'packages',            synced: 'synced_at' },
     { type: 'github_repo',       table: 'github_repos',        synced: 'synced_at' },
     { type: 'hos_proposal',      table: 'hos_proposals',       synced: 'synced_at' },
+    { type: 'incident',          table: 'incidents',           synced: 'synced_at' },
   ];
 
   function countFor(type: string, table: string): number {

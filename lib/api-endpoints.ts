@@ -11,6 +11,12 @@
 export const ENDPOINTS = [
   { path: '/api/v1/proposals', desc: 'House of Stake proposals from vote.dao with vote standing and forum thread', params: 'status, q, limit' },
   { path: '/api/v1/proposals/:ref', desc: 'One House of Stake proposal with its text', params: 'on-chain id or HSP number, e.g. "27" or "HSP-027"' },
+  { path: '/api/v1/projects', desc: 'NEAR Catalog projects with TVL on NEAR (DefiLlama) and partner flag; without q, the top projects by TVL', params: 'q, category, limit' },
+  { path: '/api/v1/projects/:slug', desc: 'One NEAR Catalog project with tokens, TVL components and security incidents', params: 'catalog slug, e.g. "ref-finance"' },
+  { path: '/api/v1/incidents', desc: 'Security incidents in the NEAR ecosystem (DefiLlama hacks), newest first', params: 'relevance (near|related|all), q, project, limit' },
+  { path: '/api/v1/incidents/:id', desc: 'One security incident', params: 'incident id from /api/v1/incidents, e.g. "llama-1546-2026-04-16"' },
+  { path: '/api/v1/partners', desc: 'NEAR partners (Intents, OutLayer, Trezu, HOT, Rhea): contracts, GitHub, docs feeds', params: '' },
+  { path: '/api/v1/partners/:id', desc: 'One partner with its catalog projects and incidents', params: 'partner id, e.g. "near-intents"' },
   { path: '/api/v1/protocol', desc: 'Protocol version, upgrade vote by stake, epoch progress and upgrade schedule of mainnet and testnet', params: 'network (mainnet|testnet)' },
   { path: 'POST /api/v1/check-code', desc: 'Check one NEAR source file or manifest for removed, deprecated, changed or superseded APIs and outdated dependencies', params: 'Body: { code: string (≤100000 chars), filename?, language? (js|rust|cargo|package-json|json|toml|text) }' },
   { path: '/api/v1/deprecations', desc: 'Deprecated, removed and changed NEAR packages, APIs and services, each with evidence', params: 'q, kind, status, limit, offset' },

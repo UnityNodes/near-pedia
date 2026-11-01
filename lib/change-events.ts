@@ -25,7 +25,9 @@ export type ChangeKind =
   | 'deprecation_added'
   | 'protocol_upgraded'
   | 'proposal_created'
-  | 'proposal_status_changed';
+  | 'proposal_status_changed'
+  | 'incident_added'
+  | 'project_added';
 
 export interface ChangeEvent {
   kind: ChangeKind;

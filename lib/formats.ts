@@ -134,4 +134,4 @@ export const ORDER_PAIRS: [string, string][] = [
  * they mean. Everything else describing something that already happened must
  * not be, and a clock skew or a unit slip is how it gets there.
  */
-export const FUTURE_IS_LEGITIMATE = /^(expires_at|deadline|effective_at|target_effective_at|start_at|end_at|vote_before|available_after|claimed_expires_at|round_effective_at)$/;
+export const FUTURE_IS_LEGITIMATE = /^(expires_at|deadline|effective_at|target_effective_at|start_at|end_at|vote_before|available_after|claimed_expires_at|round_effective_at|voting_ends_at|timelock_ends_at)$/;

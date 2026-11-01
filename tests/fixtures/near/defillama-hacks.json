@@ -1,0 +1,123 @@
+[
+ {
+  "date": 1776297600,
+  "name": "Rhea Lend",
+  "classification": "Oracle Manipulation",
+  "technique": "Spot Price Manipulation",
+  "amount": 18400000,
+  "chain": [
+   "Near"
+  ],
+  "bridgeHack": false,
+  "targetType": "DeFi Protocol",
+  "source": "",
+  "returnedFunds": null,
+  "defillamaId": "1546",
+  "parentProtocolId": "parent#rhea-finance",
+  "language": "Solidity",
+  "description": "On April 16, 2026, Rhea Lend on NEAR was exploited via chained swap path that defeated margin module's slippage protection. Attacker spent April 13-15 deploying fake token contracts and eight Ref Finance pools, then executed complex swap reusing intermediate assets to drain reserves. Oracle accepted attacker-created pool prices as legitimate."
+ },
+ {
+  "date": 1750118400,
+  "name": "Meta Pool",
+  "classification": "Token & Share Accounting",
+  "technique": "Infinite Mint",
+  "amount": 130000,
+  "chain": [
+   "Ethereum"
+  ],
+  "bridgeHack": false,
+  "targetType": "DeFi Protocol",
+  "source": "",
+  "returnedFunds": null,
+  "defillamaId": null,
+  "language": "Solidity",
+  "description": "On June 17, 2025, Meta Pool's ERC4626 vault contract on Ethereum was exploited via an unprotected mint() function in Staking.sol. An attacker called the public mint function to create 9,705 mpETH tokens (~$27M at face value) without depositing collateral, extracting only $130K due to low liquidity in affected pools."
+ },
+ {
+  "date": 1628985600,
+  "name": "Ref Finance",
+  "classification": "Input Validation",
+  "technique": "Missing Input Validation",
+  "amount": 3203000,
+  "chain": [
+   "NEAR"
+  ],
+  "bridgeHack": false,
+  "targetType": "DeFi Protocol",
+  "source": "",
+  "returnedFunds": null,
+  "defillamaId": null,
+  "language": "Rust",
+  "description": "On August 14-15, 2021, Ref Finance was exploited when a faulty security hotfix failed to properly validate and debit users' LP token balances when removing liquidity from pools. This allowed attackers to withdraw more tokens than they should have, extracting approximately 507K NEAR and 1M REF tokens worth ~$3.2M."
+ },
+ {
+  "date": 1726704000,
+  "name": "Banana Gun",
+  "classification": "Frontend & Infrastructure",
+  "technique": "Frontend Compromise",
+  "amount": 3000000,
+  "chain": [
+   "Ethereum"
+  ],
+  "bridgeHack": false,
+  "targetType": "DeFi Protocol",
+  "source": "",
+  "returnedFunds": 3000000,
+  "defillamaId": "3336",
+  "language": null,
+  "description": "On September 19, 2024, Banana Gun's Telegram message oracle validation failure allowed attackers to forge transfer authorizations and drain $3M from 11 users' wallets. All users were reimbursed from the treasury."
+ },
+ {
+  "date": 1557187200,
+  "name": "Binance",
+  "classification": "Key Compromise",
+  "technique": "Hot Wallet Key Compromised",
+  "amount": 40000000,
+  "chain": [
+   "Bitcoin"
+  ],
+  "bridgeHack": false,
+  "targetType": "CEX",
+  "source": "",
+  "returnedFunds": null,
+  "defillamaId": null,
+  "language": null,
+  "description": "On May 7, 2019, Binance's hot wallet private keys were compromised, resulting in theft of 7,000 bitcoin (~$40 million). The exchange halted transactions for one week and reimbursed all affected customers from its insurance fund."
+ },
+ {
+  "date": 1777420800,
+  "name": "Sweat Foundation",
+  "classification": "Protocol Logic",
+  "technique": "Withdrawal Logic Flaw",
+  "amount": 3500000,
+  "chain": [
+   "Near"
+  ],
+  "bridgeHack": false,
+  "targetType": "DeFi Protocol",
+  "source": "",
+  "returnedFunds": null,
+  "defillamaId": null,
+  "language": "Rust",
+  "description": "On April 29, 2026, an attacker exploited a logic flaw in the SWEAT token contract on NEAR Protocol, draining 13.71B SWEAT tokens (~$3.5M) from foundation wallets within 30 seconds via a malicious drain contract. Stolen tokens were quickly liquidated via MEXC and Rhea Finance; Sweat Foundation patched the contract and restored all external user balances."
+ },
+ {
+  "date": 1790812800,
+  "name": "NEAR Intents",
+  "classification": "Bridge & Cross-Chain",
+  "technique": "Bridge Logic Flaw",
+  "amount": 3800000,
+  "chain": [
+   "BSC"
+  ],
+  "bridgeHack": true,
+  "targetType": "DeFi Protocol",
+  "source": "",
+  "returnedFunds": null,
+  "defillamaId": "6225",
+  "parentProtocolId": "parent#near-protocol",
+  "language": "Solidity",
+  "description": "NEAR Intents was exploited through a bug in the interaction between its Omni deposit and withdrawal infrastructure and the NEAR Intents smart contract, allowing unauthorized withdrawals. The team stopped services, patched the contract-side vulnerability, and temporarily suspended deposits and withdrawals across multiple networks while completing fixes to the Omni infrastructure. The stolen funds w"
+ }
+]
