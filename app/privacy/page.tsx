@@ -1,11 +1,12 @@
 import type { Metadata } from 'next';
 import { LegalPage } from '@/components/reader-shell';
+import { SITE } from '@/lib/site.config';
 
 export const revalidate = 3600;
 
 export const metadata: Metadata = {
   title: 'Privacy Policy',
-  description: 'How YOURPEDIA handles your data, short version, because we collect very little.',
+  description: `How ${SITE.name} handles your data, short version, because we collect very little.`,
 };
 
 const LAST_UPDATED = '2026-09-21';
@@ -22,8 +23,8 @@ export default function PrivacyPage() {
       <section>
         <h2>1. Who we are</h2>
         <p>
-          YOURPEDIA is operated by <strong>Your Organization</strong>. It is a read-only aggregator of
-          publicly available YourChain content (CIPs, forum, docs,
+          {SITE.name} is operated by <strong>{SITE.publisher.name}</strong>. It is a read-only aggregator of
+          publicly available NEAR content (CIPs, forum, docs,
           whitepapers, blog, releases). No accounts, no
           logins, no profiles.
         </p>

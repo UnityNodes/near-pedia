@@ -25,7 +25,7 @@
  *
  * WHAT THIS DOES NOT DO. It asserts no "known chrome" regression guard
  * against a `stripDocChrome`/`hasDocChrome` module with source-specific
- * removal rules. yourpedia has no such module and no accumulated rule set -
+ * removal rules. nearpedia has no such module and no accumulated rule set -
  * there is nothing to regress yet. If a real banner is found here, the fix is
  * to write the removal rule, and this check's own exempt list grows one
  * deliberate decision at a time, with a reason.

@@ -16,7 +16,7 @@ const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 // as 'failed' instead of silently reporting success on zero written rows.
 let fetchFailed = false;
 
-// Core YourChain repos: consensus node + app, plus
+// Core NEAR repos: consensus node + app, plus
 // the OpenRPC spec repo and YourSDK.
 // Exported so check-completeness.ts checks the same repo list this sync
 // reads, rather than a second copy that can drift from it.
@@ -46,7 +46,7 @@ async function fetchReleases(repo: string): Promise<FetchedReleases> {
   const headers: Record<string, string> = {
     Accept: 'application/vnd.github+json',
     'X-GitHub-Api-Version': '2022-11-28',
-    'User-Agent': 'yourpedia-sync',
+    'User-Agent': 'nearpedia-sync',
   };
   if (GITHUB_TOKEN) headers['Authorization'] = `Bearer ${GITHUB_TOKEN}`;
 
@@ -112,7 +112,7 @@ async function main() {
   const fetched: Array<{ repo: string; releases: GithubRelease[]; complete: boolean }> = [];
   for (const repo of REPOS) {
     const { releases, complete } = await fetchReleases(repo);
-    // skip drafts; keep prereleases (YourChain ships -testnet/-devnet tags)
+    // skip drafts; keep prereleases (NEAR ships -testnet/-devnet tags)
     const usable = releases.filter((r) => !r.draft);
     fetched.push({ repo, releases: usable, complete });
     console.log(`[sync-releases] ${repo}: ${usable.length} releases`);

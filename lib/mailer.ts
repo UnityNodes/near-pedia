@@ -1,5 +1,6 @@
 import nodemailer from 'nodemailer';
 import type { Transporter } from 'nodemailer';
+import { SITE } from './site.config';
 
 export interface MailMessage {
   to: string;
@@ -50,7 +51,7 @@ export async function sendMail(msg: MailMessage): Promise<SendResult> {
     return { ok: false, error: 'SMTP not configured' };
   }
 
-  const fromName = msg.fromName ?? 'YOURPEDIA Contact';
+  const fromName = msg.fromName ?? `${SITE.name} Contact`;
   const from = `"${fromName}" <${fromEnv}>`;
 
   try {

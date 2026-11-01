@@ -15,7 +15,7 @@ export const revalidate = 300;
 
 export const metadata = pageMetadata({
   title: 'Releases',
-  description: 'The current version of each YourChain product and what changed in every release, with its notes.',
+  description: 'The current version of each NEAR product and what changed in every release, with its notes.',
   path: '/releases',
 });
 
@@ -74,7 +74,7 @@ export default async function ReleasesPage({ searchParams }: PageProps) {
     <PageShell
       href="/releases"
       title="Releases"
-      description="The current version of each YourChain product, and what changed in every release, with the notes its maintainers published for it."
+      description="The current version of each NEAR product, and what changed in every release, with the notes its maintainers published for it."
       stat={{ value: all, unit: all === 1 ? 'release' : 'releases' }}
       synced={getLastSync('github_releases')}
       source="github_releases"

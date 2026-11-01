@@ -2,9 +2,10 @@ import { ImageResponse } from 'next/og';
 import { readFile } from 'fs/promises';
 import path from 'path';
 import { getDb } from '@/lib/db';
+import { SITE } from '@/lib/site.config';
 
 export const runtime = 'nodejs';
-export const alt = 'YourChain video';
+export const alt = 'NEAR video';
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
 
@@ -26,7 +27,7 @@ export default async function Image({ params }: { params: Promise<{ id: string }
   const logoBuffer = await readFile(path.join(process.cwd(), 'public/logo-light.png'));
   const logoSrc = `data:image/png;base64,${logoBuffer.toString('base64')}`;
 
-  const title = video?.title ?? 'YourChain video';
+  const title = video?.title ?? 'NEAR video';
   const channel = video?.channel_name ?? '';
   const published = video?.published_at?.slice(0, 10) ?? '';
 
@@ -46,7 +47,7 @@ export default async function Image({ params }: { params: Promise<{ id: string }
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
           <img src={logoSrc} width={64} height={64} style={{ objectFit: 'contain' }} />
-          <div style={{ fontSize: 32, fontWeight: 700, letterSpacing: -0.5 }}>YOURPEDIA</div>
+          <div style={{ fontSize: 32, fontWeight: 700, letterSpacing: -0.5 }}>{SITE.name}</div>
           <div style={{ fontSize: 22, opacity: 0.55, marginLeft: 8 }}>· video</div>
         </div>
 

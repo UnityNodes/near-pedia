@@ -15,6 +15,7 @@ import 'dotenv/config';
 import { createHash } from 'node:crypto';
 import { getDb } from '../lib/db';
 import { guardSync } from '../lib/sync-log';
+import { SITE } from '../lib/site.config';
 
 const SRC = 'https://raw.githubusercontent.com/your-org/yourchain.example/main/src/data/about/team.ts';
 const ABOUT_URL = 'https://yourchain.example/about';
@@ -37,7 +38,7 @@ async function main() {
     content_hash TEXT NOT NULL, kb_version TEXT, synced_at TEXT NOT NULL,
     UNIQUE(category, key))`);
 
-  const res = await fetch(SRC, { headers: { 'User-Agent': 'YourPedia-Bot/1.0' } });
+  const res = await fetch(SRC, { headers: { 'User-Agent': `${SITE.name}-Bot/1.0` } });
   if (!res.ok) {
     throw new Error(`[sync-foundation] source unavailable: HTTP ${res.status} for ${SRC}`);
   }
@@ -97,7 +98,7 @@ async function main() {
       .join('\n');
     if (content) {
       rows.push({
-        category: 'about', key: 'stats', title: 'YourChain at a glance',
+        category: 'about', key: 'stats', title: 'NEAR at a glance',
         content, url: ABOUT_URL, tags: 'about,foundation,stats',
         content_hash: hash(content), synced_at: now,
       });

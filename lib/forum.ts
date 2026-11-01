@@ -1,6 +1,7 @@
 import { getDb } from './db';
 import { ftsPrefixMatch } from './rank';
 import { htmlToTextWithCode } from './html-extract';
+import { SITE } from './site.config';
 
 /** A forum post's rendered HTML (`cooked`) as plain text, code blocks kept readable. */
 export function cookedToText(cooked: string | null | undefined): string {
@@ -162,7 +163,7 @@ async function fetchFromDiscourse(topicId: number): Promise<DiscourseTopicJson |
     // Discourse topic and short enough that the page falls back to what the
     // database already holds.
     const res = await fetch(`https://forum.yourchain.example/t/${topicId}.json`, {
-      headers: { 'User-Agent': 'YOURPEDIA/1.0' },
+      headers: { 'User-Agent': `${SITE.name}/1.0` },
       next: { revalidate: 3600 },
       signal: AbortSignal.timeout(8_000),
     });

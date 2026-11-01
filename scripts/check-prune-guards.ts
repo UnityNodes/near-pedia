@@ -50,10 +50,9 @@ const NOT_URL_KEYED: Record<string, string> = {
 
 /**
  * Scripts that generate files and never write a table. Their source can still
- * match the prune heuristics below by accident: the docs generator holds the
- * word delete as an HTTP method next to a `!set.has()` filter.
+ * match the prune heuristics below by accident.
  */
-const NOT_A_DB_WRITER = new Set(['build-template-mcp-doc']);
+const NOT_A_DB_WRITER = new Set<string>();
 
 /** Callers that must route through pruneConfirmingUrls. */
 const CONFIRMER = 'pruneConfirmingUrls';

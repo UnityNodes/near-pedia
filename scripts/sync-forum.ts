@@ -1,5 +1,5 @@
 /**
- * Sync the FULL YourChain Discourse forum (forum.yourchain.example) via the CF bypass.
+ * Sync the FULL NEAR Discourse forum (forum.yourchain.example) via the CF bypass.
  * Pulls every topic across /latest.json pages, then every post in each topic via
  * the post_stream (chunked). Run under xvfb:  xvfb-run -a npx tsx scripts/sync-forum.ts
  */

@@ -1,6 +1,6 @@
 import Database from 'better-sqlite3';
 import type { CategoriesRow } from '../lib/db-rows';
-const src = new Database('/srv/yourpedia/data/yourpedia.db',{readonly:true});
+const src = new Database('/srv/nearpedia/data/nearpedia.db',{readonly:true});
 const db = new Database('data/cips.db');
 const rows = src.prepare('SELECT id,name,color,slug,topic_count,synced_at FROM forum_categories').all() as CategoriesRow[];
 const ins = db.prepare('INSERT OR REPLACE INTO categories (id,name,color,slug,topic_count,synced_at) VALUES (?,?,?,?,?,?)');

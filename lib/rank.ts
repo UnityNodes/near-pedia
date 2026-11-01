@@ -1,7 +1,7 @@
 /**
  * Relevance ranking for unified search.
  *
- * yourpedia keeps its existing per-source blocks and applies this as a
+ * nearpedia keeps its existing per-source blocks and applies this as a
  * REORDERING pass over the assembled results, which buys real idf-weighted
  * relevance without rewriting all 13 retrieval sites.
  *

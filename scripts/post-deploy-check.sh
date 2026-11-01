@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 #
-# YOURPEDIA — post-deploy smoke test.
+# NEAR-pedia — post-deploy smoke test.
 #
 # Run on the server after a deploy. Exits non-zero on any failure so it can be
 # wired into a deploy script:
 #
-#   /srv/yourpedia/scripts/post-deploy-check.sh && echo "Deploy OK"
+#   /srv/nearpedia/scripts/post-deploy-check.sh && echo "Deploy OK"
 #
-# WHICH SERVER IT ASKS. By default the box's own origin: https://yourpedia.example
+# WHICH SERVER IT ASKS. By default the box's own origin: https://nearpedia.example
 # resolved to 127.0.0.1 (Caddy's Cloudflare Origin certificate is not publicly
 # trusted, hence -k). The public host goes through Cloudflare, which answers a
 # machine on this box with a 401 on /api/metrics, so a check that
@@ -25,10 +25,10 @@
 
 set -euo pipefail
 
-BASE="${BASE_URL:-https://yourpedia.example}"
+BASE="${BASE_URL:-https://nearpedia.example}"
 TIMEOUT="${TIMEOUT:-15}"
 if [[ -z "${BASE_URL:-}" && -z "${CURL_EXTRA+x}" ]]; then
-  CURL_EXTRA="-k --resolve yourpedia.example:443:127.0.0.1"
+  CURL_EXTRA="-k --resolve nearpedia.example:443:127.0.0.1"
 fi
 # shellcheck disable=SC2206  # word splitting is the point
 CURL=(curl -sS -m "$TIMEOUT" ${CURL_EXTRA:-})
@@ -75,7 +75,7 @@ check_redirect() {
 }
 
 echo "=== Pages ==="
-check "home"           "$BASE/"                                  200 "YOURPEDIA"
+check "home"           "$BASE/"                                  200 "NEAR-pedia"
 check "/cips"          "$BASE/cips"                              200 "CIP"
 check "/cips/graph"    "$BASE/cips/graph"                        200
 check "/discussions"   "$BASE/discussions"                       200
@@ -104,8 +104,8 @@ check_redirect "/developers" "$BASE/developers"
 check_redirect "/proposals"  "$BASE/proposals"
 
 echo "=== HTML structure ==="
-check "home topbar"      "$BASE/"                                200 'YOURPEDIA'
-check "home names YourChain" "$BASE/"                             200 'YourChain'
+check "home topbar"      "$BASE/"                                200 'NEAR-pedia'
+check "home names NEAR" "$BASE/"                             200 'NEAR'
 check "home FAQ schema"  "$BASE/"                                200 '"@type":"FAQPage"'
 check "Skip link"        "$BASE/"                                200 'Skip to content'
 check "JSON-LD home"     "$BASE/"                                200 'application/ld+json'
@@ -141,9 +141,9 @@ probe_image "CIP-0001 OG"         "$BASE/cips/0001/opengraph-image"
 
 echo "=== APIs ==="
 check "/api/health"    "$BASE/api/health"                        200 '"status"'
-check "/api/metrics"   "$BASE/api/metrics"                       200 'yourpedia_cips_total'
-check "metrics:search" "$BASE/api/metrics"                       200 'yourpedia_search_24h'
-check "metrics:tldr"   "$BASE/api/metrics"                       200 'yourpedia_cips_tldr_coverage_ratio'
+check "/api/metrics"   "$BASE/api/metrics"                       200 'nearpedia_cips_total'
+check "metrics:search" "$BASE/api/metrics"                       200 'nearpedia_search_24h'
+check "metrics:tldr"   "$BASE/api/metrics"                       200 'nearpedia_cips_tldr_coverage_ratio'
 check "v1 pop searches" "$BASE/api/v1/searches/popular?limit=1"  200 '"items"'
 
 # Batch CIP lookup: POST helper since check() only does GET.

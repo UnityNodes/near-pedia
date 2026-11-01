@@ -12,7 +12,7 @@
  * WITH a tiebreak (`ORDER BY upvotes DESC, created_at DESC`) so it doesn't
  * trip this today, but a future single-term regression on either column is
  * exactly what this check exists to catch (an audit found this exact
- * landmine live in yourpedia's own schema).
+ * landmine live in nearpedia's own schema).
  *
  * WHY NOT check-cuts. check-cuts fires on a LIMIT with NO ORDER BY - the rows
  * kept are the lowest rowids. Here an ORDER BY exists, on a constant, so it
@@ -71,7 +71,7 @@ async function main(): Promise<void> {
 
   // Degenerate columns a tool deliberately offers as a sort but GUARDS at
   // runtime, so the interpolated ORDER BY never actually sorts on nothing.
-  // Empty today - no yourpedia tool has this shape yet - named with the
+  // Empty today - no nearpedia tool has this shape yet - named with the
   // reason the moment one does, the same way check-counters names
   // upstream-only columns. A future UNGUARDED interpolated degenerate order
   // is not on this list and still fails.

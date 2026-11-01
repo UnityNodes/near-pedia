@@ -8,7 +8,7 @@
  * are allowed for primary key values" while a script that only prints and
  * never asserts exits 0 regardless. build-embeddings would hit the same wall
  * on its next new chunk. This file previously WAS that unsafe shape: a fixed
- * magic rowid (99999) that sits inside yourpedia's live embedding_vectors id
+ * magic rowid (99999) that sits inside nearpedia's live embedding_vectors id
  * range and only stayed safe by luck, a hardcoded dimension count instead of
  * reading the table's own definition, no read-back verification, and no
  * exit code on failure.

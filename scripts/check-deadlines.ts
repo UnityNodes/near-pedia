@@ -41,7 +41,7 @@ const ROOT = process.cwd();
 
 /**
  * Outbound calls that cross the network. Adding an SDK means adding it here.
- * No anthropic entry: yourpedia's cascade (lib/llm-cascade.ts) is
+ * No anthropic entry: nearpedia's cascade (lib/llm-cascade.ts) is
  * gemini -> groq -> groq -> openai, all OpenAI-SDK-compatible or Gemini's
  * own client - no Anthropic SDK call site exists to check.
  */

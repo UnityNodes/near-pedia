@@ -11,7 +11,7 @@ export const dynamic = 'force-dynamic';
 
 export const metadata = pageMetadata({
   title: 'Feed',
-  description: 'Live activity feed across all YourChain sources: CIPs, forum, GitHub, blog and docs.',
+  description: 'Live activity feed across all NEAR sources: CIPs, forum, GitHub, blog and docs.',
   path: '/feed',
 });
 
@@ -120,7 +120,7 @@ export default async function PulsePage({ searchParams }: PageProps) {
     <PageShell
       href="/feed"
       title="Feed"
-      description="Live activity across all YourChain sources: CIPs, forum threads, blog posts and releases, newest first."
+      description="Live activity across all NEAR sources: CIPs, forum threads, blog posts and releases, newest first."
       stat={{ value: items.length, unit: items.length === 1 ? 'event' : 'events' }}
       synced={latestSync()}
       source="cips · forum · blog · releases"

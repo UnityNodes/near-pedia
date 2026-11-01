@@ -1,5 +1,5 @@
 services:
-  yourpedia:
+  nearpedia:
     build:
       context: .
       dockerfile: Dockerfile

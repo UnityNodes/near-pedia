@@ -57,7 +57,7 @@ export interface McpToolSummary {
  * the caller falls back to a static list rather than showing nothing.
  */
 export async function listMcpTools(): Promise<McpToolSummary[]> {
-  const url = process.env.MCP_URL ?? 'http://127.0.0.1:3041/mcp';
+  const url = process.env.MCP_URL ?? 'http://127.0.0.1:3131/mcp';
   try {
     const ctrl = new AbortController();
     const t = setTimeout(() => ctrl.abort(), 2000);

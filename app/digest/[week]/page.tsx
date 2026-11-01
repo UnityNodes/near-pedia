@@ -15,7 +15,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const { week } = await params;
   const title = `Digest ${week}`;
   const brandedTitle = `${title} | ${SITE.name}`;
-  const description = `YourChain weekly digest for ${week}.`;
+  const description = `NEAR weekly digest for ${week}.`;
   const url = `${SITE.url}/digest/${week}`;
   return {
     title,

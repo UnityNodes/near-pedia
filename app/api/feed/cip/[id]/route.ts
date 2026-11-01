@@ -1,7 +1,8 @@
 import { NextRequest } from 'next/server';
 import { getDb } from '@/lib/db';
+import { SITE as SITE_CONFIG } from '@/lib/site.config';
 
-const SITE = 'https://yourpedia.example';
+const SITE = SITE_CONFIG.url;
 
 function esc(s: string) {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -48,7 +49,7 @@ export async function GET(
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
   <id>${esc(`${SITE}/api/feed/${feedId}`)}</id>
-  <title>${esc(`YOURPEDIA · ${feedTitle}`)}</title>
+  <title>${esc(`${SITE_CONFIG.name} · ${feedTitle}`)}</title>
   <link href="${esc(`${SITE}/cips/${id}`)}" />
   <link rel="self" href="${esc(`${SITE}/api/feed/${feedId}`)}" />
   <updated>${esc(updated)}</updated>

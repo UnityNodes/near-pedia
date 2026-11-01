@@ -135,7 +135,7 @@ export const NOT_SHARED: { name: string; impls: number; why: string }[] = [
   {
     name: 'fetchJson', impls: 2,
     why:
-      'lib/onchain.ts calls a YourChain RPC endpoint with a fixed timeout; sync-github-items.ts '
+      'lib/onchain.ts calls a NEAR RPC endpoint with a fixed timeout; sync-github-items.ts '
       + 'calls the GitHub REST API with auth headers and rate-limit handling. Different '
       + 'upstreams, different error shapes, no shared input.',
   },

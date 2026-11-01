@@ -17,14 +17,14 @@ export const CIP_TEMPLATE_RE = /cip-template\.md$/;
 const RAW_BASE = `https://raw.githubusercontent.com/${REPO}/${BRANCH}/`;
 
 // your-org/CIPs uses a Markdown *table* preamble, not YAML/`<pre>` like the
-// YourChain template. Each file opens with:
+// NEAR template. Each file opens with:
 //   | cip | 49 |
 //   | - | - |               <- separator row, skipped
 //   | title | ... |
 //   ...
 // followed by a blank line and the Markdown body. We parse the leading run of
 // `| key | value |` rows ourselves (the shared lib/parsers/cip-frontmatter.ts
-// only understands the YourChain <pre> format).
+// only understands the NEAR <pre> format).
 
 interface TreeEntry {
   path: string;
@@ -34,7 +34,7 @@ interface TreeEntry {
 function ghHeaders(): Record<string, string> {
   const headers: Record<string, string> = {
     Accept: 'application/vnd.github+json',
-    'User-Agent': 'yourpedia-sync',
+    'User-Agent': 'nearpedia-sync',
   };
   const token = process.env.GITHUB_TOKEN;
   if (token) headers.Authorization = `Bearer ${token}`;
@@ -183,8 +183,8 @@ async function syncCips() {
         p.status,
         p.type,
         p.created,
-        null, // approved_date - not present in YourChain frontmatter
-        null, // license - not present in YourChain frontmatter
+        null, // approved_date - not present in NEAR frontmatter
+        null, // license - not present in NEAR frontmatter
         p.requires,
         p.content,
         now

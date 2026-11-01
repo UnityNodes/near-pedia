@@ -1,4 +1,5 @@
 import { getDb } from './db';
+import { SITE } from './site.config';
 
 export interface SourceLink {
   url: string;
@@ -27,7 +28,7 @@ function buildSourceLinkUnsafe(sourceType: string, sourceId: string): SourceLink
         const num = sourceId.slice(3);
         return { url: `https://github.com/your-org/CIPs/pull/${num}`, label: `CIP draft PR #${num}`, sourceType };
       }
-      return { url: `https://yourpedia.example/cips/${sourceId}`, label: `CIP-${sourceId}`, sourceType };
+      return { url: `${SITE.url}/cips/${sourceId}`, label: `CIP-${sourceId}`, sourceType };
     }
     case 'github_item': {
       // sourceId like "your-org/yourchain-node#5071"; app/proposals/[...slug]
@@ -35,7 +36,7 @@ function buildSourceLinkUnsafe(sourceType: string, sourceId: string): SourceLink
       // of the slug, so the replace below must keep producing exactly 3
       // '/'-separated segments.
       const row = getDb().prepare('SELECT url, title, number FROM github_items WHERE id = ?').get(sourceId) as { url: string; title: string; number: number } | undefined;
-      if (row) return { url: `https://yourpedia.example/proposals/${sourceId.replace('#', '/')}`, label: `Proposal #${row.number}: ${row.title}`, sourceType };
+      if (row) return { url: `${SITE.url}/proposals/${sourceId.replace('#', '/')}`, label: `Proposal #${row.number}: ${row.title}`, sourceType };
       return null;
     }
     case 'forum_topic': {
@@ -55,7 +56,7 @@ function buildSourceLinkUnsafe(sourceType: string, sourceId: string): SourceLink
     }
     case 'whitepaper': {
       const row = getDb().prepare('SELECT slug, title, pdf_url FROM whitepapers WHERE id = ?').get(sourceId) as { slug: string; title: string; pdf_url: string } | undefined;
-      if (row) return { url: `https://yourpedia.example/whitepapers/${row.slug}`, label: row.title || 'Whitepaper', sourceType };
+      if (row) return { url: `${SITE.url}/whitepapers/${row.slug}`, label: row.title || 'Whitepaper', sourceType };
       return null;
     }
     case 'youtube_video': {
@@ -101,14 +102,14 @@ function buildSourceLinkUnsafe(sourceType: string, sourceId: string): SourceLink
       ).get(sourceId) as { title: string; url: string | null; category: string | null } | undefined;
       if (!row) return null;
       const label = row.category ? `${row.title} (${row.category})` : (row.title || 'Foundation KB');
-      return { url: row.url || 'https://yourpedia.example/docs', label, sourceType };
+      return { url: row.url || `${SITE.url}/docs`, label, sourceType };
     }
     case 'radar_item': {
       const row = getDb().prepare(
         'SELECT title, source_url, level FROM radar_items WHERE id = ?'
       ).get(sourceId) as { title: string; source_url: string | null; level: string } | undefined;
       if (!row) return null;
-      return { url: row.source_url || 'https://yourpedia.example/radar', label: `[${row.level}] ${row.title}`, sourceType };
+      return { url: row.source_url || `${SITE.url}/radar`, label: `[${row.level}] ${row.title}`, sourceType };
     }
     default:
       return null;

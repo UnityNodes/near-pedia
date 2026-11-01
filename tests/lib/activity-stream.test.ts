@@ -1,8 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import { mergeActivityStream, type ActivityItem } from '@/lib/activity-stream';
+import { SITE } from '@/lib/site.config';
 
 const make = (kind: ActivityItem['kind'], when: string, id: string): ActivityItem => ({
-  kind, when, id, title: `${kind}-${id}`, url: `https://yourpedia.example/${id}`,
+  kind, when, id, title: `${kind}-${id}`, url: `${SITE.url}/${id}`,
 });
 
 describe('mergeActivityStream', () => {

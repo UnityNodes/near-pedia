@@ -126,7 +126,7 @@ const SITES: Site[] = [
     longest: (db) => {
       // NOT simply "the newest-published release of a repo": the tool
       // filters to STABLE_TAG_RE (/^v?\d+(?:\.\d+){1,3}$/) first, then picks
-      // the newest release of the highest major line among those. YourChain
+      // the newest release of the highest major line among those. NEAR
       // repos interleave plain numbered tags (v0.31.4) with network-suffixed
       // ones (v0.32.1-testnet, v0.32.1-devnet) that are frequently NEWER by
       // published_at but never stable-tagged - a naive "newest published"

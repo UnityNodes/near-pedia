@@ -20,7 +20,7 @@ const MAX_DESCRIPTION = 200;
 
 export const metadata = pageMetadata({
   title: 'Ecosystem Projects',
-  description: 'YourChain ecosystem catalog: wallets, infrastructure, tooling and other projects building on YourChain. Sourced from yourchain.example/ecosystem.',
+  description: 'NEAR ecosystem catalog: wallets, infrastructure, tooling and other projects building on NEAR. Sourced from yourchain.example/ecosystem.',
   path: '/ecosystem',
 });
 
@@ -29,7 +29,7 @@ interface PageProps {
 }
 
 function cleanTitle(title: string): string {
-  return title.replace(/\s*[-—|]\s*YourChain.*$/i, '').replace(/\s*\d{4}$/, '').trim();
+  return title.replace(/\s*[-—|]\s*NEAR.*$/i, '').replace(/\s*\d{4}$/, '').trim();
 }
 
 export default async function EcosystemPage({ searchParams }: PageProps) {
@@ -60,8 +60,8 @@ export default async function EcosystemPage({ searchParams }: PageProps) {
 
   const schemas = [
     collectionPage({
-      name: 'YourChain Ecosystem Projects',
-      description: 'Catalog of projects building on YourChain across categories like DeFi, wallets, infrastructure and tokenized assets.',
+      name: 'NEAR Ecosystem Projects',
+      description: 'Catalog of projects building on NEAR across categories like DeFi, wallets, infrastructure and tokenized assets.',
       path: '/ecosystem',
       itemCount: total,
     }),
@@ -77,7 +77,7 @@ export default async function EcosystemPage({ searchParams }: PageProps) {
       title="Ecosystem"
       description={
         <>
-          Catalog of projects building on YourChain, sourced from{' '}
+          Catalog of projects building on NEAR, sourced from{' '}
           <ExtLink href="https://yourchain.example/ecosystem">yourchain.example/ecosystem ↗</ExtLink>
           . Each card links back to the upstream project listing.
         </>

@@ -48,7 +48,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const MANUAL: Record<string, string> = {
   'migrate-board-status': 'one-off schema migration',
   'migrate-stats-nulls': 'one-off data-repair migration',
-  'migrate-from-yourpedia': 'one-time migration from the pre-template yourpedia.db, already run',
+  'migrate-from-nearpedia': 'one-time migration from the pre-template nearpedia.db, already run',
   'backfill-video-channels': 'one-off backfill, re-run by hand if channel data goes stale again',
   'backfill-video-dates': 'one-off backfill for videos migrated without a real published_at',
   'fix-duplicate-cips': 'one-off data-repair, re-run by hand if the underlying dupe bug recurs',
@@ -59,7 +59,6 @@ const MANUAL: Record<string, string> = {
   'alert-cip-discord': 'not enabled here: posts to a Discord channel and needs DISCORD_CIP_WEBHOOK_URL, which is not set on this box. Wire it into the tick when a channel exists; scheduling it now would only run an inert script',
   'push-radar-tg': 'not enabled here: posts to a Telegram channel and needs TELEGRAM_BOT_TOKEN and TELEGRAM_CHANNEL_ID, neither set on this box. Wire it into the tick when a channel exists',
   'alert-crash': "invoked by sync-tick's own run() wrapper on a non-zero exit, never on a timer; it files the sync_log row a script that died before reaching logRun could not file for itself, and a healthy box never runs it at all",
-  'build-template-mcp-doc': 'writes docs/template/mcp-api.md from the running MCP server; run by hand after a tool or route changes. It needs the MCP process up, so it does not belong on a timer, and the daily check-template-mcp-doc fails and names this command when the file goes stale',
   'fix-vec': 'diagnostic/repair for the sqlite-vec index, run by hand',
   'clean-vec': 'destructive vec0 reset for a broken schema; run deliberately, not on a timer',
   'cleanup-docs': 'one-off corpus cleanup (dead redirects, near-empty pages), re-run by hand',

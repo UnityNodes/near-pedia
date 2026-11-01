@@ -1,7 +1,7 @@
 /**
  * Is every tool that requires an identifier reachable at all?
  *
- * The mechanism is fully behavioural and reads nothing YourChain-specific.
+ * The mechanism is fully behavioural and reads nothing NEAR-specific.
  * Only COVERED_BY_HANDOFFS is app-specific, and here it is EMPTY: the one
  * tool that could need an entry is this app's own get_issue_status(repo,
  * number) - checked directly (PRAGMA index_list on github_items) and

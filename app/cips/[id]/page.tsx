@@ -102,10 +102,10 @@ export default async function CipDetailPage({ params }: PageProps) {
     // not guaranteed to parse) the same way ingest and get_cip do.
     dateModified: history[0]?.changed_at ?? parseCipDate(cip.approved_date) ?? cip.created_date,
     author: cip.author ? { '@type': 'Person', name: formatAuthor(cip.author) } : undefined,
-    publisher: { '@type': 'Organization', name: 'YourChain Foundation', url: 'https://yourchain.example' },
+    publisher: { '@type': 'Organization', name: 'NEAR Foundation', url: 'https://near.org' },
     isPartOf: { '@type': 'WebSite', name: SITE.name, url: SITE.url },
     articleSection: cip.type ?? 'Chain Improvement Proposal',
-    keywords: ['YourChain', 'CIP', `CIP-${cip.id}`, cip.type, cip.status].filter(Boolean).join(', '),
+    keywords: ['NEAR', 'CIP', `CIP-${cip.id}`, cip.type, cip.status].filter(Boolean).join(', '),
   };
 
   const breadcrumb = {

@@ -56,7 +56,7 @@ describe('breadcrumbList', () => {
 describe('collectionPage', () => {
   it('builds a CollectionPage with publisher + isPartOf', () => {
     const c = collectionPage({
-      name: 'YOURPEDIA for Validators',
+      name: `${SITE_CONFIG.name} for Validators`,
       description: 'Operational hub.',
       path: '/validators',
     });
@@ -135,7 +135,7 @@ describe('techArticle', () => {
 describe('dataset', () => {
   it('builds a Dataset with publisher', () => {
     const d = dataset({
-      name: 'YOURPEDIA Stats',
+      name: `${SITE_CONFIG.name} Stats`,
       description: 'Time-series',
       path: '/stats',
     });

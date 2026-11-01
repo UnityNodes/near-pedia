@@ -22,7 +22,7 @@ import { embedText, embedBatch } from '@/lib/embeddings';
 
 describe('embedText', () => {
   it('returns array of length 1536', async () => {
-    const result = await embedText('What is YourChain?');
+    const result = await embedText('What is NEAR?');
     expect(result).toHaveLength(1536);
     expect(result[0]).toBeCloseTo(0.1);
   });

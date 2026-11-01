@@ -1,11 +1,12 @@
 import type { MetadataRoute } from 'next';
+import { SITE, SITE_TITLE } from '@/lib/site.config';
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'YOURPEDIA - YourChain Knowledge Hub',
-    short_name: 'YOURPEDIA',
+    name: SITE_TITLE,
+    short_name: SITE.name,
     description:
-      'CIPs, docs, discussions and whitepapers for the YourChain ecosystem - indexed, searchable, always current.',
+      'CIPs, docs, discussions and whitepapers for the NEAR ecosystem - indexed, searchable, always current.',
     start_url: '/',
     scope: '/',
     display: 'standalone',

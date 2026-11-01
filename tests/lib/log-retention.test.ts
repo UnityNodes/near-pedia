@@ -10,7 +10,7 @@ import {
  * The one property that matters: pruning changes how far back the DETAIL
  * goes, and changes no published lifetime figure at all.
  *
- * yourpedia's schema has no page_visits/api_requests, and mcp_calls is
+ * nearpedia's schema has no page_visits/api_requests, and mcp_calls is
  * keyed on an ISO `ts` column with no session_id. This test exists because
  * it once caught a real omission: two counters were wired for eleven metrics
  * and two were missed, and nothing else would have noticed until the pruner

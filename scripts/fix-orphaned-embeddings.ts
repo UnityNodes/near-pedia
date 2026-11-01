@@ -15,7 +15,7 @@ import { getDb } from '../lib/db';
 //               two whitepapers already correctly embedded under their
 //               current ids (3, 4).
 //
-//               6 source_ids (2897-2902 - 162 chunks) are NOT yourpedia
+//               6 source_ids (2897-2902 - 162 chunks) are NOT nearpedia
 //               content at all: whitepapers from other projects, fully absent from the current whitepapers table
 //               (a cross-project data leak, not a rekey artifact) but still
 //               retrievable via semantic_search with no working citation.

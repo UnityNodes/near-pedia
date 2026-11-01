@@ -1,11 +1,12 @@
 import type { Metadata } from 'next';
 import { LegalPage } from '@/components/reader-shell';
+import { SITE } from '@/lib/site.config';
 
 export const revalidate = 3600;
 
 export const metadata: Metadata = {
   title: 'Terms of Service',
-  description: 'Terms of use for the YOURPEDIA YourChain knowledge aggregator.',
+  description: `Terms of use for the ${SITE.name} NEAR knowledge aggregator.`,
 };
 
 const LAST_UPDATED = '2026-09-21';
@@ -20,18 +21,18 @@ export default function TermsPage() {
       </header>
 
       <section>
-        <h2>1. What YOURPEDIA is</h2>
+        <h2>1. What {SITE.name} is</h2>
         <p>
-          YOURPEDIA is a free, read-only aggregator that pulls publicly available content from
-          several YourChain sources into one place, CIPs (your-org/CIPs), the
-          YourChain forum, the node and developer documentation,
+          {SITE.name} is a free, read-only aggregator that pulls publicly available content from
+          several NEAR sources into one place, CIPs (your-org/CIPs), the
+          NEAR forum, the node and developer documentation,
           official whitepapers, blog and release announcements, and lets you search across all
           of them.
         </p>
         <p>
-          YOURPEDIA is run by <strong>Your Organization</strong> as a convenience for the community. It
-          is <strong>not affiliated</strong> with the YourChain Foundation, YourChain Labs,
-          or any other organization in the official YourChain ecosystem.
+          {SITE.name} is run by <strong>{SITE.publisher.name}</strong> as a convenience for the community. It
+          is <strong>not affiliated</strong> with the NEAR Foundation, NEAR Labs,
+          or any other organization in the official NEAR ecosystem.
         </p>
         <p>By using the site you agree to these terms. If you don&apos;t, please don&apos;t use it.</p>
       </section>
@@ -39,13 +40,13 @@ export default function TermsPage() {
       <section>
         <h2>2. Source content stays with its owners</h2>
         <p>
-          Every CIP, forum post, doc page and announcement displayed on YOURPEDIA
+          Every CIP, forum post, doc page and announcement displayed on {SITE.name}
           belongs to its original author or publisher. We aggregate and re-display it under
           fair-use / community-knowledge principles and always link back to the source. Nothing
-          on YOURPEDIA transfers copyright or grants new rights to anyone.
+          on {SITE.name} transfers copyright or grants new rights to anyone.
         </p>
         <p>
-          The YOURPEDIA layout, design, and original code (the aggregator itself) is © 2026 Your Organization.
+          The {SITE.name} layout, design, and original code (the aggregator itself) is © 2026 {SITE.publisher.name}.
         </p>
       </section>
 
@@ -64,8 +65,8 @@ export default function TermsPage() {
         <h2>4. No warranty, no liability</h2>
         <p>
           The site is provided <strong>&quot;as is&quot;</strong>. We don&apos;t guarantee uptime, accuracy,
-          completeness, or fit for any purpose. To the maximum extent allowed by law, Your
-          Organization is not liable for any damages arising from your use of the site.
+          completeness, or fit for any purpose. To the maximum extent allowed by law,{' '}
+          {SITE.publisher.name} is not liable for any damages arising from your use of the site.
         </p>
       </section>
 

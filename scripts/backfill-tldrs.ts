@@ -25,12 +25,12 @@ async function main() {
         messages: [
           {
             role: 'system',
-            content: 'You are a technical summarizer for Chain Improvement Proposals (CIPs). YourChain is a blockchain network; CIPs govern its protocol. Write exactly 2-3 sentences summarizing the key purpose, mechanism, and impact of the CIP. Be precise and concise. Never call it a YourChain proposal. No bullet points, no headers, no markdown.',
+            content: 'You are a technical summarizer for Chain Improvement Proposals (CIPs). NEAR is a blockchain network; CIPs govern its protocol. Write exactly 2-3 sentences summarizing the key purpose, mechanism, and impact of the CIP. Be precise and concise. Never call it a NEAR proposal. No bullet points, no headers, no markdown.',
           },
           {
             // content_md merges to main via a reviewed GitHub PR, a much
             // higher bar than an anonymous forum post - but it's still text
-            // written by someone outside yourpedia, so it gets the same
+            // written by someone outside nearpedia, so it gets the same
             // fence as any other retrieved text before it reaches the model.
             role: 'user',
             content: `Summarize this Chain Improvement Proposal in 2-3 sentences:\n\n${fenceUntrusted(snippet)}`,

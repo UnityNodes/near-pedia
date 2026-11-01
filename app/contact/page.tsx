@@ -2,10 +2,11 @@ import type { Metadata } from 'next';
 import { ContactForm } from './contact-form';
 import { isMailerConfigured } from '@/lib/mailer';
 import { LegalPage } from '@/components/reader-shell';
+import { SITE } from '@/lib/site.config';
 
 export const metadata: Metadata = {
   title: 'Contact',
-  description: 'Get in touch with the YOURPEDIA team.',
+  description: `Get in touch with the ${SITE.name} team.`,
 };
 
 export default function ContactPage() {
@@ -42,7 +43,7 @@ export default function ContactPage() {
         <p>
           <strong>Security vulnerabilities?</strong> Please report privately via{' '}
           <a
-            href="https://github.com/your-org/yourpedia/security/advisories/new"
+            href="https://github.com/your-org/nearpedia/security/advisories/new"
             target="_blank"
             rel="noopener noreferrer"
           >
@@ -60,7 +61,7 @@ export default function ContactPage() {
           <li>
             Bug reports and feature requests:{' '}
             <a
-              href="https://github.com/your-org/yourpedia/issues"
+              href="https://github.com/your-org/nearpedia/issues"
               target="_blank"
               rel="noopener noreferrer"
             >
@@ -70,11 +71,11 @@ export default function ContactPage() {
           <li>
             Source code:{' '}
             <a
-              href="https://github.com/your-org/yourpedia"
+              href="https://github.com/your-org/nearpedia"
               target="_blank"
               rel="noopener noreferrer"
             >
-              github.com/your-org/yourpedia
+              github.com/your-org/nearpedia
             </a>
           </li>
         </ul>

@@ -1,7 +1,7 @@
 import OpenGraphImage from './opengraph-image';
 
 export const runtime = 'nodejs';
-export const alt = 'YourChain documentation';
+export const alt = 'NEAR documentation';
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
 

@@ -17,7 +17,7 @@ export const revalidate = 300;
 
 export const metadata = pageMetadata({
   title: 'Blog',
-  description: 'Articles, news and press releases from YourChain, with partner press and third-party reprints in tabs of their own.',
+  description: 'Articles, news and press releases from NEAR, with partner press and third-party reprints in tabs of their own.',
   path: '/blog',
 });
 
@@ -92,7 +92,7 @@ export default async function BlogPage({ searchParams }: PageProps) {
     <PageShell
       href="/blog"
       title="Blog"
-      description="Articles, news and press releases that YourChain publishes on its own sites. Partner press and third-party reprints sit in tabs of their own."
+      description="Articles, news and press releases that NEAR publishes on its own sites. Partner press and third-party reprints sit in tabs of their own."
       stat={{
         value: glance.shown,
         unit: glance.shown === glance.held ? (glance.shown === 1 ? 'post' : 'posts') : `posts, of ${glance.held.toLocaleString('en-US')} items held`,

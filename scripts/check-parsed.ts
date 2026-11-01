@@ -28,7 +28,7 @@
  * table has no `title` row, and comparing a value that is not purely a
  * frontmatter reflection would report that fallback as a defect. `approved`
  * and `license` are not in RULES either: sync-cips.ts writes them as a
- * literal `null` with the comment "not present in YourChain frontmatter" -
+ * literal `null` with the comment "not present in NEAR frontmatter" -
  * confirmed against a real CIP's table (cip-0001 has cip/title/author/
  * status/type/created and nothing else) - so there is no source value either
  * side of a comparison could ever hold.
@@ -77,7 +77,7 @@ const plain = (v: string): string => v.trim().replace(/\s+/g, ' ').replace(/[.;]
 
 /**
  * The key spellings come from parseTableFrontmatter, which already lowercases
- * every key it reads (`inner[0].toLowerCase()`), and YourChain's
+ * every key it reads (`inner[0].toLowerCase()`), and NEAR's
  * markdown-table preamble has one spelling per field, confirmed by reading sync-cips.ts's own `meta['...']` lookups
  * rather than assumed.
  */

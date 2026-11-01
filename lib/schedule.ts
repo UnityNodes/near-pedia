@@ -1,7 +1,7 @@
 /**
  * How often each writer is supposed to run, and how long it may go quiet.
  *
- * WHY IT IS SHARED. An audit found yourpedia's own
+ * WHY IT IS SHARED. An audit found nearpedia's own
  * scripts/check-sync-staleness.sh had drifted into an anti-pattern: a hand-typed table of thresholds
  * keyed by SCRIPT name, disconnected from deploy/sync-tick.sh, with a blanket
  * fallback for anything unlisted. That shape is how a source silently goes
@@ -42,7 +42,7 @@ export const TOLERANCE_HOURS: Record<string, number> = {
 
 /**
  * Writers whose `run` sits behind a shell conditional in deploy/sync-tick.sh,
- * with the real tolerance in hours. Empty today — yourpedia's buckets are
+ * with the real tolerance in hours. Empty today — nearpedia's buckets are
  * flat `run a; run b; ...` with no `if` guards — kept so a future guarded
  * writer has somewhere to declare its real cadence instead of inheriting a
  * bucket tolerance that doesn't describe it.

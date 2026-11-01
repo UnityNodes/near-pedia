@@ -85,7 +85,7 @@ export async function GET(
       messages: [
         {
           role: 'system',
-          content: 'You are a technical summarizer for YourChain governance proposals. Write exactly 2-3 sentences summarizing the key purpose, mechanism, and impact of the CIP. Be precise and concise. No bullet points, no headers, no markdown.',
+          content: 'You are a technical summarizer for NEAR governance proposals. Write exactly 2-3 sentences summarizing the key purpose, mechanism, and impact of the CIP. Be precise and concise. No bullet points, no headers, no markdown.',
         },
         {
           // Same fence as scripts/backfill-tldrs.ts: content_md merges via a

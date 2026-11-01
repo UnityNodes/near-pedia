@@ -4,9 +4,9 @@ import { statusTone } from '@/lib/status';
 import { PgRow } from '@/components/page-shell';
 
 const REPO_LABEL: Record<string, string> = {
-  'your-org/yourchain-node':     'YourChain Node',
-  'your-org/yourchain-app':      'YourChain App',
-  'your-org/yourchain-core':     'YourChain Core',
+  'your-org/yourchain-node':     'NEAR Node',
+  'your-org/yourchain-app':      'NEAR App',
+  'your-org/yourchain-core':     'NEAR Core',
   'your-org/CIPs':              'CIPs',
   'your-org/docs':              'Docs',
   'your-org/yourchain-openrpc':  'OpenRPC',

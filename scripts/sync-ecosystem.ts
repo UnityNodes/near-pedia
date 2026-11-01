@@ -1,5 +1,5 @@
 /**
- * Sync the YourChain ecosystem directory (86 projects) from the official
+ * Sync the NEAR ecosystem directory (86 projects) from the official
  * yourchain.example ecosystemExplorer.js into the ecosystem_projects table that the
  * /ecosystem page reads. Creates the table if the template DB lacks it.
  */

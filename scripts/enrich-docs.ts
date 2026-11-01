@@ -1,15 +1,15 @@
 /**
- * Enrich the template doc_pages with the richer YourChain content that the
+ * Enrich the template doc_pages with the richer NEAR content that the
  * initial migration left behind (template has no repo_docs/adrs/rpc tables):
  * fold repo_docs + adrs + rpc_methods into doc_pages as additional sources so
  * they appear on /docs (grouped by source) and in the RAG corpus.
  * Run scripts/build-embeddings.ts afterwards.
  *
- * data/yourpedia.db (SRC) is a static one-time export, not a live sync
+ * data/nearpedia.db (SRC) is a static one-time export, not a live sync
  * target - nothing regenerates it. INSERT OR IGNORE means every run after
  * the first inserts 0 rows by construction; this script sitting in the daily
  * cron bucket does not mean the ADR/RPC/repo-doc content refreshes daily.
- * See the notes/bugs/2026-08-01-yourpedia-audit.md.
+ * See the notes/bugs/2026-08-01-nearpedia-audit.md.
  */
 import Database from 'better-sqlite3';
 import path from 'path';
@@ -20,7 +20,7 @@ interface RepoDocRow { repo: string; path: string; title: string | null; content
 interface AdrRow { repo: string; number: number; title: string | null; status: string | null; content_md: string; url: string | null; synced_at: string | null }
 interface RpcMethodRow { name: string; summary: string | null; description: string | null; params_json: string | null; result_json: string | null; url: string | null; synced_at: string | null }
 
-const SRC = '/srv/yourpedia/data/yourpedia.db';
+const SRC = '/srv/nearpedia/data/nearpedia.db';
 const DEST = path.join(process.cwd(), 'data', 'cips.db');
 
 function main(): number {
@@ -97,7 +97,7 @@ console.log('doc_pages total now:', total);
 console.log('by source:', JSON.stringify(bySource));
 db.close(); src.close();
 
-// Return rows actually inserted this run, not the running total - yourpedia.db
+// Return rows actually inserted this run, not the running total - nearpedia.db
 // is a static one-time snapshot (see header comment), so this is 0 on every
 // run after the first. That's the honest number: it's what tells sync_log
 // this "sync" cannot produce anything new without a live source behind it.

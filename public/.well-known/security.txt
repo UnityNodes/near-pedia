@@ -1,9 +1,9 @@
-# Security disclosure policy for YOURPEDIA
+# Security disclosure policy for NEAR-pedia
 # RFC 9116 — https://www.rfc-editor.org/rfc/rfc9116
 
 Contact: mailto:security@example.com
-Contact: https://github.com/your-org/yourpedia/security/advisories/new
-Contact: https://yourpedia.example/contact
+Contact: https://github.com/your-org/nearpedia/security/advisories/new
+Contact: https://nearpedia.example/contact
 
 # Expires once a year. Renew before the date below.
 Expires: 2027-06-04T00:00:00.000Z
@@ -11,10 +11,10 @@ Expires: 2027-06-04T00:00:00.000Z
 Preferred-Languages: en
 
 # Public policy on issue handling, scope, and acknowledgement.
-Policy: https://yourpedia.example/security
+Policy: https://nearpedia.example/security
 
 # Where to find the canonical copy of this file.
-Canonical: https://yourpedia.example/.well-known/security.txt
+Canonical: https://nearpedia.example/.well-known/security.txt
 
 # Hall of fame for prior reports (or note that none have been received yet).
-Acknowledgments: https://yourpedia.example/security#acknowledgments
+Acknowledgments: https://nearpedia.example/security#acknowledgments

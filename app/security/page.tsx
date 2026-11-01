@@ -4,13 +4,14 @@ import { pageMetadata } from '@/lib/seo';
 import { breadcrumbList } from '@/lib/jsonld';
 import { JsonLd } from '@/components/json-ld';
 import { ReaderHead, ReaderPage } from '@/components/reader-shell';
+import { SITE } from '@/lib/site.config';
 
 export const revalidate = 86400;
 
 export const metadata: Metadata = pageMetadata({
   title: 'Security - Coordinated Disclosure',
   description:
-    'How to responsibly report security vulnerabilities in YOURPEDIA, response timelines, scope, and acknowledgements.',
+    `How to responsibly report security vulnerabilities in ${SITE.name}, response timelines, scope, and acknowledgements.`,
   path: '/security',
 });
 
@@ -29,7 +30,7 @@ export default function SecurityPage() {
           title="Security disclosure"
           lede={
             <>
-              How to report vulnerabilities in YOURPEDIA. Machine-readable copy at <Link href="/.well-known/security.txt">/.well-known/security.txt</Link>.
+              How to report vulnerabilities in {SITE.name}. Machine-readable copy at <Link href="/.well-known/security.txt">/.well-known/security.txt</Link>.
             </>
           }
         />
@@ -40,7 +41,7 @@ export default function SecurityPage() {
             <div className="rd-card">
               <p>
                 Email <a href="mailto:security@example.com">security@example.com</a> or
-                open a private advisory at <a href="https://github.com/your-org/yourpedia/security/advisories/new" target="_blank" rel="noopener noreferrer">github.com/your-org/yourpedia/security/advisories/new</a>.
+                open a private advisory at <a href="https://github.com/your-org/nearpedia/security/advisories/new" target="_blank" rel="noopener noreferrer">github.com/your-org/nearpedia/security/advisories/new</a>.
                 GitHub advisories are encrypted end-to-end and give a private audit trail; pick whichever you prefer.
                 For non-security questions, use the <a href="/contact">contact form</a>.
               </p>
@@ -67,7 +68,7 @@ export default function SecurityPage() {
             <div className="rd-card">
               <p><b>In scope:</b></p>
               <ul>
-                <li>yourpedia.example and its subdomains.</li>
+                <li>{SITE.host} and its subdomains.</li>
                 <li>/api/v1/* REST endpoints, /mcp MCP server, /api/feed/* feeds.</li>
                 <li>The metrics endpoint (/api/metrics).</li>
               </ul>

@@ -6,10 +6,11 @@ import { getTopics } from '@/lib/forum';
 import { getDocs } from '@/lib/docs';
 import { getVideos } from '@/lib/videos';
 import { getAllWhitepapers } from '@/lib/whitepapers';
+import { SITE } from '@/lib/site.config';
 
 export const revalidate = 3600;
 
-const BASE = 'https://yourpedia.example';
+const BASE = SITE.url;
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date().toISOString();

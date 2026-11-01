@@ -13,6 +13,7 @@ import {
 } from './data';
 import { groupTools } from './tool-groups';
 import './design.css';
+import { SITE } from '@/lib/site.config';
 
 interface ForAiContent {
   cips: number;
@@ -45,8 +46,8 @@ function getForAiContent(): ForAiContent {
 export const revalidate = 300;
 
 export const metadata = pageMetadata({
-  title: 'YOURPEDIA for AI | MCP + REST API',
-  description: `Machine-readable access to the YourChain knowledge base via MCP server (${MCP_TOOL_COUNT} tools) and REST API v1 (${REST_ENDPOINT_COUNT} endpoints).`,
+  title: `${SITE.name} for AI | MCP + REST API`,
+  description: `Machine-readable access to the NEAR knowledge base via MCP server (${MCP_TOOL_COUNT} tools) and REST API v1 (${REST_ENDPOINT_COUNT} endpoints).`,
   path: '/for-ai',
 });
 
@@ -93,10 +94,10 @@ export default async function ForAiPage() {
     <PageShell
       href="/for-ai"
       title="MCP Setup"
-      kicker="BUILD · YOURPEDIA FOR AI AGENTS"
+      kicker={`BUILD · ${SITE.name} FOR AI AGENTS`}
       description={(
         <>
-          Machine-readable access to the YourChain knowledge base. YOURPEDIA exposes all content via{' '}
+          Machine-readable access to the NEAR knowledge base. {SITE.name} exposes all content via{' '}
           <span className="fa-em">MCP</span> (Model Context Protocol) and a <span className="fa-em">REST API</span>.
           No authentication required.
         </>

@@ -1,14 +1,14 @@
-# YourPedia — block appended to the shared /etc/caddy/Caddyfile.
+# NEAR-pedia — block appended to the shared /etc/caddy/Caddyfile.
 # Behind Cloudflare (orange cloud) with a CF Origin Certificate (not ACME).
-# Routes /mcp* and /api/v1* → Express MCP server (3041, the REST API lives
-# there, not in Next); everything else (incl. the web UI) → Next.js (3040).
+# Routes /mcp* and /api/v1* → Express MCP server (3131, the REST API lives
+# there, not in Next); everything else (incl. the web UI) → Next.js (3130).
 # CSP is set per-request by Next middleware, so it is intentionally NOT set
 # here.
 
-yourpedia.example, www.yourpedia.example {
+nearpedia.example, www.nearpedia.example {
 	encode zstd gzip
 
-	tls /etc/ssl/cf-origin-yourpedia.pem /etc/ssl/cf-origin-yourpedia-key.pem
+	tls /etc/ssl/cf-origin-nearpedia.pem /etc/ssl/cf-origin-nearpedia-key.pem
 
 	header {
 		Strict-Transport-Security "max-age=31536000"
@@ -21,15 +21,15 @@ yourpedia.example, www.yourpedia.example {
 	}
 
 	# www → apex (canonical)
-	@www host www.yourpedia.example
-	redir @www https://yourpedia.example{uri} permanent
+	@www host www.nearpedia.example
+	redir @www https://nearpedia.example{uri} permanent
 
 	# MCP server (stateless Streamable HTTP) + the REST API it serves.
 	# /api/v1/* lives on the MCP process, not Next - without this the
 	# endpoints advertised on /for-ai return 404 to every caller.
 	@ai_routes path /mcp /mcp/* /api/v1 /api/v1/*
 	handle @ai_routes {
-		reverse_proxy 127.0.0.1:3041
+		reverse_proxy 127.0.0.1:3131
 	}
 
 	# Everything else → Next.js. Cloudflare puts the real visitor IP in
@@ -39,7 +39,7 @@ yourpedia.example, www.yourpedia.example {
 	handle {
 		@nextStatic path /_next/static/*
 		header @nextStatic Cache-Control "public, max-age=31536000, immutable"
-		reverse_proxy 127.0.0.1:3040 {
+		reverse_proxy 127.0.0.1:3130 {
 			header_up X-Real-IP {http.request.header.Cf-Connecting-Ip}
 			flush_interval -1
 		}

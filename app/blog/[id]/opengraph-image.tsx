@@ -2,9 +2,10 @@ import { ImageResponse } from 'next/og';
 import { readFile } from 'fs/promises';
 import path from 'path';
 import { authorLabel, getBlogPost, kindLabel, shortLine } from '@/lib/blog';
+import { SITE } from '@/lib/site.config';
 
 export const runtime = 'nodejs';
-export const alt = 'YourChain blog post';
+export const alt = 'NEAR blog post';
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
 
@@ -17,7 +18,7 @@ export default async function Image({ params }: { params: Promise<{ id: string }
   const logoBuffer = await readFile(path.join(process.cwd(), 'public/logo-light.png'));
   const logoSrc = `data:image/png;base64,${logoBuffer.toString('base64')}`;
 
-  const title = post?.title ?? 'YourChain blog post';
+  const title = post?.title ?? 'NEAR blog post';
   const excerpt = post ? shortLine(post.excerpt, post.content_text, EXCERPT_CHARS) : '';
   const author = authorLabel(post?.author) ?? '';
   const published = post?.published_at?.slice(0, 10) ?? '';
@@ -39,7 +40,7 @@ export default async function Image({ params }: { params: Promise<{ id: string }
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
           <img alt="" src={logoSrc} width={64} height={64} style={{ objectFit: 'contain' }} />
-          <div style={{ fontSize: 32, fontWeight: 700, letterSpacing: -0.5 }}>YOURPEDIA</div>
+          <div style={{ fontSize: 32, fontWeight: 700, letterSpacing: -0.5 }}>{SITE.name}</div>
           <div style={{ fontSize: 22, opacity: 0.55, marginLeft: 8 }}>{`· ${tag}`}</div>
         </div>
 

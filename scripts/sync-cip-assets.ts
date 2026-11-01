@@ -1,5 +1,5 @@
 /**
- * Index the asset files that ship alongside YourChain CIPs.
+ * Index the asset files that ship alongside NEAR CIPs.
  *
  * your-org/CIPs keeps diagrams under cips/assets/cip-<n>/, referenced from
  * the CIP markdown. get_cip_attachments and /api/v1/cips/:id/attachments have
@@ -16,6 +16,7 @@ import { guardSync } from '../lib/sync-log';
 import { prune } from '../lib/prune';
 import { pruneConfirmingUrls } from '../lib/confirm-gone';
 import { isoNowSql } from '../lib/formats';
+import { SITE } from '../lib/site.config';
 
 const REPO = 'your-org/CIPs';
 const TREE_URL = `https://api.github.com/repos/${REPO}/git/trees/main?recursive=1`;
@@ -45,7 +46,7 @@ async function main(): Promise<number> {
   const res = await fetch(TREE_URL, {
     headers: {
       accept: 'application/vnd.github+json',
-      'User-Agent': 'YourPedia-Bot/1.0',
+      'User-Agent': `${SITE.name}-Bot/1.0`,
       ...(token ? { authorization: `Bearer ${token}` } : {}),
     },
   });
@@ -96,7 +97,7 @@ async function main(): Promise<number> {
   const { result, report } = await pruneConfirmingUrls(
     { table: 'cip_attachments', keyColumn: 'github_url', liveKeys: seen, maxDeleteRatio: 0.2 },
     (spec) => prune(spec),
-    { userAgent: 'YourPedia-Bot/1.0', delayMs: 300 },
+    { userAgent: `${SITE.name}-Bot/1.0`, delayMs: 300 },
   );
   if (report.overCap) {
     console.log(`[sync-cip-assets] ${report.candidates} prune candidate(s) over the probe cap; not confirming, the ratio guard decides alone`);

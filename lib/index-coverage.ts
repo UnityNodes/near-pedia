@@ -61,7 +61,7 @@ export const PUBLISHED_TO_INDEXED: Record<string, string> = {
 /**
  * Published sources that are deliberately not in the vector index, and why.
  *
- * Empty here: yourpedia's /api/v1/sources endpoint appends
+ * Empty here: nearpedia's /api/v1/sources endpoint appends
  * its 'embedding_chunk' row with .push() after the literal array this check
  * parses, so it never reaches `published` in the first place - declaring an
  * excuse for it would be an excuse for something never asked about.

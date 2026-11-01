@@ -82,7 +82,7 @@ export default async function DocPage({ params }: PageProps) {
       path: `/docs/${id}`,
       dateModified: doc.last_modified ?? null,
       section: doc.breadcrumb ?? sourceLabel,
-      keywords: ['YourChain', sourceLabel, doc.breadcrumb ?? ''].filter(Boolean) as string[],
+      keywords: ['NEAR', sourceLabel, doc.breadcrumb ?? ''].filter(Boolean) as string[],
     }),
     breadcrumbList([
       { name: 'Home', path: '/' },

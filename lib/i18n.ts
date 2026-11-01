@@ -1,8 +1,10 @@
+import { SITE } from './site.config';
+
 export type Lang = 'en';
 
 export const TRANSLATIONS = {
   en: {
-    brand: 'YOURPEDIA',
+    brand: SITE.name,
     tagline: 'CIPs · Forum · Docs · Papers',
     nav_home: 'HOME',
     nav_search: 'SEARCH',
@@ -39,7 +41,7 @@ export const TRANSLATIONS = {
     search_searching: 'Searching…',
     search_placeholder: '> type query...',
     search_esc: 'ESC',
-    search_modal_title: 'SEARCH // yourpedia',
+    search_modal_title: 'SEARCH // nearpedia',
     search_no_results: '// NO MATCHES //',
     search_enter: 'ENTER to browse',
     views: 'views',
@@ -71,13 +73,13 @@ export const TRANSLATIONS = {
     sources_label: 'SOURCES',
     system_online: 'SYSTEM ONLINE',
     indexed_min: 'MIN AGO',
-    home_h1_1: 'YOURCHAIN',
+    home_h1_1: 'NEAR',
     home_h1_2: 'NETWORK',
     home_h1_3: '// INDEXED.',
     home_intro: 'One place to read every Chain Improvement Proposal, every forum thread, the full node and developer documentation, and every official spec and whitepaper. Built for builders, researchers, and the merely curious.',
     home_search_cta: '>> START SEARCHING',
     home_explore: 'EXPLORE ↓',
-    cips_section: 'YOURCHAIN IMPROVEMENT PROPOSALS',
+    cips_section: 'NEAR IMPROVEMENT PROPOSALS',
     forum_section: 'FORUM // FROM THE WIRE',
     docs_section: 'DOCUMENTATION',
     papers_section: 'WHITEPAPERS',
@@ -86,7 +88,7 @@ export const TRANSLATIONS = {
     num_topics: 'topics · forum.yourchain.example',
     num_docs: 'pages · docs.yourchain.example',
     num_papers: 'specs · yourchain',
-    footer_tagline: 'One index for the whole YourChain ecosystem. Free, open, no API key.',
+    footer_tagline: 'One index for the whole NEAR ecosystem. Free, open, no API key.',
     last_indexed: 'LAST INDEXED',
     source_filter_all: 'ALL',
     search_type_cip: 'CIP',

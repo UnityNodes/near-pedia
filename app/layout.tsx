@@ -85,12 +85,12 @@ const WEBSITE_SCHEMA = {
   description: SITE.description,
   about: {
     '@type': 'Thing',
-    name: 'YourChain',
-    description: 'A blockchain network with an ecosystem of validators, developers and applications.',
-    url: 'https://yourchain.example',
+    name: 'NEAR',
+    description: 'NEAR Protocol, a sharded proof-of-stake layer-1 blockchain.',
+    url: 'https://near.org',
     sameAs: [
-      'https://en.wikipedia.org/wiki/YourChain_(blockchain)',
-      'https://github.com/your-org',
+      'https://en.wikipedia.org/wiki/NEAR_Protocol',
+      'https://github.com/near',
     ],
   },
   potentialAction: {
@@ -115,9 +115,9 @@ const ORGANIZATION_SCHEMA = {
   alternateName: SITE.tagline,
   url: SITE.url,
   logo: `${SITE.url}${SITE.logo.icon}`,
-  description: `${SITE.name} is the central knowledge hub for the YourChain ecosystem.`,
+  description: `${SITE.name} is the central knowledge hub for the NEAR ecosystem.`,
   sameAs: [
-    'https://github.com/your-org/yourpedia',
+    'https://github.com/your-org/nearpedia',
   ],
   parentOrganization: {
     '@type': 'Organization',

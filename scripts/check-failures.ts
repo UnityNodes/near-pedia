@@ -9,7 +9,7 @@ import {
 import { deletePage, hasChannel, pagerChannels, sendPage } from '../lib/ops-pager';
 import { SITE } from '../lib/site.config';
 
-const QUIET_FILE = process.env.ALERT_QUIET_FILE ?? '/var/run/yourpedia-quiet';
+const QUIET_FILE = process.env.ALERT_QUIET_FILE ?? '/var/run/nearpedia-quiet';
 const STATUS_URL = process.env.STATUS_URL ?? SITE.url;
 
 async function removeResolved(messages: PagedMessage[], gone: PagedMessage[]): Promise<{ kept: PagedMessage[]; removed: number }> {

@@ -1,11 +1,11 @@
 /**
- * lib/onchain.ts — LIVE YourChain on-chain state + TKN market.
+ * lib/onchain.ts — LIVE NEAR on-chain state + NEAR market.
  *
  * Sources (all public, no key):
  *   - Explorer mainnet indexer  https://api.explorer.example/v1/head
- *       → block height, validators, TKN supply, cumulative data size, txs, accounts, contracts
+ *       → block height, validators, NEAR supply, cumulative data size, txs, accounts, contracts
  *   - CoinGecko simple price     https://api.coingecko.com/api/v3/simple/price?ids=yourchain
- *       → TKN price, market cap, 24h change
+ *       → NEAR price, market cap, 24h change
  *
  * Fetched live at call time with a short in-process cache, so the MCP/REST layer
  * returns real on-chain context without storing or scheduling anything. DeFi TVL
@@ -112,7 +112,7 @@ export interface ValidatorRow {
   moniker: string;
   website: string | null;
   valoperAddress: string | null;
-  votingPower: number | null;   // TKN
+  votingPower: number | null;   // NEAR
   commissionRate: number | null; // 0..1
   jailed: boolean;
 }
@@ -132,7 +132,7 @@ let validatorCache: { at: number; data: ValidatorStats } | null = null;
 const EMPTY_STATS: ValidatorStats = { registered: 0, active: 0, jailed: 0, rows: [] };
 
 /**
- * Live YourChain validator set from the Explorer indexer.
+ * Live NEAR validator set from the Explorer indexer.
  *
  * Explorer's /head reports `total_validators`, which is the size of the whole
  * REGISTRY, which includes jailed validators and ones that carry no voting

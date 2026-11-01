@@ -29,8 +29,8 @@ import { sourceFiles, reachableFrom, isNextEntry } from '../lib/reachability';
 // only (app/api/health/route.ts), and asking through Caddy makes the answer
 // depend on whether a forwarding header survived the hop - which is a
 // question about the proxy, not about the deploy this check is grading.
-const BASE = process.env.HEALTH_URL ?? 'http://127.0.0.1:3040/api/health';
-const MCP_HEALTH = process.env.MCP_HEALTH_URL ?? 'http://127.0.0.1:3041/health';
+const BASE = process.env.HEALTH_URL ?? 'http://127.0.0.1:3130/api/health';
+const MCP_HEALTH = process.env.MCP_HEALTH_URL ?? 'http://127.0.0.1:3131/health';
 const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
 
 /**
@@ -212,7 +212,7 @@ async function main(): Promise<void> {
   }
   if (staleBuilt.length) {
     for (const f of staleBuilt) console.error(`  STALE BUILD    ${f}`);
-    console.error('                 the site is not serving these; rebuild and restart yourpedia');
+    console.error('                 the site is not serving these; rebuild and restart nearpedia');
     problems.push(`${staleBuilt.length} built file(s) newer than the running build: ${staleBuilt.slice(0, 8).join(', ')}`);
   } else if (nextChanged.length) {
     // Scripts and docs only: cron runs those from the working tree via tsx,
@@ -230,7 +230,7 @@ async function main(): Promise<void> {
 
   if (staleMcp.length) {
     for (const f of staleMcp) console.error(`  STALE MCP      ${f}`);
-    console.error('                 no build needed; restart yourpedia-mcp and it re-reads the source');
+    console.error('                 no build needed; restart nearpedia-mcp and it re-reads the source');
     problems.push(`${staleMcp.length} file(s) newer than the running MCP server: ${staleMcp.slice(0, 8).join(', ')}`);
   }
   if (mcpNote) {

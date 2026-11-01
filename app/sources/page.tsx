@@ -8,6 +8,7 @@ import { getSourceInventory } from '@/lib/sources';
 import { scheduleFromTick } from '@/lib/schedule';
 import { freshnessRows, latestSync, ragChunkCount, renderClock } from './freshness';
 import { SyncAge } from './sync-age';
+import { SITE } from '@/lib/site.config';
 
 export const revalidate = 60;
 
@@ -15,13 +16,13 @@ export async function generateMetadata(): Promise<Metadata> {
   const { source_count, mcp_tools_count } = await getSourceInventory();
   return {
     title: 'Sources',
-    description: `${source_count} live YourChain knowledge sources indexed by YOURPEDIA, semantically searchable via ${mcp_tools_count} MCP tools. Real-time data.`,
-    alternates: { canonical: 'https://yourpedia.example/sources' },
+    description: `${source_count} live NEAR knowledge sources indexed by ${SITE.name}, semantically searchable via ${mcp_tools_count} MCP tools. Real-time data.`,
+    alternates: { canonical: `${SITE.url}/sources` },
     openGraph: {
-      title: `YOURPEDIA · ${source_count} live YourChain knowledge sources`,
+      title: `${SITE.name} · ${source_count} live NEAR knowledge sources`,
       description:
         'Forum, docs, CIPs, GitHub, YouTube, ecosystem projects and more - all indexed, all searchable, all current.',
-      url: 'https://yourpedia.example/sources',
+      url: `${SITE.url}/sources`,
     },
   };
 }
@@ -46,7 +47,7 @@ export default async function SourcesPage() {
       title="Sources"
       description={
         <>
-          {summary.source_count} sources. One unified corpus. Every YourChain knowledge source you would search
+          {summary.source_count} sources. One unified corpus. Every NEAR knowledge source you would search
           separately, indexed continuously
           {summary.mcp_tools_count > 0 && <> and exposed through {summary.mcp_tools_count} MCP tools</>}. The numbers
           below refresh every minute, straight from the production database.
@@ -61,7 +62,7 @@ export default async function SourcesPage() {
         endpoint={
           process.env.NODE_ENV === 'production'
             ? '/api/v1/sources'
-            : 'https://yourpedia.example/api/v1/sources'
+            : `${SITE.url}/api/v1/sources`
         }
       />
 

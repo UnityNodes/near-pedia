@@ -47,7 +47,7 @@ const VERBOSE = process.argv.includes('--verbose');
  *
  * "It only returns a few" is NOT a reason. That is the defect.
  *
- * Empty today: yourpedia's serving layer has no site matching either shape
+ * Empty today: nearpedia's serving layer has no site matching either shape
  * yet, and a real one is added here the moment G1 finds it rather than
  * guessed at in advance.
  */
@@ -104,7 +104,7 @@ function servingFiles(): string[] {
  * Is this statement's result handed to rankRows, by NAME rather than by
  * position?
  *
- * yourpedia's own tools don't wrap the query inside the rankRows(...) call
+ * nearpedia's own tools don't wrap the query inside the rankRows(...) call
  * the way an inline pattern would - they assign the candidate rows to a
  * variable (`const wpCandidates = db.prepare(...).all(...)`) and rank it a
  * few lines later, often after an early-return or another query sits
@@ -213,7 +213,7 @@ function main() {
   } else {
     const cap = Number(capM[1]);
     // Every table fetched under the cap, taken from the statements
-    // themselves. yourpedia's own shape: `FROM table WHERE (...) LIMIT ?`
+    // themselves. nearpedia's own shape: `FROM table WHERE (...) LIMIT ?`
     // as a template literal, immediately followed by `.all(...args,
     // RANK_CAND_CAP)` - one consistent shape at every call site.
     const tables = new Set<string>();

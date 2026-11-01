@@ -62,8 +62,8 @@ export default async function CodePage({ searchParams }: PageProps) {
 
   const schemas = [
     collectionPage({
-      name: 'YourChain Code Browser',
-      description: 'GitHub issues and pull requests across yourchain-node, yourchain-app, yourchain-core, CIPs and other YourChain ecosystem repositories.',
+      name: 'NEAR Code Browser',
+      description: 'GitHub issues and pull requests across yourchain-node, yourchain-app, yourchain-core, CIPs and other NEAR ecosystem repositories.',
       path: '/code',
       itemCount: totalRepos,
     }),

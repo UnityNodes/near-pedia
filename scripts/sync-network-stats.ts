@@ -1,8 +1,8 @@
 /**
- * Track YOURPEDIA content growth metrics.
+ * Track NEAR-pedia content growth metrics.
  *
  * A content-count proxy for ecosystem activity (CIPs, forum, docs, videos,
- * radar) - separate from the live YourChain on-chain/TKN-market stats served
+ * radar) - separate from the live NEAR on-chain/NEAR-market stats served
  * by get_network_state (Explorer + CoinGecko). Updated every 6 hours via the
  * slow bucket.
  */
@@ -51,7 +51,7 @@ async function main() {
     CREATE INDEX IF NOT EXISTS idx_network_stats_at ON network_stats(snapshot_at DESC);
   `);
 
-  // Existing DBs carry four YourChain-era columns (proposals_total/open/approved,
+  // Existing DBs carry four NEAR-era columns (proposals_total/open/approved,
   // mailing_threads) declared NOT NULL, so simply dropping them from the INSERT
   // would fail the constraint. Rebuild the table once, preserving history.
   const cols = db.prepare('PRAGMA table_info(network_stats)').all() as Array<{ name: string }>;
@@ -77,7 +77,7 @@ async function main() {
       CREATE INDEX IF NOT EXISTS idx_network_stats_at ON network_stats(snapshot_at DESC);
       COMMIT;
     `);
-    console.log('[sync-network-stats] migrated network_stats: dropped 4 YourChain-era columns');
+    console.log('[sync-network-stats] migrated network_stats: dropped 4 NEAR-era columns');
   }
 
   const c = (sql: string, ...params: unknown[]) =>

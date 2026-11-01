@@ -24,7 +24,7 @@ import { logRun } from '../lib/sync-log';
 import { BLOG_TABS, KIND_SQL, NEWS_STUB_CHARS } from '../lib/blog';
 import { radarLiveSql } from '../lib/constants';
 
-const BASE = process.env.MCP_URL ?? 'http://127.0.0.1:3041/mcp';
+const BASE = process.env.MCP_URL ?? 'http://127.0.0.1:3131/mcp';
 
 interface Published {
   tool: string;

@@ -72,7 +72,7 @@ export async function startScratchMcp(opts: StartOptions): Promise<ScratchMcp> {
   const callTimeoutMs = opts.callTimeoutMs ?? 30_000;
   sweepStaleWorkDirs(opts.label);
   // Derived from the pid so two checks running at once do not collide, and
-  // well clear of 3040/3041.
+  // well clear of 3130/3131.
   const port = 38000 + (process.pid % 900);
 
   const work = fs.mkdtempSync(path.join(os.tmpdir(), `${opts.label}-`));

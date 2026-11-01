@@ -111,7 +111,7 @@ export function measureDrift(snapshotPath: string): FtsDrift[] {
 }
 
 function main(): void {
-  const dir = mkdtempSync(join(tmpdir(), 'yourpedia-fts-'));
+  const dir = mkdtempSync(join(tmpdir(), 'nearpedia-fts-'));
   const snapshot = join(dir, 'snapshot.db');
   const t0 = Date.now();
   try {

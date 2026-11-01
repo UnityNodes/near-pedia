@@ -1,7 +1,7 @@
 /**
  * A tool that shows what a stranger wrote must say so in the output.
  *
- * WHY. yourpedia hands forum posts, GitHub issue/discussion text, and
+ * WHY. nearpedia hands forum posts, GitHub issue/discussion text, and
  * ecosystem self-listings to a model. Text in those tables was typed by
  * someone who is not the operator and who can address the model directly, so
  * it goes out wrapped in lib/untrusted-fence.ts markers or under a banner

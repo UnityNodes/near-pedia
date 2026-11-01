@@ -18,7 +18,7 @@
  *
  * BOTH DIRECTIONS MATTER. A published source with no index entry is
  * unreachable by meaning. An indexed source in no inventory is the reverse:
- * yourpedia answers from it and tells nobody it holds it.
+ * nearpedia answers from it and tells nobody it holds it.
  *
  * Reads mcp-server.ts and the database. No network, no MCP calls, no rate limit.
  *

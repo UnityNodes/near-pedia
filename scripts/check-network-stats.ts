@@ -1,5 +1,5 @@
 /**
- * The network_stats snapshot must count what yourpedia actually holds.
+ * The network_stats snapshot must count what nearpedia actually holds.
  *
  * THE ORACLE. sync-network-stats.ts writes a periodic snapshot that
  * /api/v1/network and other summary surfaces read instead of re-querying

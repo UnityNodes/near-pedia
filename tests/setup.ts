@@ -10,7 +10,7 @@ import '@testing-library/jest-dom';
  * left the shape untouched everywhere else.
  *
  * The same shape was still live in four more files. middleware.ts posts its
- * visit log to an ABSOLUTE https://yourpedia.example/api/log/visit, so tests/lib/
+ * visit log to an ABSOLUTE https://nearpedia.example/api/log/visit, so tests/lib/
  * csp-header, error-reporting, analytics and image-hosts were inserting rows
  * into the PRODUCTION database on every run: 147 of them, each with a fresh
  * session id and no user-agent, and usage-counters scores agent_class IN

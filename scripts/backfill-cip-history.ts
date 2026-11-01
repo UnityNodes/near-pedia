@@ -3,7 +3,7 @@
  * your-org/CIPs.
  *
  * sync-cips only records a transition when it *notices* one between two of its
- * own runs, so cip_status_history began accumulating on the day yourpedia
+ * own runs, so cip_status_history began accumulating on the day nearpedia
  * started running - two rows for 51 CIPs, and both timestamped when we first
  * saw the value rather than when it actually changed. Every Draft -> Review ->
  * Last Call -> Final that happened before that was simply absent, which made
