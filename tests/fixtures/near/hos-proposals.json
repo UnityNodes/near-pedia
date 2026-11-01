@@ -1,0 +1,166 @@
+[
+ {
+  "id": 22,
+  "creation_time_ns": "1770158616885361493",
+  "proposer_id": "104d155abedc34d9e26b65e890335abad9fe9c0849c81e013d17b5b7ee5dc1bf",
+  "reviewer_id": "arrr_tems.near",
+  "rejecter_id": null,
+  "approval_time_ns": null,
+  "voting_start_time_ns": null,
+  "voting_duration_ns": "1209600000000000",
+  "expiration_ns": "0",
+  "snapshot_and_state": null,
+  "votes": [
+   {
+    "total_venear": "0",
+    "total_votes": 0
+   },
+   {
+    "total_venear": "0",
+    "total_votes": 0
+   },
+   {
+    "total_venear": "0",
+    "total_votes": 0
+   }
+  ],
+  "total_votes": {
+   "total_venear": "0",
+   "total_votes": 0
+  },
+  "status": "Rejected",
+  "quorum_threshold_bps": 3500,
+  "quorum_floor": "1000000000000000000000000000",
+  "approval_threshold_bps": 5000,
+  "actions": null,
+  "flow": "Classic",
+  "timelock_duration_ns": "0",
+  "sandbox_start_time_ns": null,
+  "bond_amount": "0",
+  "sandbox_duration_ns": "0",
+  "sandbox_threshold_bps": 0,
+  "title": "DONT APPROVE - TEST PROPOSAL",
+  "description": "\u001e\u001e\u001e\u001e\u0001\u0001DONT APPROVE - TEST PROPOSAL|approval_threshold=5000,quorum=3500",
+  "link": "https://gov.near.org/a"
+ },
+ {
+  "id": 27,
+  "creation_time_ns": "1781801899843556980",
+  "proposer_id": "anton-near-one.near",
+  "reviewer_id": "arrr_tems.near",
+  "rejecter_id": null,
+  "approval_time_ns": "1781974431476329155",
+  "voting_start_time_ns": "1782687600000000000",
+  "voting_duration_ns": "432000000000000",
+  "expiration_ns": "1781974699843556980",
+  "snapshot_and_state": {
+   "snapshot": {
+    "root": "9Fgkrxv4gLf9937xdWYP4nwTCiYX9PbKTeGdnHELqdUd",
+    "length": 469,
+    "block_height": 203545957
+   },
+   "timestamp_ns": "1781974432618302973",
+   "total_venear": "5097162483222986944397858247627",
+   "venear_growth_config": {
+    "FixedRate": {
+     "annual_growth_rate_ns": {
+      "numerator": "15850000000000",
+      "denominator": "1000000000000000000000000000000"
+     }
+    }
+   }
+  },
+  "votes": [
+   {
+    "total_venear": "4667203303407807881929719421008",
+    "total_votes": 44
+   },
+   {
+    "total_venear": "1818648129444391748400000012",
+    "total_votes": 2
+   },
+   {
+    "total_venear": "0",
+    "total_votes": 0
+   }
+  ],
+  "total_votes": {
+   "total_venear": "4669021951537252273678119421020",
+   "total_votes": 46
+  },
+  "status": "Succeeded",
+  "quorum_threshold_bps": 3500,
+  "quorum_floor": "1000000000000000000000000000",
+  "approval_threshold_bps": 5000,
+  "actions": null,
+  "flow": "FastTrack",
+  "timelock_duration_ns": "0",
+  "sandbox_start_time_ns": "1781974431476329155",
+  "bond_amount": "0",
+  "sandbox_duration_ns": "604800000000000",
+  "sandbox_threshold_bps": 3000,
+  "title": "Remove the NEAR Developer Gas Rebate",
+  "description": "# Frontmatter\n```yaml\nhsp: TBD\ntitle: Remove the NEAR Developer Gas Rebate\ndescription: Eliminate the 30% developer gas rebate and direct all execution fee burn to the protocol.\nauthor: Anton Astafiev (NEAR One) - @bendersgreat\ndiscussions-to: TBD\nstatus: Draft\ntrack: Decision\ntype: Simple Majority\n",
+  "link": null
+ },
+ {
+  "id": 29,
+  "creation_time_ns": "1792427496841809829",
+  "proposer_id": "svrnaiemissions.near",
+  "reviewer_id": "arrr_tems.near",
+  "rejecter_id": null,
+  "approval_time_ns": "1792428488461922091",
+  "voting_start_time_ns": "1792428488461922091",
+  "voting_duration_ns": "1209600000000000",
+  "expiration_ns": "1793032296841809829",
+  "snapshot_and_state": {
+   "snapshot": {
+    "root": "2QcSsBUW8i6QayUtFLsbHS1chMsJQswhzGi3EWUryUNr",
+    "length": 496,
+    "block_height": 220563095
+   },
+   "timestamp_ns": "1792428489848094629",
+   "total_venear": "5274745154783239928996539106458",
+   "venear_growth_config": {
+    "FixedRate": {
+     "annual_growth_rate_ns": {
+      "numerator": "15850000000000",
+      "denominator": "1000000000000000000000000000000"
+     }
+    }
+   }
+  },
+  "votes": [
+   {
+    "total_venear": "3285084853944151343425937893923",
+    "total_votes": 28
+   },
+   {
+    "total_venear": "15456460682700000001",
+    "total_votes": 1
+   },
+   {
+    "total_venear": "1070572816045588991017908399",
+    "total_votes": 3
+   }
+  ],
+  "total_votes": {
+   "total_venear": "3286155426775653393099655802323",
+   "total_votes": 32
+  },
+  "status": "Voting",
+  "quorum_threshold_bps": 3500,
+  "quorum_floor": "1000000000000000000000000000",
+  "approval_threshold_bps": 6667,
+  "actions": null,
+  "flow": "Classic",
+  "timelock_duration_ns": "1209600000000000",
+  "sandbox_start_time_ns": null,
+  "bond_amount": "0",
+  "sandbox_duration_ns": "0",
+  "sandbox_threshold_bps": 0,
+  "title": "Establish a 24-Month Issuance Ramp to a 1.6% Target Rate Of NEAR Token Emissions",
+  "description": "## Frontmatter\n\n```\nTitle: Establish a 24-Month Issuance Ramp to a 1.6% Target Rate Of NEAR Token Emissions\nDescription: Reduces NEAR's maximum protocol issuance from 2.5% to a target 1.6% target rate on a smooth 24-month per-epoch ramp, retaining the measured 90/10 split.\nAuthor: Sal Ternullo (SVRN",
+  "link": "https://gov.near.org/t/hsp-xxx-establish-a-24-month-issuance-ramp-to-a-1-6-target-rate-of-near-token-emissions/42644"
+ }
+]

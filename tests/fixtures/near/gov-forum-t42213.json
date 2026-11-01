@@ -1,0 +1,81 @@
+{
+ "id": 42213,
+ "title": "HSP-027: Remove the NEAR Developer Gas Rebate",
+ "slug": "hsp-027-remove-the-near-developer-gas-rebate",
+ "category_id": 168,
+ "created_at": "2026-06-15T17:05:22.113Z",
+ "last_posted_at": "2026-09-17T18:01:41.479Z",
+ "posts_count": 21,
+ "post_stream": {
+  "stream": [
+   141115,
+   141116,
+   141117,
+   141120,
+   141121,
+   141122,
+   141123,
+   141125,
+   141132,
+   141139,
+   141146,
+   141171,
+   141179,
+   141183,
+   141208,
+   141210,
+   141212,
+   141213,
+   141214,
+   141222,
+   141644
+  ],
+  "posts": [
+   {
+    "id": 141115,
+    "post_number": 1,
+    "username": "hos_official",
+    "created_at": "2026-06-15T17:05:22.227Z",
+    "cooked": "<h1><a name=\"p-141115-frontmatter-1\" class=\"anchor\" href=\"#p-141115-frontmatter-1\" aria-label=\"Heading link\"></a>Frontmatter</h1>\n<pre><code class=\"lang-auto\">hsp: 027\ntitle: Remove the NEAR Developer Gas Rebate\ndescription: Eliminate the 30% developer gas rebate and direct all execution fee burn to the protocol.\nauthor: Anton Astafiev (NEAR One) - @bendersgreat\ndiscussions-to: https://houseofstake.org/proposals/27\nstatus: Final\ntrack: Decision\ntype: Simple Majority\ncategory: Economic Governance\nstakeholders: Tokenholders, Developers, Protocol Contributors, NEAR Ecosystem\ncreated: 2026-06-15\n<",
+    "actions_summary": [
+     {
+      "id": 2,
+      "count": 4
+     }
+    ],
+    "hidden": false,
+    "user_deleted": false
+   },
+   {
+    "id": 141116,
+    "post_number": 2,
+    "username": "slimedrgn",
+    "created_at": "2026-06-15T21:20:15.192Z",
+    "cooked": "<aside class=\"quote no-group\" data-username=\"hos_official\" data-post=\"1\" data-topic=\"42213\">\n<div class=\"title\">\n<div class=\"quote-controls\"></div>\n<img alt=\"\" width=\"24\" height=\"24\" src=\"https://avatars.discourse-cdn.com/v4/letter/h/49beb7/48.png\" class=\"avatar\"> hos_official:</div>\n<blockquote>\n<p>highlighting how quickly the developer rebate becomes diluted as rewards are spread across a growing number of contract instances</p>\n</blockquote>\n</aside>\n<p>rebate is not spread across contracts, gas is rebated to contracts that are used by people, so ai slop contracts or rising number of global",
+    "actions_summary": [
+     {
+      "id": 2,
+      "count": 5
+     }
+    ],
+    "hidden": false,
+    "user_deleted": false
+   },
+   {
+    "id": 141117,
+    "post_number": 3,
+    "username": "vadim_hom",
+    "created_at": "2026-06-16T10:39:39.482Z",
+    "cooked": "<p>A few points against this.</p>\n<ol>\n<li>\n<p>The upside is tiny. By the math in this thread, removing the rebate adds about +0.57% to value accrual vs inflation. Noise. No holder will notice.</p>\n</li>\n<li>\n<p>The downside is real. It removes a revenue stream for developers and weakens the incentive to build on NEAR, all for a negligible protocol gain.</p>\n</li>\n<li>\n<p>\u201cIt pushes contracts to burn excess gas\u201d doesn\u2019t hold economically. A contract that wastes gas to farm the rebate just loses users to one that doesn\u2019t.</p>\n</li>\n</ol>\n<p>This isn\u2019t the place to burn NEAR. If the goal is more",
+    "actions_summary": [
+     {
+      "id": 2,
+      "count": 3
+     }
+    ],
+    "hidden": false,
+    "user_deleted": false
+   }
+  ]
+ }
+}
