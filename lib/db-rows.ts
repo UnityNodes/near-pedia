@@ -212,6 +212,7 @@ export interface DeprecationsRow {
   replacement_url: string | null;
   since: string | null;
   effective: string | null;
+  effective_protocol: number | null;
   matchers: string;
   subjects: string;
   origin: string;
@@ -588,6 +589,24 @@ export interface PackagesRow {
   synced_at: string;
 }
 
+export interface ProtocolSnapshotsRow {
+  network: string;
+  observed_at: string;
+  chain_id: string;
+  protocol_version: number;
+  latest_protocol_version: number;
+  node_version: string | null;
+  block_height: number;
+  block_time: string;
+  epoch_id: string;
+  epoch_height: number | null;
+  epoch_start_height: number;
+  epoch_length: number | null;
+  threshold_num: number | null;
+  threshold_den: number | null;
+  endpoint: string;
+}
+
 export interface RadarItemsRow {
   id: number;
   level: string;
@@ -655,6 +674,23 @@ export interface VWhitepapersFtsRow {
   term: unknown | null;
   doc: unknown | null;
   cnt: unknown | null;
+}
+
+export interface ValidatorStakesRow {
+  network: string;
+  epoch_id: string;
+  account_id: string;
+  stake: string;
+  block_producer: number;
+}
+
+export interface ValidatorVotesRow {
+  network: string;
+  epoch_id: string;
+  account_id: string;
+  voted_version: number;
+  block_height: number;
+  block_time: string;
 }
 
 export interface WeeklyDigestsRow {
@@ -811,6 +847,7 @@ export interface DbRowByTable {
   "network_stats": NetworkStatsRow;
   "package_versions": PackageVersionsRow;
   "packages": PackagesRow;
+  "protocol_snapshots": ProtocolSnapshotsRow;
   "radar_items": RadarItemsRow;
   "search_log": SearchLogRow;
   "sync_log": SyncLogRow;
@@ -820,6 +857,8 @@ export interface DbRowByTable {
   "v_docs_fts": VDocsFtsRow;
   "v_forum_fts": VForumFtsRow;
   "v_whitepapers_fts": VWhitepapersFtsRow;
+  "validator_stakes": ValidatorStakesRow;
+  "validator_votes": ValidatorVotesRow;
   "weekly_digests": WeeklyDigestsRow;
   "whitepapers": WhitepapersRow;
   "whitepapers_fts": WhitepapersFtsRow;
