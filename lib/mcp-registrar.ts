@@ -22,8 +22,10 @@ export function isRawShape(o: unknown): o is Shape {
   return Object.values(o).every(v => typeof v === 'object' && v !== null && ('_zod' in v || '_def' in v));
 }
 
-export function registrarFor(sdk: McpServer): Registrar {
+/** `allow` decides which names are offered; a tool it refuses is not registered at all. */
+export function registrarFor(sdk: McpServer, allow: (name: string) => boolean = () => true): Registrar {
   const tool = (name: string, ...rest: unknown[]): Registered => {
+    if (!allow(name)) return undefined as unknown as Registered;
     const cb = rest.pop();
     if (typeof cb !== 'function') throw new Error(`tool ${name} was registered without a handler`);
     const description = typeof rest[0] === 'string' ? (rest.shift() as string) : undefined;

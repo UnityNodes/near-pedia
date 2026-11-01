@@ -1,41 +1,41 @@
 import { describe, expect, it } from 'vitest';
 import { groupTools } from '@/app/for-ai/tool-groups';
 import { MCP_TOOLS_FALLBACK } from '@/app/for-ai/data';
+import { CODE_TOOLS, ECOSYSTEM_TOOLS, PUBLIC_TOOLS, toolFilter } from '@/lib/mcp-toolset';
 
 const tool = (name: string) => ({ name, desc: `${name} description` });
 
 describe('groupTools', () => {
   it('keeps every tool exactly once', () => {
-    const groups = groupTools(MCP_TOOLS_FALLBACK);
-    const names = groups.flatMap(g => g.tools.map(t => t.name));
-    expect(names.sort()).toEqual(MCP_TOOLS_FALLBACK.map(t => t.name).sort());
+    const names = groupTools(MCP_TOOLS_FALLBACK).flatMap((g) => g.tools.map((t) => t.name));
+    expect(names.sort()).toEqual(MCP_TOOLS_FALLBACK.map((t) => t.name).sort());
   });
 
-  it('puts CIP tools under governance and search tools under search', () => {
-    const groups = groupTools([tool('get_cip'), tool('list_cips'), tool('semantic_search'), tool('search_talks')]);
-    expect(groups.find(g => g.key === 'governance')?.tools.map(t => t.name)).toEqual(['get_cip', 'list_cips']);
-    expect(groups.find(g => g.key === 'search')?.tools.map(t => t.name)).toEqual(['semantic_search', 'search_talks']);
+  it('puts the public tools in the code and ecosystem groups of lib/mcp-toolset.ts', () => {
+    const groups = groupTools([tool('check_code'), tool('get_radar'), tool('get_standard')]);
+    expect(groups.map((g) => [g.key, g.tools.map((t) => t.name)])).toEqual([['code', ['check_code', 'get_standard']], ['ecosystem', ['get_radar']]]);
   });
 
-  it('sends a tool nothing matches to the last group instead of dropping it', () => {
-    const groups = groupTools([tool('get_cip'), tool('frobnicate_widget')]);
-    expect(groups[groups.length - 1].key).toBe('other');
-    expect(groups[groups.length - 1].tools.map(t => t.name)).toEqual(['frobnicate_widget']);
-  });
-
-  it('matches whole words, so a name that merely contains one does not move', () => {
-    const groups = groupTools([tool('principal_report')]);
-    expect(groups).toHaveLength(1);
-    expect(groups[0].key).toBe('other');
-  });
-
-  it('returns no empty groups and keeps the input order inside a group', () => {
-    const groups = groupTools([tool('list_videos'), tool('get_doc'), tool('get_video')]);
-    expect(groups).toHaveLength(1);
-    expect(groups[0].tools.map(t => t.name)).toEqual(['list_videos', 'get_doc', 'get_video']);
+  it('sends a tool outside both groups to the last group instead of dropping it', () => {
+    const groups = groupTools([tool('check_code'), tool('frobnicate_widget')]);
+    expect(groups[groups.length - 1]).toMatchObject({ key: 'other', tools: [{ name: 'frobnicate_widget' }] });
   });
 
   it('returns nothing for an empty list', () => {
     expect(groupTools([])).toEqual([]);
+  });
+});
+
+describe('the public tool set', () => {
+  it('is the spec\'s twelve code and nine ecosystem tools, and the fallback list names exactly them', () => {
+    expect(CODE_TOOLS).toHaveLength(12);
+    expect(ECOSYSTEM_TOOLS).toHaveLength(9);
+    expect(MCP_TOOLS_FALLBACK.map((t) => t.name).sort()).toEqual([...PUBLIC_TOOLS].sort());
+  });
+
+  it('offers every tool only to a scratch server that asks for the full set', () => {
+    expect(toolFilter({})('list_cips')).toBe(false);
+    expect(toolFilter({})('check_code')).toBe(true);
+    expect(toolFilter({ MCP_TOOLSET: 'full' })('list_cips')).toBe(true);
   });
 });

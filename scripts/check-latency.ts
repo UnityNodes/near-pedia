@@ -37,19 +37,18 @@ interface Probe {
 
 /**
  * Deliberately small: distinct SHAPES of work, not coverage of all ~40 tools.
- * Budgets measured live (get_cip 16ms, list_cips 13ms, search 35ms,
- * semantic_search unfiltered 449ms, filtered 201ms, learning_path 32ms,
- * get_recent_changes 27ms, ecosystem_dependency_graph 12ms) then set well
- * above, per the file header.
+ * Budgets set well above what each probe takes on this corpus, per the file
+ * header; the probes are public tools (lib/mcp-toolset.ts), the ones the live
+ * endpoint actually serves.
  */
 const PROBES: Probe[] = [
   {
-    tool: 'get_cip', args: { id: '0001' }, budgetMs: 750,
-    why: 'single indexed row plus its formatting: the floor for anything this server does',
+    tool: 'check_deprecation', args: { name: 'near-sdk-js' }, budgetMs: 750,
+    why: 'one entry with its evidence: the floor for anything this server does',
   },
   {
-    tool: 'list_cips', args: { limit: 20 }, budgetMs: 750,
-    why: 'a listing with a COUNT beside it, the shape most tools here share',
+    tool: 'resolve_package', args: { package: 'near-api-js@5.0.0' }, budgetMs: 750,
+    why: 'a package row, its versions and its deprecation entry',
   },
   {
     tool: 'search', args: { query: 'getting started' }, budgetMs: 1500,
@@ -71,16 +70,16 @@ const PROBES: Probe[] = [
     why: 'semantic_search restricted to one source type: the filter runs inside both halves of the hybrid',
   },
   {
-    tool: 'learning_path', args: { goal: 'run a node' }, budgetMs: 1500,
-    why: 'multi-source fan-out: whitepaper, docs, CIPs, forum and talks assembled into one sequence',
-  },
-  {
     tool: 'get_recent_changes', args: {}, budgetMs: 1500,
-    why: 'the cross-source timeline: CIP status changes, forum, blog and releases merged and ordered',
+    why: 'the cross-source timeline: change events, forum, blog and releases merged and ordered',
   },
   {
-    tool: 'ecosystem_dependency_graph', args: { topic: 'wallets' }, budgetMs: 1500,
-    why: 'a full aggregate walk over the ecosystem catalogue rather than a row fetch',
+    tool: 'get_radar', args: {}, budgetMs: 750,
+    why: 'the live radar, read and fenced',
+  },
+  {
+    tool: 'explain_error', args: { error_text: 'wasm execution failed with error: MethodResolveError(MethodNotFound)' }, budgetMs: 1500,
+    why: 'the error catalog, the deprecation index and two text searches in one answer',
   },
 ];
 

@@ -73,6 +73,7 @@ describe('mergeActivityStream', () => {
   it('every activity kind present in the counts object', () => {
     const s = mergeActivityStream(7, {}, 1);
     expect(Object.keys(s.counts).sort()).toEqual([
+      'change_event',
       'cip_status_change',
       'new_blog_post',
       'new_cip',

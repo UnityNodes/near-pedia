@@ -52,7 +52,7 @@ async function main(): Promise<void> {
 
     for (const days of WINDOWS) {
       const since = new Date(Date.now() - days * 86_400_000).toISOString();
-      // Independent raw anchor: the six kinds, arrivals and transitions split.
+      // Independent raw anchor: the seven kinds, arrivals and transitions split.
       const anchor = {
         cip_status_change: c('SELECT COUNT(*) c FROM cip_status_history WHERE changed_at >= ? AND from_status IS NOT NULL', since),
         new_cip: c('SELECT COUNT(*) c FROM (SELECT cip_id FROM cip_status_history WHERE from_status IS NULL GROUP BY cip_id HAVING MIN(changed_at) >= ?)', since),
@@ -60,6 +60,7 @@ async function main(): Promise<void> {
         new_blog_post: c('SELECT COUNT(*) c FROM blog_posts WHERE published_at >= ?', since),
         new_release: c('SELECT COUNT(*) c FROM github_releases WHERE published_at >= ?', since),
         new_radar_item: c('SELECT COUNT(*) c FROM radar_items WHERE published_at >= ?', since),
+        change_event: c('SELECT COUNT(*) c FROM change_events WHERE observed_at >= ?', since),
       };
       const anchorTotal = Object.values(anchor).reduce((a, b) => a + b, 0);
 

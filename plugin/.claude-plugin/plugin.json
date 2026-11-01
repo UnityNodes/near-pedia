@@ -1,0 +1,13 @@
+{
+  "name": "nearpedia",
+  "displayName": "NEAR-pedia",
+  "description": "Live NEAR knowledge for agents: check NEAR code for removed or deprecated APIs and stale packages, explain errors, read standards, protocol upgrades, governance, incidents and contracts, every answer with a source and a date",
+  "author": {
+    "name": "Unity Nodes",
+    "url": "https://github.com/UnityNodes"
+  },
+  "homepage": "https://nearpedia.example/for-ai",
+  "repository": "https://github.com/UnityNodes/nearpedia",
+  "license": "MIT",
+  "keywords": ["near", "blockchain", "smart-contracts", "mcp", "deprecations"]
+}

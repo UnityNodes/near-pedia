@@ -25,8 +25,10 @@
  * that reverts get_latest_release to an inline date-only pick (or any other
  * drift between the two) is what this is built to catch.
  *
- * Needs the MCP server. If it is unreachable the run is UNVERIFIED, never a
- * pass.
+ * get_latest_release is not among the public tools (lib/mcp-toolset.ts), so
+ * this asks a scratch server started with every tool, over a snapshot of
+ * the database, rather than the live endpoint. If it does not answer the
+ * run is UNVERIFIED, never a pass.
  *
  *   npx tsx scripts/check-version-lines.ts
  */
@@ -35,26 +37,16 @@ import { getDb } from '../lib/db';
 import { logRun } from '../lib/sync-log';
 import { isEntrypoint } from '../lib/is-entrypoint';
 import { latestStableByLine, type ReleaseRow } from '../lib/yourchain-versions';
+import { startScratchMcp, type ScratchMcp } from '../lib/mcp-probe';
 
-const BASE = process.env.MCP_URL ?? 'http://127.0.0.1:3131/mcp';
+/** Started once: a failed start is not retried per repo, which would hold the daily bucket a minute per repository. */
+let scratch: Promise<ScratchMcp> | null = null;
 
 async function callTool(name: string, args: Record<string, unknown>): Promise<string | null> {
   try {
-    const res = await fetch(BASE, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Accept: 'application/json, text/event-stream' },
-      body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name, arguments: args } }),
-      signal: AbortSignal.timeout(20_000),
-    });
-    if (!res.ok) return null;
-    for (const line of (await res.text()).split('\n')) {
-      const l = line.startsWith('data: ') ? line.slice(6) : line;
-      if (!l.trim().startsWith('{')) continue;
-      const parsed = JSON.parse(l) as { result?: { content?: { text?: string }[]; isError?: boolean } };
-      if (parsed.result?.isError) return null;
-      return parsed.result?.content?.[0]?.text ?? null;
-    }
-    return null;
+    scratch ??= startScratchMcp({ label: 'check-version-lines' });
+    const text = await (await scratch).callTool(name, args);
+    return text.startsWith(' rpc-error:') ? null : text;
   } catch {
     return null;
   }
@@ -112,7 +104,7 @@ async function main(): Promise<void> {
 }
 
 if (isEntrypoint(import.meta.url)) {
-  main().catch(e => {
+  main().finally(() => scratch?.then((s) => s.close(), () => undefined)).catch(e => {
     console.error(e);
     try { logRun('version-lines', { status: 'error', items: 0, error: String(e).slice(0, 1000) }, getDb()); } catch { /* db down */ }
     process.exitCode = 1;
