@@ -98,3 +98,6 @@ mcp-publisher
 
 # Rust build output of contracts/*
 contracts/*/target/
+
+# Submission drafts: the X post and the form text are published by the maintainers, not committed
+docs/submission-drafts/
