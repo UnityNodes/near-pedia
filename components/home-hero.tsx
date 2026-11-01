@@ -6,15 +6,15 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Search } from 'lucide-react';
 
 const PHRASES = [
-  'How do I run a node?',
-  'What is a CIP?',
-  'Latest release notes',
-  'Validator rewards',
+  'Is near-sdk-js still maintained?',
+  'DelegateV2 meta transactions',
+  'near-api-js 7 migration',
+  'storage_deposit',
 ];
 
-const CHIPS = ['validator rewards', 'CIP-0001', 'getting started', 'governance'];
+const CHIPS = ['near-sdk-js', 'DelegateV2', 'wallet selector', 'protocol upgrade'];
 
-const STATIC_PLACEHOLDER = 'Search CIPs, docs, forum, releases…';
+const STATIC_PLACEHOLDER = 'Search docs, releases, deprecations, forum…';
 
 function useTypedPlaceholder(): string {
   const [text, setText] = useState(STATIC_PLACEHOLDER);
@@ -97,11 +97,11 @@ export function HomeHero({
             </Link>
           )}
           <h1 className="dp-h1 dp-rise" style={{ animationDelay: '.12s' }}>
-            One index for the whole <span className="dp-shine">{headline}</span>.
+            What <span className="dp-shine">{headline}</span> looks like today.
           </h1>
           <p className="dp-lede dp-rise" style={{ animationDelay: '.2s' }}>
-            CIPs, docs, forum and code in one place. Always current, always searchable,
-            and open to AI agents through MCP.
+            AI agents write NEAR code from stale memory. NEAR-pedia tells them what NEAR removed, deprecated and
+            changed, before their code breaks, with a source and a date on every answer.
           </p>
           <form
             className="dp-search dp-rise"
@@ -124,13 +124,13 @@ export function HomeHero({
             ))}
           </div>
           <div className="dp-newhere dp-rise" style={{ animationDelay: '.4s' }}>
-            <span>New here? Terms like CIP, validator and round, explained.</span>
-            <Link href="/glossary">/glossary →</Link>
+            <span>Building with an agent? Connect it in one command.</span>
+            <Link href="/for-ai">/for-ai →</Link>
           </div>
           <ul className="dp-promises dp-rise" style={{ animationDelay: '.46s' }}>
-            <li><span aria-hidden="true">↳</span>Linked to primary sources</li>
+            <li><span aria-hidden="true">↳</span>Every answer cites its source</li>
             <li><span aria-hidden="true">↻</span>Re-synced 5 min – 24 h</li>
-            <li><span aria-hidden="true">◇</span>REST + MCP, no key</li>
+            <li><span aria-hidden="true">◇</span>MCP + REST, no key</li>
           </ul>
         </div>
         <div className="dp-hero-right dp-rise" style={{ animationDelay: '.2s' }}>{panel}</div>

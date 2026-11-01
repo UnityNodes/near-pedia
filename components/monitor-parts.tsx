@@ -42,10 +42,12 @@ interface RadarRowProps {
   tags?: string[];
   deadline: string | null;
   published: string;
+  /** What ends the alert, shown as "until …": a date, or the event it waits on. */
+  until?: string | null;
   index?: number;
 }
 
-export function RadarRow({ level, title, body, href, tags = [], deadline, published, index = 0 }: RadarRowProps) {
+export function RadarRow({ level, title, body, href, tags = [], deadline, published, until, index = 0 }: RadarRowProps) {
   const passed = deadline ? deadlinePassed(deadline) : false;
   const className = `pg-row mn-row mn-row--${level}${href ? '' : ' mn-row--static'}`;
   const style = { animationDelay: `${Math.min(index, MAX_STAGGER_STEPS) * STAGGER_MS}ms` };
@@ -62,6 +64,7 @@ export function RadarRow({ level, title, body, href, tags = [], deadline, publis
               {passed ? 'Closed' : 'Due'} {deadlineLabel(deadline)}
             </span>
           )}
+          {until && <span className="pg-tag" data-tone="mute" title="The alert leaves the radar as soon as what it is about resolves">until {until}</span>}
         </div>
         <div className="pg-row-title">
           {title}

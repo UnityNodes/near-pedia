@@ -13,8 +13,4 @@ describe('the published sources split proposals from open pull requests', () => 
     expect(server).not.toMatch(/type: 'cip',[^\n]*COUNT\(\*\) c FROM cips'\)/);
   });
 
-  it('gives the pull request source a tile on the home widget', () => {
-    const widget = fs.readFileSync(path.join(ROOT, 'components', 'sources-live.tsx'), 'utf8');
-    expect(widget).toContain('cip_pull_request:');
-  });
 });

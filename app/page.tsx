@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import {
-  ArrowRight, BookOpen, Boxes, CirclePlay, Code2, FileText, GitPullRequest, MessagesSquare,
-  PenLine, Radar, ScrollText, ShieldCheck, Tag, BookText, type LucideIcon,
+  Activity, ArrowRight, BookOpen, BookText, Boxes, Code2, Gauge, MessageCircleQuestion, MessagesSquare,
+  Plug, Radar, ShieldAlert, Tag, type LucideIcon,
 } from 'lucide-react';
 import { HomeHero } from '@/components/home-hero';
 import { SourcesLive } from '@/components/sources-live';
@@ -10,22 +10,19 @@ import { getLatestReleases, getRecentFeed } from '@/lib/home-feed';
 import { SITE, SITE_TITLE } from '@/lib/site.config';
 import type { Metadata } from 'next';
 import { JsonLd } from '@/components/json-ld';
+import { getDb } from '@/lib/db';
+import { getDeprecation } from '@/lib/deprecations';
 
 export const revalidate = 60;
 
+const DESCRIPTION = 'What NEAR removed, deprecated and changed, for AI agents writing NEAR code: check code and packages, follow protocol upgrades, governance and incidents, every answer with a source and a date.';
+
 export const metadata: Metadata = {
   title: SITE_TITLE,
-  description: 'CIPs, docs, discussions and whitepapers for the NEAR ecosystem, indexed, searchable, always current.',
+  description: DESCRIPTION,
   alternates: { canonical: SITE.url },
-  openGraph: {
-    title: SITE_TITLE,
-    description: 'CIPs, docs, discussions and whitepapers for the NEAR ecosystem, indexed, searchable, always current.',
-    url: SITE.url,
-  },
-  twitter: {
-    title: SITE_TITLE,
-    description: 'CIPs, docs, discussions and whitepapers for the NEAR ecosystem, indexed, searchable, always current.',
-  },
+  openGraph: { title: SITE_TITLE, description: DESCRIPTION, url: SITE.url },
+  twitter: { title: SITE_TITLE, description: DESCRIPTION },
 };
 
 const faqSchema = {
@@ -35,68 +32,62 @@ const faqSchema = {
     {
       '@type': 'Question',
       name: `What is ${SITE.name}?`,
-      acceptedAnswer: { '@type': 'Answer', text: `${SITE.name} is the central knowledge hub for the NEAR ecosystem, indexing Chain Improvement Proposals (CIPs), technical documentation, governance discussions, whitepapers, and developer resources in one searchable, always-current platform.` },
+      acceptedAnswer: { '@type': 'Answer', text: `${SITE.name} is a live knowledge layer for AI agents building on NEAR. It syncs NEAR's docs, packages, repositories, release notes, RPC and governance, and tells an agent when its code uses something NEAR removed, deprecated or changed, with the source and the date.` },
     },
     {
       '@type': 'Question',
-      name: 'What is a Chain Improvement Proposal (CIP)?',
-      acceptedAnswer: { '@type': 'Answer', text: 'A Chain Improvement Proposal (CIP) is a formal technical document that defines standards, protocols, and upgrades for NEAR, similar to Ethereum\'s EIPs or Bitcoin\'s BIPs. CIPs go through Draft, Review, Final, and other statuses before adoption.' },
+      name: 'How does an agent use it?',
+      acceptedAnswer: { '@type': 'Answer', text: `Through MCP at ${SITE.url}/mcp (no key) or the REST API: check_code checks a file, check_deprecation and resolve_package check a name or a package version, get_radar lists what is changing now.` },
     },
     {
       '@type': 'Question',
-      name: 'What is NEAR?',
-      acceptedAnswer: { '@type': 'Answer', text: 'NEAR is a blockchain network. Validators secure it, NEAR is its native token, and protocol changes are proposed and discussed through Chain Improvement Proposals (CIPs). Developers can run nodes and build applications on it.' },
-    },
-    {
-      '@type': 'Question',
-      name: `What content does ${SITE.name} index?`,
-      acceptedAnswer: { '@type': 'Answer', text: `${SITE.name} indexes CIPs, the NEAR and node documentation, forum discussions from gov.near.org, whitepapers, news, blog posts, and videos related to the NEAR ecosystem.` },
+      name: 'Where do the answers come from?',
+      acceptedAnswer: { '@type': 'Answer', text: 'From NEAR\'s own sources: docs.near.org, npm and crates.io, the NEAR GitHub organisations and their release notes, mainnet and testnet RPC, the House of Stake contracts, gov.near.org, NEAR Catalog and DefiLlama.' },
     },
   ],
 };
 
-const HERO_HEADLINE = 'NEAR ecosystem';
+const HERO_HEADLINE = 'NEAR';
 
 const PATHS: { k: string; t: string; d: string; links: { href: string; label: string; Icon: LucideIcon }[] }[] = [
   {
-    k: '01 · GOVERNANCE',
-    t: 'Proposals and governance',
-    d: 'Every proposal with its full status history, cross-linked to the threads that shaped it.',
+    k: '01 · CHECK',
+    t: 'Is my NEAR code current?',
+    d: 'SDKs, packages, RPC methods and protocol features NEAR removed or replaced, each with its evidence and what to use instead.',
     links: [
-      { href: '/cips', label: 'CIPs', Icon: FileText },
-      { href: '/cips?view=prs', label: 'Pull requests', Icon: GitPullRequest },
-      { href: '/whitepapers', label: 'Whitepapers', Icon: ScrollText },
+      { href: '/deprecations', label: 'Deprecations', Icon: ShieldAlert },
+      { href: '/ask', label: 'Ask', Icon: MessageCircleQuestion },
+      { href: '/for-ai', label: 'Connect an agent', Icon: Plug },
     ],
   },
   {
-    k: '02 · LEARN',
-    t: 'Documentation',
-    d: 'The official docs and guides, re-synced on their own cadence and never paraphrased.',
+    k: '02 · NOW',
+    t: 'What is changing',
+    d: 'Protocol upgrades and the validator vote, House of Stake votes, incidents and deadlines, each alert gone once it resolves.',
+    links: [
+      { href: '/radar', label: 'Radar', Icon: Radar },
+      { href: '/protocol', label: 'Protocol', Icon: Gauge },
+      { href: '/feed', label: 'Feed', Icon: Activity },
+    ],
+  },
+  {
+    k: '03 · LEARN',
+    t: 'Docs and releases',
+    d: 'docs.near.org and partner docs, release notes of nearcore, near-sdk, near-api-js and the rest, re-synced on their own cadence.',
     links: [
       { href: '/docs', label: 'Docs', Icon: BookOpen },
-      { href: '/glossary', label: 'Glossary', Icon: BookText },
-      { href: '/videos', label: 'Videos', Icon: CirclePlay },
-    ],
-  },
-  {
-    k: '03 · COMMUNITY',
-    t: 'Community',
-    d: 'Forum threads, discussions and posts from across the ecosystem, ranked by relevance.',
-    links: [
-      { href: '/discussions', label: 'Forum', Icon: MessagesSquare },
-      { href: '/blog', label: 'Blog', Icon: PenLine },
-      { href: '/ecosystem', label: 'Ecosystem', Icon: Boxes },
-    ],
-  },
-  {
-    k: '04 · NETWORK',
-    t: 'Build and monitor',
-    d: 'Releases, code, validators and the radar, kept current from their primary sources.',
-    links: [
       { href: '/releases', label: 'Releases', Icon: Tag },
+      { href: '/glossary', label: 'Glossary', Icon: BookText },
+    ],
+  },
+  {
+    k: '04 · ECOSYSTEM',
+    t: 'Who builds what',
+    d: 'NEAR Catalog with TVL, gov.near.org threads and the repositories of the NEAR organisations.',
+    links: [
+      { href: '/ecosystem', label: 'Ecosystem', Icon: Boxes },
+      { href: '/discussions', label: 'Forum', Icon: MessagesSquare },
       { href: '/code', label: 'Code', Icon: Code2 },
-      { href: '/validators', label: 'Validators', Icon: ShieldCheck },
-      { href: '/radar', label: 'Radar', Icon: Radar },
     ],
   },
 ];
@@ -109,6 +100,13 @@ export default async function Home() {
     ? `${sourcesInventory.mcp_tools_count} MCP tools over the same index.`
     : 'MCP tools over the same index.';
   const endpoint = `${SITE.url}/mcp`;
+  const sample = (() => {
+    try {
+      return getDeprecation(getDb(), 'near-sdk-js');
+    } catch {
+      return null;
+    }
+  })();
   const serverName = SITE.name.toLowerCase();
 
   return (
@@ -192,7 +190,7 @@ export default async function Home() {
           <div className="dp-agents">
             <div className="dp-agents-copy">
               <span className="dp-kicker">FOR AI AGENTS</span>
-              <h2>Give your agent the whole index.</h2>
+              <h2>Let your agent check before it writes.</h2>
               <p>{toolsLine} No API key, no signup, read only.</p>
               <div className="dp-agents-cta">
                 <Link href="/for-ai" className="dp-btn-dark">MCP Setup →</Link>
@@ -207,7 +205,10 @@ export default async function Home() {
                   connected{sourcesInventory.mcp_tools_count > 0 ? ` · ${sourcesInventory.mcp_tools_count} tools available` : ''}
                 </span>
               </div>
-              <div><span className="dp-term-mute">$</span> <span className="dp-term-acc">search</span>(&quot;validator rewards&quot;)</div>
+              <div><span className="dp-term-mute">$</span> <span className="dp-term-acc">check_deprecation</span>(&quot;near-sdk-js&quot;)</div>
+              {sample && (
+                <div><span className="dp-term-mute">{sample.status.toUpperCase()} ({sample.strength} evidence){sample.replacement ? ` · use ${sample.replacement}` : ''}{sample.since ? ` · since ${sample.since.slice(0, 10)}` : ''}</span></div>
+              )}
             </div>
           </div>
         </section>

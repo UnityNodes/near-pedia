@@ -2340,8 +2340,8 @@ server.tool('get_radar', 'Get the NEAR Radar: what is changing on NEAR now and n
     const order = `ORDER BY CASE level WHEN 'critical' THEN 0 WHEN 'important' THEN 1 ELSE 2 END, published_at DESC`;
     const lim = limit ?? 25;
     const off = offset ?? 0;
-    const items = db.prepare(`SELECT level,title,body,deadline,affects,source_url,expires_at FROM radar_items ${where} ${order} LIMIT ? OFFSET ?`).all(...params, lim, off) as {
-      level: string; title: string; body: string | null; deadline: string | null; affects: string; source_url: string | null; expires_at: string | null;
+    const items = db.prepare(`SELECT level,title,body,source_type,deadline,affects,source_url,expires_at FROM radar_items ${where} ${order} LIMIT ? OFFSET ?`).all(...params, lim, off) as {
+      level: string; title: string; body: string | null; source_type: string; deadline: string | null; affects: string; source_url: string | null; expires_at: string | null;
     }[];
     const total = (db.prepare(`SELECT COUNT(*) c FROM radar_items ${where}`).get(...params) as { c: number }).c;
     if (!items.length) return { content:[{ type:'text', text: emptyPage('radar items', total, off, level !== 'all' ? `level "${level}"` : '', heldCount(db, `SELECT COUNT(*) c FROM radar_items WHERE ${expiry}`)) }] };
@@ -2354,7 +2354,7 @@ server.tool('get_radar', 'Get the NEAR Radar: what is changing on NEAR now and n
         fenceUntrustedRun([r.title, r.body], '\n\n'),
         r.deadline?`Deadline: ${r.deadline}${deadlinePassed(r.deadline)?' (CLOSED)':''}`:'',
         r.affects&&r.affects!=='[]'?`Affects: ${r.affects}`:'',
-        r.expires_at?`Live until: ${r.expires_at.slice(0, 16)} UTC, or earlier once resolved`:'',
+        r.source_type==='protocol_upgrade'?'Live until: the network runs the new version (checked against RPC every 15 minutes)':r.expires_at?`Live until: ${r.expires_at.slice(0, 16)} UTC, or earlier once resolved`:'',
         r.source_url?`Source: ${r.source_url}`:'',
       ].filter(Boolean).join('\n')),
     ].join('\n\n');

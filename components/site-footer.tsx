@@ -9,14 +9,14 @@ const COLUMNS: { title: string; links: { href: string; label: string; external?:
   {
     title: 'Explore',
     links: [
-      { href: '/cips', label: 'CIPs' },
+      { href: '/deprecations', label: 'Deprecations' },
+      { href: '/radar', label: 'Radar' },
+      { href: '/protocol', label: 'Protocol' },
+      { href: '/ask', label: 'Ask' },
       { href: '/docs', label: 'Docs' },
+      { href: '/releases', label: 'Releases' },
       { href: '/discussions', label: 'Forum' },
-      { href: '/code', label: 'Code' },
-      { href: '/whitepapers', label: 'Whitepapers' },
       { href: '/feed', label: 'Feed' },
-      { href: '/resources', label: 'Resources' },
-      { href: '/trending', label: 'Trending' },
     ],
   },
   {
@@ -24,7 +24,7 @@ const COLUMNS: { title: string; links: { href: string; label: string; external?:
     links: [
       { href: '/for-ai', label: 'For AI · MCP' },
       { href: '/api/v1/reference', label: 'REST API' },
-      { href: '/api/feed/cips', label: 'RSS feeds' },
+      { href: '/api/v1/openapi.json', label: 'OpenAPI' },
       { href: '/sources', label: 'Sources' },
     ],
   },
@@ -32,7 +32,7 @@ const COLUMNS: { title: string; links: { href: string; label: string; external?:
     title: 'Project',
     links: [
       { href: '/ecosystem', label: 'Ecosystem' },
-      { href: '/validators', label: 'Validators' },
+      { href: '/code', label: 'Code' },
       { href: '/contact', label: 'Contact' },
       { href: '/privacy', label: 'Privacy' },
       { href: '/terms', label: 'Terms' },
