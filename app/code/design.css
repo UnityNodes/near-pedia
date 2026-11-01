@@ -1,0 +1,5 @@
+.cde-labels { display: inline-flex; flex-wrap: wrap; gap: 6px; }
+.cde-label {
+  font-family: var(--mono); font-size: 11px; padding: 2px 8px; border-radius: 6px;
+  border: 1px solid var(--rule-2); color: var(--fg-mute);
+}

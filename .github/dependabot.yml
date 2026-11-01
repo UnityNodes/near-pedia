@@ -1,0 +1,33 @@
+# Automated dependency updates.
+#
+# The quality bar asks for regular dependency updates and automated CVE
+# checks. `npm audit` in CI reports the surface; Dependabot is what actually
+# lands the fixes, one reviewable PR at a time, each with its own CI run.
+#
+# minor+patch are grouped into a single monthly PR so a routine month is one
+# review, not thirty. Majors come as individual PRs because they can carry
+# breaking changes (e.g. the voyageai/sharp chain behind the current highs)
+# and deserve to be looked at on their own. Monthly with at most three open
+# PRs, because every PR is a billed CI run in this private repository.
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    open-pull-requests-limit: 3
+    groups:
+      minor-and-patch:
+        update-types:
+          - "minor"
+          - "patch"
+
+  # Keep the CI action pins (actions/checkout, setup-node) current too.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    open-pull-requests-limit: 3
+    groups:
+      actions:
+        patterns: ["*"]

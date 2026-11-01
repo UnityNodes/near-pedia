@@ -1,0 +1,52 @@
+# YourPedia — block appended to the shared /etc/caddy/Caddyfile.
+# Behind Cloudflare (orange cloud) with a CF Origin Certificate (not ACME).
+# Routes /mcp* and /api/v1* → Express MCP server (3041, the REST API lives
+# there, not in Next); everything else (incl. the web UI) → Next.js (3040).
+# CSP is set per-request by Next middleware, so it is intentionally NOT set
+# here.
+
+yourpedia.example, www.yourpedia.example {
+	encode zstd gzip
+
+	tls /etc/ssl/cf-origin-yourpedia.pem /etc/ssl/cf-origin-yourpedia-key.pem
+
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options   "nosniff"
+		X-Frame-Options          "SAMEORIGIN"
+		Referrer-Policy          "strict-origin-when-cross-origin"
+		Permissions-Policy       "camera=(), microphone=(), geolocation=()"
+		-Server
+		-X-Powered-By
+	}
+
+	# www → apex (canonical)
+	@www host www.yourpedia.example
+	redir @www https://yourpedia.example{uri} permanent
+
+	# MCP server (stateless Streamable HTTP) + the REST API it serves.
+	# /api/v1/* lives on the MCP process, not Next - without this the
+	# endpoints advertised on /for-ai return 404 to every caller.
+	@ai_routes path /mcp /mcp/* /api/v1 /api/v1/*
+	handle @ai_routes {
+		reverse_proxy 127.0.0.1:3041
+	}
+
+	# Everything else → Next.js. Cloudflare puts the real visitor IP in
+	# Cf-Connecting-Ip; map it to X-Real-IP so rate-limiting keys on the
+	# real client, not Cloudflare's edge IP. flush_interval -1 flushes streamed
+	# responses immediately.
+	handle {
+		@nextStatic path /_next/static/*
+		header @nextStatic Cache-Control "public, max-age=31536000, immutable"
+		reverse_proxy 127.0.0.1:3040 {
+			header_up X-Real-IP {http.request.header.Cf-Connecting-Ip}
+			flush_interval -1
+		}
+	}
+
+	# No `log { output file ... }`: on a box where Caddy runs as user caddy and
+	# /var/log/caddy refuses new files, a new log file makes `systemctl reload
+	# caddy` hang ("Reload operation timed out") while the old config keeps
+	# serving. Logs go to the journal: journalctl -u caddy.
+}

@@ -1,0 +1,19 @@
+.rl-now { display: flex; flex-direction: column; gap: 12px; }
+.rl-now h2 { margin: 0; font-family: var(--mono); font-size: 12px; font-weight: 400; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent-text); }
+.rl-grid { margin: 0; }
+.pg-cards .rl-card { animation-fill-mode: backwards; }
+.rl-card dt, .rl-card dd { margin: 0; }
+.rl-card dt { font-family: var(--mono); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--fg-mute); }
+.rl-card dd { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.rl-version { align-self: flex-start; font-size: 30px; font-weight: 600; letter-spacing: -0.03em; line-height: 1.1; color: var(--accent-text); }
+a.rl-version:hover { text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 2px; }
+.rl-date { font-family: var(--mono); font-size: 12px; color: var(--fg-mute); }
+.rl-note { font-size: 13px; line-height: 1.5; color: var(--fg-soft); }
+.rl-note a { color: var(--accent-text); }
+.rl-note a:hover { text-decoration: underline; text-underline-offset: 3px; }
+.rl-version:focus-visible, .rl-note a:focus-visible { outline: 2px solid var(--accent-line); outline-offset: 2px; }
+.rl-caption { margin: 0; font-size: 13px; color: var(--fg-mute); }
+@media (max-width: 640px) {
+  .rl-version { display: inline-flex; align-items: center; min-height: 40px; }
+  .rl-note a { display: inline-flex; align-items: center; min-height: 40px; }
+}

@@ -1,0 +1,16 @@
+.eco-card { min-height: 150px; }
+.eco-name { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.pg-card .eco-name b { min-width: 0; font-size: 18px; line-height: 1.25; overflow-wrap: anywhere; }
+.eco-logo {
+  position: relative; flex-shrink: 0; width: 36px; height: 36px; overflow: hidden;
+  border-radius: 10px; border: 1px solid var(--rule); background: var(--bg-sunk);
+}
+.eco-logo img { object-fit: contain; }
+.pg-card .eco-desc {
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+}
+.eco-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.eco-tag {
+  font-family: var(--mono); font-size: 11px; padding: 2px 8px; border-radius: 6px;
+  border: 1px solid var(--rule-2); color: var(--fg-mute);
+}

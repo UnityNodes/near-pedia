@@ -1,0 +1,97 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# local env files
+.env*.local
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# yourpedia data — DB lives on server, not in git
+/data/
+
+
+# Environment
+.env.local
+.env*.local
+
+# Playwright MCP artifacts
+/.playwright-mcp/
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.webp
+*.bmp
+*.db
+.superpowers/
+
+# But DO track brand assets
+!/public/*.png
+!/public/*.svg
+!/public/*.ico
+!/app/icon.png
+!/app/apple-icon.png
+!/app/opengraph-image.png
+!/app/twitter-image.png
+
+# Audit / debug screenshots in repo root - never commit these
+/audit-*.png
+/audit-*.jpg
+/audit-*.jpeg
+/screenshot-*.png
+/screenshot-*.jpg
+/*.screenshot.png
+
+# Secrets — every .env variant (only .env.example may be committed
+# and only if it contains placeholder values). pre-commit hook in
+# deploy/hooks/ is the runtime backstop; this is the static one.
+.env
+.env.production
+.env.development
+.env.staging
+.env.test
+.env.*
+!.env.example
+
+# Build artifacts (mcp-server runs from .ts via tsx)
+mcp-server.js
+mcp-server.js.map
+
+# local artifacts (not app source)
+.claude/
+
+# editor/one-off backups
+*.bak-*
+mcp-publisher
+
+# deploy build directories (see CLAUDE.md, Deploying)
+/.next.new/
+/.next.prev/

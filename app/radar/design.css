@@ -1,0 +1,15 @@
+.rd-filters { gap: 10px; }
+.rd-filter-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.rd-filter-label {
+  flex: 0 0 64px; font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--fg-mute);
+}
+.rd-chip-dot { display: inline-block; width: 7px; height: 7px; margin-right: 8px; border-radius: 50%; vertical-align: 1px; background: var(--fg-mute); }
+.rd-chip-dot[data-tone="bad"] { background: var(--bad); }
+.rd-chip-dot[data-tone="lime"] { background: var(--accent-text); }
+.rd-chip-dot[data-tone="info"] { background: var(--cy); }
+.pg-chip--on .rd-chip-dot { background: var(--on-accent); }
+.rd-chip-n { margin-left: 8px; font-family: var(--mono); font-size: 11px; font-variant-numeric: tabular-nums; opacity: 0.7; }
+@media (max-width: 640px) {
+  .rd-filter-label { flex-basis: 100%; }
+}

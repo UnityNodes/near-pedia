@@ -1,0 +1,4 @@
+.dsc-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; display: inline-block; }
+.dsc-stats { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 2px 10px; }
+.dsc-stats > span + span::before { content: "·" / ""; margin-right: 10px; }
+.dsc-likes { color: var(--accent-text); }

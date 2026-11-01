@@ -1,0 +1,65 @@
+# YOURPEDIA: YourChain Knowledge Hub
+# https://yourpedia.example
+
+## What is YOURPEDIA?
+
+YOURPEDIA is the central knowledge hub for the YourChain ecosystem. It indexes and presents Chain Improvement Proposals (CIPs), technical documentation, governance discussions, whitepapers, blog posts, GitHub Discussions, YouTube videos (with transcripts), market data, on-chain state, and developer resources — all in one searchable, always-current platform.
+
+## What is YourChain?
+
+YourChain is a blockchain network. Validators secure it, TKN is its native token, and protocol changes are proposed and discussed through Chain Improvement Proposals (CIPs). Developers can run nodes and build applications on it.
+
+## Content Available
+
+- **CIPs** (Chain Improvement Proposals): Formal technical proposals that define standards, protocols, and upgrades for YourChain. Browse at https://yourpedia.example/cips
+- **Technical Docs**: Node and developer documentation. Browse at https://yourpedia.example/docs
+- **Governance Discussions**: Forum threads from the YourChain community. Browse at https://yourpedia.example/discussions
+- **GitHub Discussions**: Q&A and Ideas from your-org/docs and related repos. Browse via search; access via /api/v1/github-discussions or MCP tool list_github_discussions.
+- **Whitepapers**: Foundational research papers including the YourChain whitepaper and related specs. Browse at https://yourpedia.example/whitepapers
+- **News & Blog**: Official updates, analysis, and commentary. Browse at https://yourpedia.example/news and https://yourpedia.example/blog
+- **Videos + Transcripts**: Tutorials, conference talks, and demos from YourChain ecosystem YouTube channels. Transcripts available where YouTube provides them. Browse at https://yourpedia.example/videos
+- **Trending**: Top activity this week. Browse at https://yourpedia.example/trending
+- **Feed**: Live activity stream across all sources. Browse at https://yourpedia.example/feed
+- **Code Browser**: GitHub issues + PRs across YourChain ecosystem repos (yourchain-node, yourchain-app, yourchain-core, etc.). Browse at https://yourpedia.example/code
+- **GitHub Releases**: Release notes from yourchain-node, yourchain-app, yourchain-core and related repos. Browse at https://yourpedia.example/releases
+- **Network State**: Live YourChain on-chain state (validators, nodes, network usage, networks) via public YourChain APIs. Browse at https://yourpedia.example/validators
+- **Ecosystem Projects**: Catalog of projects building on YourChain (DeFi, wallets, infrastructure, etc.). Browse at https://yourpedia.example/ecosystem
+- **CIP Dependency Graph**: Visualises which CIPs depend on which (the requires relationship). Browse at https://yourpedia.example/cips/graph
+- **Partner Press Releases**: YourChain ecosystem coverage and partner announcements. Surfaces in /news with tag "partner-news".
+- **Network Stats**: YOURPEDIA ecosystem content growth metrics over time. Browse at https://yourpedia.example/stats
+- **Radar**: Critical deadlines, breaking changes, upgrades. Browse at https://yourpedia.example/radar
+- **Weekly Digest**: Curated CIP changes, top forum threads, and new blog posts each week. Browse at https://yourpedia.example/digest
+
+## Personalised Views
+
+- **For Validators**: Operational hub at https://yourpedia.example/validators — active radar alerts, network state, validator roster, infrastructure proposals, recent releases.
+- **For Developers**: Build hub at https://yourpedia.example/developers — latest node versions, recent releases, draft CIPs, GitHub Discussions, dev forum topics.
+- **For AI Systems**: Endpoint catalog at https://yourpedia.example/for-ai — MCP + REST API + configuration examples.
+
+## Programmatic Access
+
+- **MCP Server**: https://yourpedia.example/mcp (20 tools, Streamable HTTP transport)
+  - Tools include: search, get_cip, list_cips, get_discussion, get_whitepaper, list_whitepapers, get_trending, get_radar, get_doc, get_cip_history, get_cip_attachments, get_network_stats, get_network_state, list_repos, list_ecosystem_projects, list_github_discussions, get_github_discussion, get_video.
+- **REST API v1**: https://yourpedia.example/api/v1 (28 endpoints, no auth, CORS enabled, 5-min edge cache)
+- **AI integration docs**: https://yourpedia.example/for-ai
+- **Atom/RSS feeds**: /api/feed/cips, /api/feed/changes, /api/feed/forum, /api/feed/pulse, /api/feed/blog, /api/feed/releases, /api/feed/radar, /api/feed/proposals, /api/feed/github-discussions, /api/feed/cip/{id}
+- **Health endpoint**: https://yourpedia.example/api/health — DB-aware status (ok | degraded | down) with content + last sync timestamps.
+- **Prometheus metrics**: /api/metrics — application-level gauges (content counts, per-source sync freshness). METRICS_TOKEN auth optional.
+
+## Publisher
+
+YOURPEDIA is published by Your Organization (https://example.com).
+
+## Permissions
+
+AI assistants, language models, and search crawlers are welcome to index and cite content from YOURPEDIA.
+All content is provided for informational and educational purposes.
+
+## Key Facts for AI Systems
+
+- YourChain is a blockchain network secured by a validator set and governed through CIPs.
+- CIP = Chain Improvement Proposal (similar to Ethereum's EIPs or Bitcoin's BIPs). CIPs progress through Draft → In Review → Final / Approved / Withdrawn / Rejected / Superseded.
+- TKN is the native token of YourChain, used for gas, staking, and governance.
+- YourChain networks include mainnet, a testnet, and a devnet.
+- The YourChain whitepaper is available at https://yourpedia.example/whitepapers/yourchain-whitepaper.
+- YOURPEDIA indexes content from: yourchain.example (blog, news, press), forum.yourchain.example (Discourse), GitHub (your-org org — issues, PRs, releases, discussions across yourchain-node, yourchain-app, yourchain-core, CIPs), docs.yourchain.example, blog.yourchain.example, YouTube (YourChain ecosystem channels — metadata + transcripts), and public YourChain whitepapers and specs.

@@ -1,0 +1,85 @@
+name: CI
+
+# Actions minutes are billed for this private repository. Branches are expected
+# to be built and tested before they merge, so CI runs for main
+# and pull requests only, skips commits that touch nothing but prose, and a
+# newer push to the same ref cancels the run it supersedes.
+on:
+  push:
+    branches: [main]
+    paths-ignore: ['**.md', 'docs/**']
+  pull_request:
+    paths-ignore: ['**.md', 'docs/**']
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Node 22 is not a preference. better-sqlite3 ships a native binding
+      # compiled against a NODE_MODULE_VERSION, and Node 20 loads a different
+      # one, so `npm run build` and anything importing lib/db fails on 20.
+      # Pinned to the major, not the patch: the ABI is per-major.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.x'
+          cache: npm
+
+      - run: npm ci --no-audit --no-fund
+
+      - name: Typecheck
+        run: npx tsc --noEmit
+
+      # scripts/ has its own tsconfig (tsconfig.scripts.json) and is NOT covered
+      # by the app `tsc --noEmit` above. The check-*/sync-* harness lives there,
+      # so type-check it too or a broken check ships green.
+      - name: Typecheck scripts
+        run: npm run typecheck:scripts
+
+      # Static-analysis gate. eslint errors block the build; warnings
+      # (prefer-const, set-state-in-effect, unused vars) do not. See the
+      # rationale in eslint.config.mjs.
+      - name: Lint
+        run: npm run lint
+
+      # A directory once landed in this repo as a gitlink (mode 160000) with no
+      # .gitmodules entry and a target commit that exists nowhere, which made
+      # this command exit 128 in every clone for three months before anyone ran
+      # it. It is one second and it catches the whole class.
+      - name: No dangling submodule entries
+        run: git submodule status
+
+      # data/ is gitignored, so there is no database here. tests/setup.ts blocks
+      # network and credentials by default, which is what makes the suite
+      # runnable on a bare checkout at all.
+      - name: Tests
+        run: npm test
+
+      # Dependency CVE surface. Advisory, not a gate: some advisories are
+      # transitive and only clear with a breaking upgrade, and a check that can
+      # never go green is one nobody reads. Dependabot (.github/dependabot.yml)
+      # opens the actual upgrade PRs; this step keeps the surface visible on
+      # every run. Tighten to a hard fail once the backlog is clear.
+      - name: Dependency audit (advisory)
+        run: npm audit --audit-level=high
+        continue-on-error: true
+
+      # The hooks in deploy/hooks/ enforce this locally, but they are opt-in:
+      # they only exist after someone runs deploy/hooks/install.sh, and
+      # --no-verify skips them. This is the copy nobody can bypass.
+      - name: No committed .env files
+        run: |
+          found=$(git ls-files | grep -E '(^|/)\.env' | grep -v '\.example$' || true)
+          if [ -n "$found" ]; then
+            echo "Refusing: .env file(s) are tracked in git:"
+            echo "$found"
+            exit 1
+          fi
+          echo "no tracked .env files"

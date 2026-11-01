@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+# Refuse to commit any .env* file (except .env.example) and obvious secret blobs.
+set -euo pipefail
+
+staged=$(git diff --cached --name-only --diff-filter=ACM)
+
+# Block env files
+bad_env=$(echo "$staged" | grep -E '(^|/)\.env($|\.)' | grep -vE '(^|/)\.env\.example$' || true)
+if [ -n "$bad_env" ]; then
+  echo "✖ pre-commit: refusing to commit env files:"
+  echo "$bad_env" | sed 's/^/    /'
+  echo "  (only .env.example may be committed). Use --no-verify to override deliberately."
+  exit 1
+fi
+
+# Block obvious secret material in staged content
+if [ -n "$staged" ]; then
+  if git diff --cached -U0 -- $staged | grep -nE 'sk-proj-[A-Za-z0-9_-]{20}|gsk_[A-Za-z0-9]{20}|AIza[0-9A-Za-z_-]{20}|-----BEGIN (RSA|OPENSSH|EC) PRIVATE KEY-----' >/dev/null 2>&1; then
+    echo "✖ pre-commit: a staged change looks like a secret (API key / private key). Aborting."
+    echo "  Review your diff; use --no-verify only if this is a false positive."
+    exit 1
+  fi
+fi
+exit 0

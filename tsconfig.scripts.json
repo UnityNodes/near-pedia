@@ -1,0 +1,10 @@
+{
+  "//": "scripts/ is excluded from tsconfig.json because Next's build should not compile it. The effect was that nothing type-checked it at all: an undefined variable in a sync script passed `tsc --noEmit` cleanly. This config exists so `npm run typecheck:scripts` covers it.",
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "target": "ES2018",
+    "noEmit": true
+  },
+  "include": ["scripts/**/*.ts", "lib/**/*.ts"],
+  "exclude": ["node_modules"]
+}

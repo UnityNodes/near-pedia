@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+# Refuse to push if any tracked .env* (except .env.example) exists in the tree.
+set -euo pipefail
+
+tracked_env=$(git ls-files | grep -E '(^|/)\.env($|\.)' | grep -vE '(^|/)\.env\.example$' || true)
+if [ -n "$tracked_env" ]; then
+  echo "✖ pre-push: tracked env file(s) present — remove from git before pushing:"
+  echo "$tracked_env" | sed 's/^/    /'
+  exit 1
+fi
+exit 0

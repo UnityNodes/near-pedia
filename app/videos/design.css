@@ -1,0 +1,26 @@
+.vg-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr)); gap: 12px; }
+.vg-grid .vidx-card {
+  border-radius: 14px; overflow: hidden; background: var(--bg-card); border: 1px solid var(--rule);
+  transition: border-color 0.2s, transform 0.2s; animation: dp-rise 0.4s backwards;
+}
+.vg-grid .vidx-card:hover, .vg-grid .vidx-card:focus-within {
+  border-color: color-mix(in srgb, var(--accent-line) 45%, transparent); transform: translateY(-2px);
+}
+.vg-grid .vidx-thumb { border-bottom: 1px solid var(--rule); }
+.vg-grid .vidx-badge {
+  border-radius: 999px; padding: 0 9px; background: color-mix(in srgb, var(--bg) 82%, transparent);
+  border-color: var(--rule-2); font-weight: 400; color: var(--fg);
+}
+.vg-grid .vidx-body { gap: 8px; padding: 16px 18px 18px; }
+.vg-grid .vidx-title { font-family: inherit; font-size: 16px; font-weight: 600; letter-spacing: -0.01em; }
+.vg-grid .vidx-meta { font-size: 12px; color: var(--fg-mute); }
+.vg-grid .vidx-channel { color: var(--cy); font-weight: 400; }
+.vg-grid .vidx-summary { color: var(--fg-soft); font-size: 14px; }
+.vg-grid .vidx-passage { border-radius: 10px; border-color: var(--rule); }
+.vg-grid .vidx-passage:hover { border-color: var(--accent-line); }
+.vg-grid .vidx-ts { font-weight: 400; }
+.vg-grid .vidx-card:nth-child(2) { animation-delay: 40ms; }
+.vg-grid .vidx-card:nth-child(3) { animation-delay: 80ms; }
+.vg-grid .vidx-card:nth-child(4) { animation-delay: 120ms; }
+.vg-grid .vidx-card:nth-child(5) { animation-delay: 160ms; }
+.vg-grid .vidx-card:nth-child(n+6) { animation-delay: 200ms; }

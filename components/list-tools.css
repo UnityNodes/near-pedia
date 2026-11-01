@@ -1,0 +1,14 @@
+.pg-chip.lt-chip { display: inline-flex; align-items: center; gap: 7px; }
+.lt-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.pg-filter input[type="search"] { appearance: none; -webkit-appearance: none; }
+.pg-chip--on .lt-dot { box-shadow: 0 0 0 1.5px var(--on-accent); }
+.lt-count { font-family: var(--mono); font-size: 11px; font-weight: 400; }
+.lt-label {
+  align-self: center; padding-right: 4px; font-family: var(--mono); font-size: 11px;
+  letter-spacing: 0.08em; text-transform: uppercase; color: var(--fg-mute);
+}
+.pg-tools-row .pg-chips { align-items: center; }
+.lt-ext { color: var(--accent-text); }
+.lt-ext:hover { text-decoration: underline; text-underline-offset: 3px; }
+.lt-pager { justify-content: center; font-variant-numeric: tabular-nums; }
+.lt-chip[aria-disabled="true"] { opacity: 0.4; pointer-events: none; cursor: not-allowed; }
