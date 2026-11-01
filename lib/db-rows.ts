@@ -188,6 +188,38 @@ export interface CspViolationLogRow {
   line_number: number | null;
 }
 
+export interface DeprecationEvidenceRow {
+  deprecation_id: string;
+  signal: string;
+  strength: string;
+  source_url: string;
+  quote: string;
+  upstream_date: string | null;
+  supports: number;
+  verified: number | null;
+  checked: string | null;
+  expired: number;
+}
+
+export interface DeprecationsRow {
+  id: string;
+  title: string;
+  kind: string;
+  status: string;
+  strength: string;
+  summary: string;
+  replacement: string | null;
+  replacement_url: string | null;
+  since: string | null;
+  effective: string | null;
+  matchers: string;
+  subjects: string;
+  origin: string;
+  stale: number;
+  contested: number;
+  built_at: string;
+}
+
 export interface DocPagesRow {
   id: number;
   url: string;
@@ -735,6 +767,8 @@ export interface DbRowByTable {
   "cips_fts_idx": CipsFtsIdxRow;
   "contact_submissions": ContactSubmissionsRow;
   "csp_violation_log": CspViolationLogRow;
+  "deprecation_evidence": DeprecationEvidenceRow;
+  "deprecations": DeprecationsRow;
   "doc_pages": DocPagesRow;
   "docs_fts": DocsFtsRow;
   "docs_fts_config": DocsFtsConfigRow;
