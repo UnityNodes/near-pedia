@@ -863,6 +863,22 @@ export interface YoutubeVideosFtsIdxRow {
   pgno: unknown | null;
 }
 
+export interface DbAnchorsRow {
+  date: string;
+  hash: string;
+  tables: number;
+  rows: number;
+  manifest: string;
+  computed_at: string;
+  status: string;
+  network: string | null;
+  contract: string | null;
+  account: string | null;
+  tx_hash: string | null;
+  block_height: number | null;
+  error: string | null;
+}
+
 export interface DbRowByTable {
   "blog_posts": BlogPostsRow;
   "blog_posts_fts": BlogPostsFtsRow;

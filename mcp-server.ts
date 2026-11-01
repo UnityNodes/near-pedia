@@ -50,6 +50,10 @@ import { allDeprecations, evidenceOf, findDeprecations, getDeprecation, renderDe
 import { checkCode, MAX_CODE_CHARS, renderCheck } from './lib/check-code.js';
 import { protocolReport, renderProtocol } from './lib/protocol.js';
 import { countProposals, getProposal, hosSynced, listProposals, proposalsForHsp, renderProposal } from './lib/hos-read.js';
+import { MAX_CODE, MAX_QUESTION, askMessages, buildAskContext } from './lib/ask.js';
+import { BusyError, UnverifiedAnswerError, nearAiConfig, verifiedChat } from './lib/near-ai.js';
+import { getAnchor, latestAnchor, listAnchors } from './lib/anchors.js';
+import { chainRecord, rpcOf } from './lib/anchor-chain.js';
 import { PARTNERS, parseJson, catalogSynced, findProjects, getIncident, getPartner, getProject, incidentsSynced, listIncidents, partnerDocsCount, partnerOfProject, renderIncident, renderPartner, renderProject, topByTvl } from './lib/ecosystem-read.js';
 import { NETWORKS } from './lib/near-sources.js';
 import { LANGUAGES as CODE_LANGUAGES, type Language } from './lib/code-scan.js';
@@ -2503,6 +2507,8 @@ const searchLimiter = rateLimit({
 
 app.use('/mcp', mcpLimiter);
 app.use('/api/v1/search', searchLimiter);
+// /ask spends NEAR AI credits on every call: 10 an hour per address.
+app.use('/api/v1/ask', rateLimit({ windowMs: 60 * 60 * 1000, max: 10, standardHeaders: true, legacyHeaders: false, ...rateLimitResponse(10, 60) }));
 app.use('/api/v1', apiLimiter);
 
 // ── MCP usage logging ────────────────────────────────────────────────────────
@@ -2923,6 +2929,72 @@ app.get('/api/v1/protocol', (req, res) => {
     res.json(report);
   } catch (e) {
     if (/no such table/.test((e as Error).message)) return res.status(503).json({ error: 'protocol sync has not run yet' });
+    throw e;
+  }
+});
+
+// A ceiling on NEAR AI spend that the per-address limit cannot give when many addresses ask at once.
+const ASK_DAILY_MAX = Number(process.env.ASK_DAILY_MAX) > 0 ? Number(process.env.ASK_DAILY_MAX) : 300;
+const askDay = { date: '', count: 0 };
+
+// POST /api/v1/ask { question, code?, filename? } - an answer from NEAR AI Cloud, from this index's sources, with a verified receipt.
+app.post('/api/v1/ask', async (req, res) => {
+  const body = req.body as { question?: unknown; code?: unknown; filename?: unknown } | undefined;
+  if (!body || typeof body.question !== 'string' || !body.question.trim()) return res.status(400).json({ error: 'Body must be { question: string, code?: string, filename?: string }' });
+  if (body.question.length > MAX_QUESTION) return res.status(400).json({ error: `question is ${body.question.length} characters; at most ${MAX_QUESTION}` });
+  if (body.code !== undefined && typeof body.code !== 'string') return res.status(400).json({ error: 'code must be a string' });
+  if (typeof body.code === 'string' && body.code.length > MAX_CODE) return res.status(400).json({ error: `code is ${body.code.length} characters; at most ${MAX_CODE}, one file` });
+  const cfg = nearAiConfig();
+  if (!cfg) return res.status(503).json({ error: '/ask is not configured on this server (NEARAI_API_KEY unset)' });
+  const day = new Date().toISOString().slice(0, 10);
+  if (askDay.date !== day) Object.assign(askDay, { date: day, count: 0 });
+  if (askDay.count >= ASK_DAILY_MAX) return res.status(503).json({ error: `today's ${ASK_DAILY_MAX} answers are spent; /ask resets at 00:00 UTC` });
+  askDay.count++;
+  const code = typeof body.code === 'string' && body.code.trim() ? { text: body.code, filename: typeof body.filename === 'string' ? body.filename.slice(0, 200) : undefined } : undefined;
+  const question = body.question.trim();
+  try {
+    const db = getDb();
+    const ctx = buildAskContext(db, question, code);
+    const { text, truncated, receipt } = await verifiedChat(cfg, askMessages(question, ctx, code), { maxTokens: 1200 });
+    res.json({ answer: text, truncated, sources: ctx.sources, check_code: ctx.check, receipt, db_anchor: latestAnchor(db) });
+  } catch (e) {
+    const msg = (e as Error).message;
+    // The pasted code is never echoed into a log line: only the failure.
+    if (e instanceof BusyError) return res.status(503).json({ error: msg });
+    console.error(`[ask] ${e instanceof UnverifiedAnswerError ? 'unverified' : 'failed'}: ${msg.slice(0, 300)}`);
+    if (e instanceof UnverifiedAnswerError) return res.status(502).json({ error: 'NEAR AI answered, but the response signature did not verify; no answer is shown', detail: msg.slice(0, 300) });
+    return res.status(502).json({ error: 'NEAR AI Cloud request failed', detail: msg.slice(0, 300) });
+  }
+});
+
+// GET /api/v1/anchors - the daily database hashes and where each is recorded on NEAR.
+app.get('/api/v1/anchors', (req, res) => {
+  try {
+    const n = clampLimit(String(req.query.limit ?? '30'), 30, 365);
+    res.json({ items: listAnchors(getDb(), n) });
+  } catch (e) {
+    if (/no such table/.test((e as Error).message)) return res.json({ items: [] });
+    throw e;
+  }
+});
+
+// GET /api/v1/anchors/:date - one day's hash with its per-table manifest.
+app.get('/api/v1/anchors/:date', async (req, res) => {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(req.params.date)) return res.status(400).json({ error: 'date must be YYYY-MM-DD' });
+  try {
+    const a = getAnchor(getDb(), req.params.date);
+    if (!a) return res.status(404).json({ error: 'not found', date: req.params.date });
+    // ?verify=true reads the record back from the chain instead of trusting this table.
+    const rpc = rpcOf(a.network);
+    if (req.query.verify !== 'true' || !a.contract || !rpc) return res.json(a);
+    try {
+      const onChain = await chainRecord(rpc, a.contract, a.date);
+      res.json({ ...a, chain: onChain ? { hash: onChain.hash, block_height: onChain.block_height, matches: onChain.hash === a.hash } : { hash: null, matches: false } });
+    } catch {
+      res.json({ ...a, chain: { error: 'the chain could not be read just now' } });
+    }
+  } catch (e) {
+    if (/no such table/.test((e as Error).message)) return res.status(404).json({ error: 'not found', date: req.params.date });
     throw e;
   }
 });
@@ -3877,7 +3949,10 @@ app.get('/health', (_req, res) => {
 // instead of Express's default HTML 500 page (which breaks API clients).
 // Must be registered after all routes.
 app.use((err: unknown, req: express.Request, res: express.Response, _next: express.NextFunction) => {
-  console.error(`[mcp-server] unhandled error on ${req.method} ${req.path}:`, err instanceof Error ? err.message : err);
+  // A JSON parse error's message quotes the start of the body: on /ask that
+  // is the developer's pasted code, which is never to reach a log.
+  const parseFailed = (err as { type?: string })?.type === 'entity.parse.failed';
+  console.error(`[mcp-server] unhandled error on ${req.method} ${req.path}:`, parseFailed ? 'request body is not valid JSON' : err instanceof Error ? err.message : err);
   if (res.headersSent) return;
   const status = (err as { status?: number; type?: string })?.status;
   if (status === 413) return res.status(413).json({ error: 'request body too large' });

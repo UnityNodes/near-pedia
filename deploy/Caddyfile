@@ -28,8 +28,12 @@ nearpedia.example, www.nearpedia.example {
 	# /api/v1/* lives on the MCP process, not Next - without this the
 	# endpoints advertised on /for-ai return 404 to every caller.
 	@ai_routes path /mcp /mcp/* /api/v1 /api/v1/*
+	# The rate limits there key on X-Forwarded-For, which Caddy would fill with
+	# Cloudflare's edge address: every visitor of one colo in one bucket.
 	handle @ai_routes {
-		reverse_proxy 127.0.0.1:3131
+		reverse_proxy 127.0.0.1:3131 {
+			header_up X-Forwarded-For {http.request.header.Cf-Connecting-Ip}
+		}
 	}
 
 	# Everything else → Next.js. Cloudflare puts the real visitor IP in
