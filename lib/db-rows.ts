@@ -521,6 +521,54 @@ export interface GithubReposRow {
   synced_at: string;
 }
 
+export interface HosProposalsRow {
+  id: number;
+  title: string;
+  status: string;
+  status_since: string | null;
+  flow: string | null;
+  proposer_id: string;
+  reviewer_id: string | null;
+  created_at: string;
+  approved_at: string | null;
+  voting_starts_at: string | null;
+  voting_ends_at: string | null;
+  timelock_ends_at: string | null;
+  expires_at: string | null;
+  snapshot_block_height: number | null;
+  total_venear: string | null;
+  votes_for: string;
+  votes_against: string;
+  votes_abstain: string;
+  voters_for: number;
+  voters_against: number;
+  voters_abstain: number;
+  votes_total: string;
+  voters_total: number;
+  quorum_threshold_bps: number | null;
+  quorum_floor: string | null;
+  quorum_required: string | null;
+  approval_threshold_bps: number | null;
+  quorum_met: number | null;
+  approval_met: number | null;
+  has_actions: number;
+  link: string | null;
+  description: string | null;
+  hsp_number: number | null;
+  forum_topic_id: number | null;
+  forum_url: string | null;
+  forum_match: string | null;
+  synced_at: string;
+}
+
+export interface HosStatsRow {
+  observed_at: string;
+  venear_total: string;
+  venear_accounts: number;
+  proposals: number;
+  active_proposals: number;
+}
+
 export interface HttpValidatorsRow {
   url: string;
   etag: string;
@@ -638,6 +686,12 @@ export interface SyncLogRow {
   items_synced: number | null;
   ran_at: string | null;
   error: string | null;
+}
+
+export interface SyncStateRow {
+  key: string;
+  value: string;
+  updated_at: string;
 }
 
 export interface TrendingSnapshotRow {
@@ -841,6 +895,8 @@ export interface DbRowByTable {
   "github_items": GithubItemsRow;
   "github_releases": GithubReleasesRow;
   "github_repos": GithubReposRow;
+  "hos_proposals": HosProposalsRow;
+  "hos_stats": HosStatsRow;
   "http_validators": HttpValidatorsRow;
   "log_rollup": LogRollupRow;
   "mcp_calls": McpCallsRow;
@@ -851,6 +907,7 @@ export interface DbRowByTable {
   "radar_items": RadarItemsRow;
   "search_log": SearchLogRow;
   "sync_log": SyncLogRow;
+  "sync_state": SyncStateRow;
   "trending_snapshot": TrendingSnapshotRow;
   "v_cip_attachments_fts": VCipAttachmentsFtsRow;
   "v_cips_fts": VCipsFtsRow;
