@@ -79,6 +79,40 @@ export function initNearSchema(db: Database.Database): void {
     );
     CREATE INDEX IF NOT EXISTS idx_github_repos_org ON github_repos(org, pushed_at DESC);
 
+    CREATE TABLE IF NOT EXISTS deprecations (
+      id TEXT PRIMARY KEY,
+      title TEXT NOT NULL,
+      kind TEXT NOT NULL CHECK(kind IN ('package','crate','repo','rpc_method','protocol','api','service','config','product')),
+      status TEXT NOT NULL CHECK(status IN ('removed','deprecated','superseded','changed','possibly_deprecated')),
+      strength TEXT NOT NULL CHECK(strength IN ('strong','medium','weak')),
+      summary TEXT NOT NULL,
+      replacement TEXT,
+      replacement_url TEXT,
+      since TEXT,
+      effective TEXT,
+      matchers TEXT NOT NULL,
+      subjects TEXT NOT NULL,
+      origin TEXT NOT NULL CHECK(origin IN ('seed','signal')),
+      stale INTEGER NOT NULL DEFAULT 0,
+      contested INTEGER NOT NULL DEFAULT 0,
+      built_at TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_deprecations_kind ON deprecations(kind, status);
+
+    CREATE TABLE IF NOT EXISTS deprecation_evidence (
+      deprecation_id TEXT NOT NULL,
+      signal TEXT NOT NULL,
+      strength TEXT NOT NULL CHECK(strength IN ('strong','medium','weak')),
+      source_url TEXT NOT NULL,
+      quote TEXT,
+      upstream_date TEXT,
+      supports INTEGER NOT NULL DEFAULT 1,
+      verified INTEGER,
+      checked TEXT,
+      expired INTEGER NOT NULL DEFAULT 0,
+      PRIMARY KEY (deprecation_id, signal, source_url, quote)
+    );
+
     CREATE TABLE IF NOT EXISTS http_validators (
       url TEXT PRIMARY KEY,
       etag TEXT NOT NULL,

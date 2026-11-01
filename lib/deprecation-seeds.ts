@@ -1,0 +1,282 @@
+/**
+ * Curated deprecation entries: the changes an agent writing NEAR code from
+ * memory most often gets wrong, as of 2026-11-01.
+ *
+ * Every evidence row quotes its source verbatim. The engine re-checks each
+ * quote whose source the syncs hold (a docs.near.org page, a GitHub release,
+ * a repository's archive flag) on every build, and an entry whose quote has
+ * gone from its source is reported, not served as current. `checked` marks
+ * the rows outside our syncs (governance forum, READMEs outside the synced
+ * orgs, a live probe), verified by hand on that date.
+ */
+
+import type { Entry, Evidence } from './deprecation-types';
+
+export interface SeedEvidence extends Omit<Evidence, 'supports'> {
+  supports?: boolean;
+  /** Set for evidence the syncs cannot re-verify: the date a human last checked it. */
+  checked?: string;
+}
+
+export interface Seed extends Omit<Entry, 'origin' | 'evidence'> {
+  evidence: SeedEvidence[];
+}
+
+const NEARCORE_2_14 = 'https://github.com/near/nearcore/releases/tag/2.14.0';
+const NEARCORE_2_13 = 'https://github.com/near/nearcore/releases/tag/2.13.0';
+
+export const SEEDS: readonly Seed[] = [
+  {
+    id: 'near-sdk-js',
+    title: 'near-sdk-js (JavaScript smart contract SDK)',
+    kind: 'package',
+    status: 'deprecated',
+    summary: 'The JavaScript contract SDK is archived and its README says "DO NOT USE"; NEAR contracts are written in Rust with near-sdk.',
+    replacement: 'near-sdk (Rust)',
+    replacement_url: 'https://github.com/near/near-sdk-rs',
+    since: null,
+    effective: null,
+    matchers: { npm: ['near-sdk-js'], imports: ['near-sdk-js'] },
+    subjects: ['github:near/near-sdk-js', 'npm:near-sdk-js'],
+    evidence: [],
+  },
+  {
+    id: 'near-cli-js',
+    title: 'near-cli (the JavaScript CLI)',
+    kind: 'package',
+    status: 'deprecated',
+    summary: 'The Node.js near-cli is archived and will receive no updates; use near-cli-rs, whose commands differ.',
+    replacement: 'near-cli-rs',
+    replacement_url: 'https://github.com/near/near-cli-rs',
+    since: null,
+    effective: null,
+    matchers: { npm: ['near-cli'] },
+    subjects: ['github:near/near-cli', 'npm:near-cli'],
+    evidence: [],
+  },
+  {
+    id: 'near-js-packages',
+    title: '@near-js/* packages',
+    kind: 'package',
+    status: 'deprecated',
+    summary: 'near-api-js v7 is a single package that replaces the @near-js/* packages, which stopped at 2.5.1 (2025-11-06); several were removed outright in v7.',
+    replacement: 'near-api-js 7.x',
+    replacement_url: 'https://github.com/near/near-api-js/blob/master/MIGRATION.md',
+    since: '2026-01-19',
+    effective: null,
+    matchers: {
+      npm: ['@near-js/accounts', '@near-js/biometric-ed25519', '@near-js/client', '@near-js/crypto', '@near-js/iframe-rpc', '@near-js/keystores',
+        '@near-js/keystores-browser', '@near-js/keystores-node', '@near-js/providers', '@near-js/signers', '@near-js/tokens', '@near-js/transactions',
+        '@near-js/types', '@near-js/utils', '@near-js/wallet-account'],
+    },
+    subjects: ['scope:@near-js'],
+    evidence: [
+      { signal: 'docs_statement', strength: 'strong', source_url: 'https://github.com/near/near-api-js', quote: '**near-api-js v7** is a single package that helps you to easily integrate NEAR blockchain into your JavaScript/TypeScript applications.', upstream_date: null, checked: '2026-11-01' },
+      { signal: 'docs_statement', strength: 'strong', source_url: 'https://github.com/near/near-api-js', quote: 'Check out the [migration guide](MIGRATION.md) to help you move from the old `@near-js/*` packages to `near-api-js`.', upstream_date: null, checked: '2026-11-01' },
+    ],
+  },
+  {
+    id: 'delegate-v2',
+    title: 'DelegateV2 meta-transaction action',
+    kind: 'protocol',
+    status: 'removed',
+    summary: 'DelegateV2 (meta transactions signed with a gas key) is removed; new transactions carrying it are rejected with RemovedProtocolFeature. Sign the inner delegate action with a regular access key and use Delegate.',
+    replacement: 'Delegate, signed with a regular access key',
+    replacement_url: 'https://docs.near.org/protocol/transactions/meta-tx',
+    since: '2026-10-26',
+    effective: 'protocol version 87 (nearcore 2.14.0); applies on a network once its validators vote the upgrade in',
+    matchers: { identifiers: ['DelegateV2'] },
+    subjects: ['id:DelegateV2'],
+    evidence: [
+      { signal: 'docs_statement', strength: 'strong', source_url: 'https://docs.near.org/protocol/transactions/meta-tx', quote: 'From protocol version 87 (nearcore 2.14), `DelegateV2` is removed and new transactions containing it are rejected with `RemovedProtocolFeature`.', upstream_date: null },
+    ],
+  },
+  {
+    id: 'developer-gas-rebate',
+    title: 'Developer gas rebate (burnt_gas_reward)',
+    kind: 'protocol',
+    status: 'changed',
+    summary: 'A FunctionCall no longer pays 30% of the burned gas back to the contract account: burnt_gas_reward goes from 30% to 0% (HSP-027). A contract that funds itself from the rebate stops earning it.',
+    replacement: null,
+    replacement_url: null,
+    since: '2026-10-26',
+    effective: 'protocol version 87 (nearcore 2.14.0); applies on a network once its validators vote the upgrade in',
+    matchers: { config: ['burnt_gas_reward'] },
+    subjects: ['id:burnt_gas_reward'],
+    evidence: [
+      { signal: 'release_removal', strength: 'strong', source_url: NEARCORE_2_14, quote: 'The `burnt_gas_reward` parameter is changed from 30% (3/10) to 0%.', upstream_date: '2026-10-26' },
+      { signal: 'governance', strength: 'strong', source_url: 'https://gov.near.org/t/hsp-027-remove-the-near-developer-gas-rebate/42213', quote: 'HSP-027: Remove the NEAR Developer Gas Rebate', upstream_date: '2026-06-15', checked: '2026-11-01' },
+    ],
+  },
+  {
+    id: 'experimental-tx-status',
+    title: 'EXPERIMENTAL_tx_status RPC method',
+    kind: 'rpc_method',
+    status: 'deprecated',
+    summary: 'nearcore 2.14.0 renamed EXPERIMENTAL_tx_status to tx_status and keeps the old name as a deprecated alias. Older nodes answer tx_status with "Method not found", so keep EXPERIMENTAL_tx_status until every node you call runs 2.14.0 or later.',
+    replacement: 'tx_status (nearcore 2.14.0 and later)',
+    replacement_url: 'https://docs.near.org/api/rpc/transactions',
+    since: '2026-10-26',
+    effective: 'nearcore 2.14.0',
+    matchers: { rpc: ['EXPERIMENTAL_tx_status'] },
+    subjects: ['id:EXPERIMENTAL_tx_status'],
+    evidence: [
+      { signal: 'docs_statement', strength: 'strong', source_url: 'https://docs.near.org/api/rpc/transactions', quote: '`EXPERIMENTAL_tx_status` still works in 2.14.0, as a deprecated alias with identical request and response types.', upstream_date: null },
+    ],
+  },
+  {
+    id: 'view-access-key-list-unpaginated',
+    title: 'view_access_key_list without pagination',
+    kind: 'rpc_method',
+    status: 'changed',
+    summary: 'From nearcore 2.14.0 a view_access_key_list query without limit or after_key fails with TOO_MANY_ACCESS_KEYS when the account holds more than 100 keys. Paginate.',
+    replacement: 'view_access_key_list with limit and after_key',
+    replacement_url: 'https://docs.near.org/api/rpc/contracts',
+    since: '2026-10-26',
+    effective: 'nearcore 2.14.0',
+    matchers: { rpc: ['view_access_key_list'] },
+    subjects: ['id:view_access_key_list'],
+    evidence: [
+      { signal: 'docs_statement', strength: 'strong', source_url: 'https://docs.near.org/api/rpc/contracts', quote: 'From nearcore 2.14.0, a request without `limit` or `after_key` fails with `TOO_MANY_ACCESS_KEYS` if the account has more than 100 keys (the default limit).', upstream_date: null },
+    ],
+  },
+  {
+    id: 'external-storage-state-sync',
+    title: 'Centralized (external-storage) state sync',
+    kind: 'config',
+    status: 'removed',
+    summary: 'Nodes always sync state from peers. Since nearcore 2.13.0 a config.json that sets state_sync.sync to ExternalStorage fails to start, and 2.14.0 removes the mode.',
+    replacement: 'Peer state sync: drop the state_sync.sync block or set it to "Peers"',
+    replacement_url: NEARCORE_2_13,
+    since: '2026-07-09',
+    effective: 'nearcore 2.13.0',
+    matchers: { config: ['ExternalStorage'] },
+    subjects: ['id:ExternalStorage'],
+    evidence: [
+      { signal: 'release_removal', strength: 'strong', source_url: NEARCORE_2_13, quote: 'Centralized (external-storage) state sync is no longer supported', upstream_date: '2026-07-09' },
+      { signal: 'release_removal', strength: 'strong', source_url: NEARCORE_2_14, quote: 'Removed centralized (external-storage) state sync.', upstream_date: '2026-10-26' },
+    ],
+  },
+  {
+    id: 'near-lake',
+    title: 'NEAR Lake (the AWS S3 block source) and NEAR Lake Framework',
+    kind: 'service',
+    status: 'removed',
+    summary: 'NEAR Lake was deprecated on 2026-03-24 and no longer indexes new blocks, so the Lake Framework has nothing new to read. The NEAR Public Lakehouse / BigQuery dataset remains.',
+    replacement: 'NEAR Public Lakehouse (BigQuery)',
+    replacement_url: 'https://github.com/near/near-public-lakehouse',
+    since: '2026-03-24',
+    effective: null,
+    matchers: {
+      npm: ['@near-lake/framework'],
+      crates: ['near-lake-framework'],
+      imports: ['@near-lake/framework', 'near_lake_framework'],
+      urls: ['near-lake-data-mainnet', 'near-lake-data-testnet'],
+    },
+    subjects: ['npm:@near-lake/framework', 'crates:near-lake-framework'],
+    evidence: [
+      { signal: 'docs_statement', strength: 'strong', source_url: 'https://docs.near.org/data-infrastructure/big-query', quote: 'NEAR Lake (the AWS S3 source) was deprecated on March 24, 2026', upstream_date: '2026-03-24' },
+      { signal: 'docs_statement', strength: 'strong', source_url: 'https://docs.near.org/data-infrastructure/what-is', quote: 'NEAR Lake has been retired.', upstream_date: null },
+    ],
+  },
+  {
+    id: 'bos-components',
+    title: 'BOS (near.social components and widgets)',
+    kind: 'product',
+    status: 'deprecated',
+    summary: 'The BOS framework of components and widgets is deprecated. The SocialDB social graph on social.near stays live; read and write it directly, for example with near-social-js.',
+    replacement: 'SocialDB directly, through near-social-js',
+    replacement_url: 'https://docs.near.org/primitives/social',
+    since: null,
+    effective: null,
+    matchers: { npm: ['near-social-vm'], imports: ['near-social-vm'], identifiers: ['VM.require'] },
+    subjects: ['npm:near-social-vm', 'github:near/nearsocial_vm'],
+    evidence: [
+      { signal: 'docs_statement', strength: 'strong', source_url: 'https://docs.near.org/primitives/social', quote: 'While the BOS framework (components/widgets) is deprecated, the social graph stored in SocialDB is still live and maintained.', upstream_date: null },
+    ],
+  },
+  {
+    id: 'pagoda-services',
+    title: 'Pagoda hosted services (RPC, Console, Enhanced API)',
+    kind: 'service',
+    status: 'removed',
+    summary: "Pagoda's hosted RPC endpoints refuse requests and its Console and Enhanced API repositories are archived. docs.near.org's near-api page still uses rpc.testnet.pagoda.co in examples (2026-11-01); use an endpoint from the RPC providers list.",
+    replacement: 'A public RPC endpoint from the providers list (e.g. https://free.rpc.fastnear.com)',
+    replacement_url: 'https://docs.near.org/api/rpc/providers',
+    since: null,
+    effective: null,
+    matchers: { urls: ['rpc.mainnet.pagoda.co', 'rpc.testnet.pagoda.co'] },
+    subjects: ['github:near/pagoda-console', 'github:near/near-enhanced-api-server'],
+    evidence: [
+      { signal: 'probe', strength: 'medium', source_url: 'https://rpc.mainnet.pagoda.co', quote: 'HTTP 403 to a JSON-RPC status call (mainnet and testnet endpoints)', upstream_date: null, checked: '2026-11-01' },
+    ],
+  },
+  {
+    id: 'fast-auth-signer',
+    title: 'fast-auth-signer (the original FastAuth iframe signer)',
+    kind: 'product',
+    status: 'deprecated',
+    summary: 'The original FastAuth signer repository is archived. FastAuth today is the @fast-auth-near SDK (FastAuthProvider over Auth0 and the fast-auth.near contract).',
+    replacement: '@fast-auth-near/react-sdk',
+    replacement_url: 'https://docs.near.org/web3-apps/tutorials/near-auth',
+    since: null,
+    effective: null,
+    matchers: {},
+    subjects: ['github:near/fast-auth-signer'],
+    evidence: [],
+  },
+  {
+    id: 'wallet-selector',
+    title: 'NEAR Wallet Selector (@near-wallet-selector/*)',
+    kind: 'package',
+    status: 'superseded',
+    summary: 'Wallet Selector remains supported during a transition period, but the NEAR Infra Committee / NEAR Foundation recommend HOT Connect, and every docs.near.org wallet guide now uses @hot-labs/near-connect.',
+    replacement: '@hot-labs/near-connect',
+    replacement_url: 'https://docs.near.org/tools/near-connect',
+    since: null,
+    effective: null,
+    matchers: { npm: ['@near-wallet-selector/core', '@near-wallet-selector/modal-ui'], imports: ['@near-wallet-selector/core', '@near-wallet-selector/modal-ui'] },
+    subjects: ['github:near/wallet-selector'],
+    evidence: [
+      { signal: 'docs_statement', strength: 'medium', source_url: 'https://docs.near.org/web3-apps/quickstart', quote: 'Yes. Install `@hot-labs/near-connect` and `near-api-js` and follow our [integration guide](/web3-apps/tutorials/wallet-login).', upstream_date: null },
+    ],
+  },
+  {
+    id: 'shade-agents',
+    title: 'Shade Agents',
+    kind: 'product',
+    status: 'possibly_deprecated',
+    summary: 'The original shade-agent-js and shade-agent-cli repositories are deprecated with known critical vulnerabilities and point to shade-agent-framework; NEAR\'s awesome-near lists Shade Agent as deprecated and no longer maintained, while @neardefi/shade-agent-js 2.2.0 shipped in June 2026. Do not build on it for mainnet without checking its current status.',
+    replacement: null,
+    replacement_url: 'https://github.com/NearDeFi/shade-agent-framework',
+    since: null,
+    effective: null,
+    matchers: { npm: ['@neardefi/shade-agent-js', '@neardefi/shade-agent-cli'], imports: ['@neardefi/shade-agent-js'] },
+    subjects: ['npm:@neardefi/shade-agent-js', 'npm:@neardefi/shade-agent-cli'],
+    evidence: [
+      // Medium, not strong: the notice is on the pre-framework repository,
+      // while the npm package this entry matches is now published from
+      // shade-agent-framework.
+      { signal: 'readme_notice', strength: 'medium', source_url: 'https://github.com/NearDeFi/shade-agent-js', quote: 'This is a deprecated version of shade-agent-js and contains known critical vulnerabilities.', upstream_date: null, checked: '2026-11-01' },
+      { signal: 'ecosystem_list', strength: 'medium', source_url: 'https://github.com/near/awesome-near', quote: 'Deprecated — This project is no longer maintained.', upstream_date: null, checked: '2026-11-01' },
+      { signal: 'registry_activity', strength: 'medium', source_url: 'https://www.npmjs.com/package/@neardefi/shade-agent-js', quote: '2.2.0 published 2026-06-04', upstream_date: '2026-06-04', supports: false, checked: '2026-11-01' },
+    ],
+  },
+  {
+    id: 'near-wallet-web',
+    title: 'NEAR Wallet (wallet.near.org)',
+    kind: 'service',
+    status: 'removed',
+    summary: 'wallet.near.org is discontinued; accounts live on chain and work in any NEAR wallet. Connect wallets through @hot-labs/near-connect.',
+    replacement: '@hot-labs/near-connect and the wallets it lists',
+    replacement_url: 'https://docs.near.org/tools/near-connect',
+    since: null,
+    effective: null,
+    matchers: { urls: ['wallet.near.org'] },
+    subjects: ['github:near/near-wallet'],
+    evidence: [
+      { signal: 'docs_statement', strength: 'strong', source_url: 'https://docs.near.org/communities', quote: 'wallet.near.org will be discontinued.', upstream_date: null },
+      { signal: 'probe', strength: 'medium', source_url: 'https://wallet.near.org', quote: 'Serves "NEAR Ecosystem Wallets", a list of other wallets, instead of a wallet', upstream_date: null, checked: '2026-11-01' },
+    ],
+  },
+];
