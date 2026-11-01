@@ -152,6 +152,62 @@ export function initNearSchema(db: Database.Database): void {
       PRIMARY KEY (network, epoch_id, account_id)
     );
 
+    CREATE TABLE IF NOT EXISTS hos_proposals (
+      id INTEGER PRIMARY KEY,
+      title TEXT NOT NULL,
+      status TEXT NOT NULL,
+      status_since TEXT,
+      flow TEXT,
+      proposer_id TEXT NOT NULL,
+      reviewer_id TEXT,
+      created_at TEXT NOT NULL,
+      approved_at TEXT,
+      voting_starts_at TEXT,
+      voting_ends_at TEXT,
+      timelock_ends_at TEXT,
+      expires_at TEXT,
+      snapshot_block_height INTEGER,
+      total_venear TEXT,
+      votes_for TEXT NOT NULL,
+      votes_against TEXT NOT NULL,
+      votes_abstain TEXT NOT NULL,
+      voters_for INTEGER NOT NULL,
+      voters_against INTEGER NOT NULL,
+      voters_abstain INTEGER NOT NULL,
+      votes_total TEXT NOT NULL,
+      voters_total INTEGER NOT NULL,
+      quorum_threshold_bps INTEGER,
+      quorum_floor TEXT,
+      quorum_required TEXT,
+      approval_threshold_bps INTEGER,
+      quorum_met INTEGER,
+      approval_met INTEGER,
+      has_actions INTEGER NOT NULL DEFAULT 0,
+      link TEXT,
+      description TEXT,
+      hsp_number INTEGER,
+      forum_topic_id INTEGER,
+      forum_url TEXT,
+      forum_match TEXT CHECK(forum_match IN ('hsp','title')),
+      synced_at TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_hos_proposals_status ON hos_proposals(status);
+    CREATE INDEX IF NOT EXISTS idx_hos_proposals_hsp ON hos_proposals(hsp_number);
+
+    CREATE TABLE IF NOT EXISTS hos_stats (
+      observed_at TEXT PRIMARY KEY,
+      venear_total TEXT NOT NULL,
+      venear_accounts INTEGER NOT NULL,
+      proposals INTEGER NOT NULL,
+      active_proposals INTEGER NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS sync_state (
+      key TEXT PRIMARY KEY,
+      value TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+
     CREATE TABLE IF NOT EXISTS http_validators (
       url TEXT PRIMARY KEY,
       etag TEXT NOT NULL,

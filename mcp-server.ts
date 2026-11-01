@@ -49,6 +49,7 @@ import { deadlinePassed } from './lib/radar.js';
 import { allDeprecations, evidenceOf, findDeprecations, getDeprecation, renderDeprecation } from './lib/deprecations.js';
 import { checkCode, MAX_CODE_CHARS, renderCheck } from './lib/check-code.js';
 import { protocolReport, renderProtocol } from './lib/protocol.js';
+import { countProposals, getProposal, hosSynced, listProposals, proposalsForHsp, renderProposal } from './lib/hos-read.js';
 import { NETWORKS } from './lib/near-sources.js';
 import { LANGUAGES as CODE_LANGUAGES, type Language } from './lib/code-scan.js';
 import { isStableTag, latestStableByLine, type ReleaseRow } from './lib/yourchain-versions.js';
@@ -2119,6 +2120,51 @@ server.tool('get_protocol_status',
   }
 );
 
+// ── House of Stake ───────────────────────────────────────────────────────────
+const HOS_STATUSES = ['Created', 'Rejected', 'Voting', 'Vetoed', 'Timelock', 'Expired', 'Succeeded', 'Defeated', 'Executable', 'InProgress', 'Failed', 'Slashed', 'Sandbox', 'Scheduled', 'Queued'] as const;
+
+server.tool('list_proposals',
+  'List NEAR House of Stake governance proposals from the vote.dao contract, newest first: id, HSP number, status (with lapsed deadlines called out), vote standing against quorum and approval thresholds, and the gov.near.org thread. Filter by status or by text in the title and description. Use for "what is NEAR governance voting on", "did HSP-027 pass". For one proposal in full use get_proposal.',
+  {
+    status: z.enum(HOS_STATUSES).optional().describe('Contract status, e.g. "Voting" or "Succeeded".'),
+    query: z.string().max(200).optional().describe('Text to find in the title or description.'),
+    limit: z.number().int().min(1).max(50).optional().describe('Most proposals to return (default 10).'),
+  },
+  async ({ status, query, limit }) => {
+    try {
+      const db = getDb();
+      if (!hosSynced(db)) return { content: [{ type: 'text', text: 'House of Stake has not been synced on this server yet.' }] };
+      const rows = listProposals(db, { status, q: query, limit: limit ?? 10 });
+      if (rows.length === 0) return { content: [{ type: 'text', text: 'No House of Stake proposal matches.' }] };
+      const now = new Date();
+      return { content: [{ type: 'text', text: [`${rows.length} proposal${rows.length === 1 ? '' : 's'} (synced ${rows[0].synced_at.slice(0, 16)} UTC). ${UNTRUSTED_INLINE_LEGEND}`, ...rows.map((p) => renderProposal(p, now, fenceUntrustedInline))].join('\n\n') }] };
+    } catch (e) {
+      const msg = (e as Error).message;
+      return { content: [{ type: 'text', text: /no such table/.test(msg) ? 'House of Stake has not been synced on this server yet.' : `list_proposals failed: ${msg}` }] };
+    }
+  }
+);
+
+server.tool('get_proposal',
+  'One NEAR House of Stake proposal in full: status, timeline, the vote with the quorum and approval arithmetic of the vote.dao contract, links on chain and to its gov.near.org thread, and the proposal text. Pass the on-chain id ("27") or the HSP number ("HSP-027").',
+  {
+    proposal: z.string().min(1).max(40).describe('On-chain id ("27", "#27") or HSP number ("HSP-027", "HSP 27").'),
+  },
+  async ({ proposal }) => {
+    try {
+      const db = getDb();
+      if (!hosSynced(db)) return { content: [{ type: 'text', text: 'House of Stake has not been synced on this server yet.' }] };
+      const p = getProposal(db, proposal);
+      if (!p) return { content: [{ type: 'text', text: `No House of Stake proposal "${fenceUntrustedInline(proposal)}". list_proposals shows what exists.` }] };
+      const sameHsp = p.hsp_number !== null ? proposalsForHsp(db, p.hsp_number) : [];
+      return { content: [{ type: 'text', text: `${UNTRUSTED_INLINE_LEGEND}\n\n${renderProposal(p, new Date(), fenceUntrustedInline, { full: true, fenceBlock: fenceUntrusted, sameHsp })}` }] };
+    } catch (e) {
+      const msg = (e as Error).message;
+      return { content: [{ type: 'text', text: /no such table/.test(msg) ? 'House of Stake has not been synced on this server yet.' : `get_proposal failed: ${msg}` }] };
+    }
+  }
+);
+
 // ── get_radar ────────────────────────────────────────────────────────────────
 server.tool('get_radar', 'Get the NEAR Radar, nearpedia\'s curated feed of time-sensitive ecosystem alerts: breaking changes, upgrade deadlines, protocol changes and required node-operator/application actions, each with deadline, affected components and source link. Filter by level (critical/important/ecosystem/all). NEAR-only. Use when a user asks what\'s changing, what\'s about to break, or what deadlines are approaching on NEAR.',
   {
@@ -2662,6 +2708,35 @@ app.get('/api/v1/deprecations', (req, res) => {
     });
   } catch (e) {
     if (/no such table/.test((e as Error).message)) return res.status(503).json({ error: 'deprecation index not built yet' });
+    throw e;
+  }
+});
+
+// GET /api/v1/proposals?status=Voting&q=issuance&limit=20 - House of Stake proposals.
+app.get('/api/v1/proposals', (req, res) => {
+  const first = (v: unknown) => (Array.isArray(v) ? v[0] : v) as string | undefined;
+  try {
+    const db = getDb();
+    if (!hosSynced(db)) return res.status(503).json({ error: 'House of Stake not synced yet' });
+    const filter = { status: first(req.query.status), q: first(req.query.q) };
+    const rows = listProposals(db, { ...filter, limit: clampLimit(first(req.query.limit) ?? '20', 20, 100) });
+    res.json({ total: countProposals(db, filter), items: rows.map((p) => ({ ...p, description: undefined, url: `${SITE.url}/api/v1/proposals/${p.id}` })) });
+  } catch (e) {
+    if (/no such table/.test((e as Error).message)) return res.status(503).json({ error: 'House of Stake not synced yet' });
+    throw e;
+  }
+});
+
+// GET /api/v1/proposals/:ref - one proposal by id or HSP number, with its text.
+app.get('/api/v1/proposals/:ref', (req, res) => {
+  try {
+    const db = getDb();
+    if (!hosSynced(db)) return res.status(503).json({ error: 'House of Stake not synced yet' });
+    const p = getProposal(db, req.params.ref);
+    if (!p) return res.status(404).json({ error: 'not found', ref: req.params.ref });
+    res.json({ ...p, same_hsp: p.hsp_number !== null ? proposalsForHsp(db, p.hsp_number).filter((x) => x.id !== p.id) : [] });
+  } catch (e) {
+    if (/no such table/.test((e as Error).message)) return res.status(503).json({ error: 'House of Stake not synced yet' });
     throw e;
   }
 });
@@ -3579,6 +3654,8 @@ app.get('/api/v1', (_req, res) => {
     base: `${SITE.url}/api/v1`,
     endpoints: [
       { path: '/api/v1/protocol', params: 'network (mainnet|testnet)' },
+      { path: '/api/v1/proposals', params: 'status, q, limit' },
+      { path: '/api/v1/proposals/:ref', params: 'on-chain id or HSP number, e.g. 27 or HSP-027' },
       { path: '/api/v1/check-code', params: 'POST { code, filename?, language? }' },
       { path: '/api/v1/deprecations', params: 'q, kind, status, limit, offset' },
       { path: '/api/v1/deprecations/:id', params: 'entry id, e.g. near-sdk-js' },

@@ -9,6 +9,8 @@
  * scripts/*.ts file uses relative imports instead of `@/`.
  */
 export const ENDPOINTS = [
+  { path: '/api/v1/proposals', desc: 'House of Stake proposals from vote.dao with vote standing and forum thread', params: 'status, q, limit' },
+  { path: '/api/v1/proposals/:ref', desc: 'One House of Stake proposal with its text', params: 'on-chain id or HSP number, e.g. "27" or "HSP-027"' },
   { path: '/api/v1/protocol', desc: 'Protocol version, upgrade vote by stake, epoch progress and upgrade schedule of mainnet and testnet', params: 'network (mainnet|testnet)' },
   { path: 'POST /api/v1/check-code', desc: 'Check one NEAR source file or manifest for removed, deprecated, changed or superseded APIs and outdated dependencies', params: 'Body: { code: string (≤100000 chars), filename?, language? (js|rust|cargo|package-json|json|toml|text) }' },
   { path: '/api/v1/deprecations', desc: 'Deprecated, removed and changed NEAR packages, APIs and services, each with evidence', params: 'q, kind, status, limit, offset' },

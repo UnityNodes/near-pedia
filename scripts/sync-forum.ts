@@ -1,178 +1,198 @@
 /**
- * Sync the FULL NEAR Discourse forum (forum.yourchain.example) via the CF bypass.
- * Pulls every topic across /latest.json pages, then every post in each topic via
- * the post_stream (chunked). Run under xvfb:  xvfb-run -a npx tsx scripts/sync-forum.ts
+ * gov.near.org into categories, forum_topics and forum_posts over the plain
+ * Discourse JSON API (no browser: the forum is not behind a challenge).
+ *
+ * Topics: each listing in lib/gov-forum.ts is paged newest-bumped first and
+ * stops at the page whose topics are all at or before the listing's
+ * watermark, so a run reads one page when nothing changed. A first run, or
+ * `--full`, pages to the end.
+ *
+ * Posts: for listings marked `posts`, topics whose last post is newer than
+ * their last post read, at most POST_TOPICS a run, newest first; long threads
+ * through posts.json in chunks of 20. Edits do not move last_posted_at, so a
+ * topic is also re-read after REREAD_DAYS.
+ *
+ *   npx tsx scripts/sync-forum.ts [--full]
  */
-import 'dotenv/config';
-import { guardSync } from '../lib/sync-log';
+
+import { config } from 'dotenv';
+config({ path: '.env.local' });
+
 import { getDb } from '../lib/db';
-import { openCf } from '../lib/cf-fetch';
-import { isSpamTopic } from '../lib/refusals';
-import { deleteSourceEmbeddings } from '../lib/vector-store';
-import { isoNowSql } from '../lib/formats';
+import { guardSync, logRun } from '../lib/sync-log';
+import { isEntrypoint } from '../lib/is-entrypoint';
+import { SITE } from '../lib/site.config';
+import { politeGetJson } from '../lib/polite-fetch';
+import { FORUM_LISTINGS, FORUM_ORIGIN, parseListing, parseTopic, type PostRow, type TopicRow } from '../lib/gov-forum';
 
-const ORIGIN = 'https://forum.yourchain.example';
+const UA = `${SITE.slug}-sync/1.0 (+${SITE.publisher.url})`;
+const FULL = process.argv.includes('--full');
+const PACE_MS = 500;
+const MAX_PAGES = 200;
+const POST_TOPICS = Number(process.env.FORUM_POST_TOPICS ?? 40);
+const POSTS_PER_REQUEST = 20;
+const MAX_POSTS_PER_TOPIC = 400;
+const REREAD_DAYS = 14;
 
-interface DiscourseCategory { id: number; name: string; color: string; slug: string; topic_count?: number; subcategory_list?: DiscourseCategory[] }
-interface DiscoursePost { id: number; post_number: number; username: string; created_at: string; cooked: string; actions_summary?: { id: number; count?: number }[] }
-interface TopicPage { topic_list?: { topics?: TopicRow[]; more_topics_url?: string } }
-interface TopicJson { post_stream?: { stream?: number[]; posts?: DiscoursePost[] } }
-interface TopicRow { id: number; title: string; category_id: number; created_at: string; last_posted_at: string; posts_count: number; reply_count: number; views: number; like_count: number; last_poster_username?: string; slug: string; }
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+const get = <T>(path: string) => politeGetJson<T>(`${FORUM_ORIGIN}${path}`, { userAgent: UA, headers: { Accept: 'application/json' } });
 
-// Existing rows that match the latest blocklist or patterns need to go too -
-// filtering the crawl at insert time (below) only stops a NEW one from
-// landing. Run this on every forum sync so a fresh entry in lib/refusals.ts's
-// SPAM_TOPIC_IDS/SPAM_TITLE_PATTERNS retroactively clears the DB without a
-// manual SQL pass, and scripts/check-refusals.ts asks forum_topics whether
-// they still agree.
-function cleanupExistingSpam() {
+interface Category { id: number; name: string; color?: string; slug: string; topic_count: number }
+interface CategoryDoc { category_list?: { categories?: Array<Category & { subcategory_list?: Category[] }> } }
+
+/** Writes the categories and returns the ids whose topics get their posts read: each `posts` listing and its subcategories. */
+async function syncCategories(now: string): Promise<{ count: number; postCategories: Set<number> }> {
+  const doc = await get<CategoryDoc>('/categories.json?include_subcategories=true');
+  const cats = doc?.category_list?.categories ?? [];
+  if (cats.length === 0) throw new Error('categories.json returned no categories');
   const db = getDb();
-  const rows = db.prepare('SELECT id, title FROM forum_topics').all() as { id: number; title: string }[];
-  const toDelete = rows.filter(isSpamTopic).map(r => r.id);
-  if (toDelete.length === 0) return;
-  console.log(`Cleaning up ${toDelete.length} existing spam topic(s): ${toDelete.join(', ')}`);
-  const delPost = db.prepare('DELETE FROM forum_posts WHERE topic_id = ?');
-  const delTopic = db.prepare('DELETE FROM forum_topics WHERE id = ?');
+  const ins = db.prepare(`INSERT INTO categories (id, name, color, slug, topic_count, synced_at) VALUES (?, ?, ?, ?, ?, ?)
+      ON CONFLICT(id) DO UPDATE SET name = excluded.name, color = excluded.color, slug = excluded.slug, topic_count = excluded.topic_count, synced_at = excluded.synced_at`);
+  let n = 0;
+  const withPosts = new Set(FORUM_LISTINGS.filter((l) => l.posts).map((l) => l.id));
+  const postCategories = new Set<number>();
   db.transaction(() => {
-    for (const id of toDelete) { delPost.run(id); delTopic.run(id); }
+    for (const c of cats) {
+      ins.run(c.id, c.name, c.color ?? null, c.slug, c.topic_count, now); n++;
+      if (withPosts.has(c.id)) postCategories.add(c.id);
+      for (const s of c.subcategory_list ?? []) {
+        ins.run(s.id, s.name, s.color ?? null, s.slug, s.topic_count, now); n++;
+        if (withPosts.has(c.id) || withPosts.has(s.id)) postCategories.add(s.id);
+      }
+    }
   })();
-  // Through the shared helper, which removes the chunk AND its vector -
-  // deleting embedding_chunks directly leaves the vector behind (on a
-  // 5-minute sync, orphans accumulate silently).
-  for (const id of toDelete) deleteSourceEmbeddings('forum_topic', String(id));
-  db.exec("INSERT INTO forum_fts(forum_fts) VALUES('rebuild')");
+  return { count: n, postCategories };
 }
 
-async function main() {
+function watermark(key: string): string | null {
+  return (getDb().prepare('SELECT value FROM sync_state WHERE key = ?').get(key) as { value: string } | undefined)?.value ?? null;
+}
+
+function setWatermark(key: string, value: string, now: string): void {
+  getDb().prepare(`INSERT INTO sync_state (key, value, updated_at) VALUES (?, ?, ?)
+      ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at`).run(key, value, now);
+}
+
+async function syncListing(id: number, now: string): Promise<{ topics: number; complete: boolean }> {
   const db = getDb();
-  cleanupExistingSpam();
-  const cf = await openCf(ORIGIN);
-  console.log('CF session open');
-
-  // ── categories ──
-  try {
-    // include_subcategories: Discourse returns only top-level categories by
-    // default, nesting children under subcategory_list. Storing just the top
-    // level left 70 of 250 topics pointing at a category_id with no row, so the
-    // /discussions filter could not reach them at all.
-    const cats = await cf.json<{ category_list?: { categories?: DiscourseCategory[] } }>('/categories.json?include_subcategories=true');
-    const flatten = (nodes: DiscourseCategory[]): DiscourseCategory[] =>
-      (nodes ?? []).flatMap((c) => [c, ...flatten(c.subcategory_list ?? [])]);
-    const list = flatten(cats?.category_list?.categories ?? []);
-    const insCat = db.prepare(`INSERT OR REPLACE INTO categories (id,name,color,slug,topic_count,synced_at) VALUES (?,?,?,?,?,${isoNowSql()})`);
-    for (const c of list) insCat.run(c.id, c.name, c.color, c.slug, c.topic_count ?? 0);
-    console.log('categories:', list.length);
-  } catch (e) { console.warn('categories skip:', (e as Error).message); }
-
-  // ── gather ALL topics: /latest pages UNION per-category crawl (catches
-  //    pinned/closed/archived/subcategory topics /latest.json omits), deduped ──
-  const byId = new Map<number, TopicRow>();
-  const addBatch = (batch: TopicRow[]) => { for (const t of batch) if (t?.id) byId.set(t.id, t); };
-
-  for (let page = 0; page < 40; page++) {
-    let data: TopicPage;
-    try { data = await cf.json<TopicPage>(`/latest.json?no_definitions=true&page=${page}`); }
-    catch (e) { console.warn(`latest page ${page}:`, (e as Error).message); break; }
-    const batch: TopicRow[] = data?.topic_list?.topics ?? [];
-    if (batch.length === 0) break;
-    addBatch(batch);
-    if (!data?.topic_list?.more_topics_url) break;
-  }
-  console.log(`after /latest: ${byId.size} topics`);
-
-  // full category list (incl subcategories) from site.json
-  let cats: { id: number; slug: string }[] = [];
-  try {
-    const site = await cf.json<{ categories?: { id: number; slug: string }[] }>('/site.json');
-    cats = (site?.categories ?? []).map((c) => ({ id: c.id, slug: c.slug }));
-  } catch (e) { console.warn('site.json:', (e as Error).message); }
-  for (const c of cats) {
-    for (let page = 0; page < 40; page++) {
-      let data: TopicPage;
-      try { data = await cf.json<TopicPage>(`/c/${c.slug}/${c.id}.json?page=${page}`); }
-      catch { break; }
-      const batch: TopicRow[] = data?.topic_list?.topics ?? [];
-      if (batch.length === 0) break;
-      addBatch(batch);
-      if (!data?.topic_list?.more_topics_url) break;
+  const key = `forum:listing:${id}:bumped`;
+  const mark = FULL ? null : watermark(key);
+  const upsert = db.prepare(`INSERT INTO forum_topics (id, title, category_id, created_at, last_post_at, posts_count, reply_count, views, like_count, last_poster_username, url, synced_at)
+      VALUES (@id, @title, @category_id, @created_at, @last_post_at, @posts_count, @reply_count, @views, @like_count, @last_poster_username, @url, @synced_at)
+      ON CONFLICT(id) DO UPDATE SET title = excluded.title, category_id = excluded.category_id, last_post_at = excluded.last_post_at,
+        posts_count = excluded.posts_count, reply_count = excluded.reply_count, views = excluded.views, like_count = excluded.like_count,
+        last_poster_username = excluded.last_poster_username, url = excluded.url, synced_at = excluded.synced_at`);
+  let newest = mark;
+  let written = 0;
+  for (let page = 0; page < MAX_PAGES; page++) {
+    const doc = await get<unknown>(`/c/${id}.json?page=${page}`);
+    if (doc === null) throw new Error(`/c/${id}.json not found`);
+    const { topics, hasMore } = parseListing(doc);
+    const fresh = topics.filter((t: TopicRow) => t.pinned || !mark || (t.bumped_at ?? '') > mark);
+    db.transaction(() => {
+      for (const t of fresh) upsert.run({ ...t, synced_at: now });
+    })();
+    written += fresh.length;
+    for (const t of topics) if (t.bumped_at && (!newest || t.bumped_at > newest)) newest = t.bumped_at;
+    const reachedMark = mark !== null && topics.filter((t) => !t.pinned).every((t) => (t.bumped_at ?? '') <= mark);
+    if (!hasMore || reachedMark) {
+      if (newest) setWatermark(key, newest, now);
+      return { topics: written, complete: true };
     }
+    await sleep(PACE_MS);
   }
-  const crawled: TopicRow[] = [...byId.values()];
-  // The door: a blocklisted or pattern-matched topic never reaches
-  // forum_topics in the first place. cleanupExistingSpam() above handles a
-  // row that is already there; this is the other half, so a re-crawl every
-  // few minutes can't put a cleaned-up topic straight back (the exact shape
-  // of a sitemap catch-up that consulted neither list, deleting and
-  // re-fetching the same "spam" topic forever).
-  const topics = crawled.filter(t => !isSpamTopic(t));
-  if (topics.length !== crawled.length) {
-    console.log(`refused ${crawled.length - topics.length} spam topic(s) at the door`);
-  }
-  console.log(`after category crawl (${cats.length} cats): ${topics.length} topics`);
-
-  // Upsert topic METADATA for all crawled topics WITHOUT touching posts_synced_at
-  // (so the incremental post-backfill below can tell which topics are stale).
-  const upTopic = db.prepare(`INSERT INTO forum_topics
-    (id,title,category_id,created_at,last_post_at,posts_count,reply_count,views,like_count,last_poster_username,url,synced_at)
-    VALUES (@id,@title,@category_id,@created_at,@last_post_at,@posts_count,@reply_count,@views,@like_count,@last_poster_username,@url,${isoNowSql()})
-    ON CONFLICT(id) DO UPDATE SET title=excluded.title, category_id=excluded.category_id,
-      last_post_at=excluded.last_post_at, posts_count=excluded.posts_count, reply_count=excluded.reply_count,
-      views=excluded.views, like_count=excluded.like_count, last_poster_username=excluded.last_poster_username,
-      url=excluded.url, synced_at=${isoNowSql()}`);
-  const upAll = db.transaction((arr: TopicRow[]) => {
-    for (const t of arr) upTopic.run({ id: t.id, title: t.title, category_id: t.category_id, created_at: t.created_at,
-      last_post_at: t.last_posted_at, posts_count: t.posts_count, reply_count: t.reply_count, views: t.views,
-      like_count: t.like_count, last_poster_username: t.last_poster_username ?? null, url: `${ORIGIN}/t/${t.slug}/${t.id}` });
-  });
-  upAll(topics);
-
-  const insPost = db.prepare(`INSERT OR REPLACE INTO forum_posts
-    (id,topic_id,post_number,username,created_at,cooked,like_count,synced_at)
-    VALUES (?,?,?,?,?,?,?,${isoNowSql()})`);
-  const markSynced = db.prepare(`UPDATE forum_topics SET posts_synced_at=${isoNowSql()} WHERE id=?`);
-
-  // Incremental, BOUNDED post backfill: each run pulls posts for the topics that
-  // are new or have changed since their last post-sync (recent first), capped so
-  // a single run never hammers Discourse's anon rate limit. Coverage accumulates
-  // across cron runs until every topic's posts are stored.
-  const PER_RUN = parseInt(process.env.FORUM_POST_TOPICS ?? '40', 10);
-  const stale = db.prepare(`SELECT id FROM forum_topics
-    WHERE posts_synced_at IS NULL OR posts_synced_at < last_post_at
-    ORDER BY (posts_synced_at IS NULL) DESC, last_post_at DESC LIMIT ?`).all(PER_RUN) as { id: number }[];
-  console.log(`post backfill: ${stale.length} stale topics this run (cap ${PER_RUN})`);
-
-  const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
-  let totalPosts = 0;
-  for (const { id } of stale) {
-    await sleep(1300); // stay under Discourse anon rate limit (strict on /t/{id}.json)
-    let topicJson: TopicJson;
-    try { topicJson = await cf.json<TopicJson>(`/t/${id}.json?include_raw=false`); }
-    catch (e) { console.warn(`topic ${id}:`, (e as Error).message); continue; }
-
-    const stream: number[] = topicJson?.post_stream?.stream ?? [];
-    const loaded: DiscoursePost[] = topicJson?.post_stream?.posts ?? [];
-    const have = new Set(loaded.map((p) => p.id));
-    const writePost = (p: DiscoursePost) => insPost.run(p.id, id, p.post_number, p.username, p.created_at, p.cooked, p.actions_summary?.find((a) => a.id === 2)?.count ?? 0);
-    for (const p of loaded) { writePost(p); totalPosts++; }
-
-    const missing = stream.filter((pid) => !have.has(pid));
-    for (let i = 0; i < missing.length; i += 50) {
-      const chunk = missing.slice(i, i + 50);
-      const qs = chunk.map((pid) => `post_ids[]=${pid}`).join('&');
-      try {
-        const more = await cf.json<TopicJson>(`/t/${id}/posts.json?${qs}`);
-        for (const p of (more?.post_stream?.posts ?? [])) { writePost(p); totalPosts++; }
-      } catch (e) { console.warn(`posts chunk t${id}:`, (e as Error).message); }
-    }
-    markSynced.run(id);
-  }
-
-  try { db.exec("INSERT INTO forum_fts(forum_fts) VALUES('rebuild')"); } catch {}
-
-  const tc = (db.prepare('SELECT COUNT(*) c FROM forum_topics').get() as { c: number }).c;
-  const pc = (db.prepare('SELECT COUNT(*) c FROM forum_posts').get() as { c: number }).c;
-  console.log(`\nDONE — forum_topics=${tc}, forum_posts=${pc} (wrote ${totalPosts} posts this run)`);
-  await cf.close();
+  return { topics: written, complete: false };
 }
 
-guardSync('forum', main).catch((e) => { console.error(e); process.exit(1); });
+/**
+ * Every post of a topic, or for a thread longer than MAX_POSTS_PER_TOPIC the
+ * opening posts the first page carries plus the newest ones: a cap that kept
+ * the oldest 400 dropped exactly the replies a reader comes for. `complete`
+ * says whether the whole stream was read, which is what allows a prune.
+ */
+async function readPosts(topicId: number): Promise<{ posts: PostRow[]; complete: boolean }> {
+  const doc = await get<unknown>(`/t/${topicId}.json`);
+  if (doc === null) throw new Error('topic not found');
+  const first = parseTopic(doc);
+  const have = new Set(first.posts.map((p) => p.id));
+  const missing = first.stream.filter((id) => !have.has(id));
+  const rest = missing.length > MAX_POSTS_PER_TOPIC ? missing.slice(-MAX_POSTS_PER_TOPIC) : missing;
+  const posts = [...first.posts];
+  for (let i = 0; i < rest.length; i += POSTS_PER_REQUEST) {
+    await sleep(PACE_MS);
+    const ids = rest.slice(i, i + POSTS_PER_REQUEST).map((id) => `post_ids[]=${id}`).join('&');
+    const chunk = await get<{ post_stream?: { posts?: unknown[] } }>(`/t/${topicId}/posts.json?${ids}`);
+    if (!chunk?.post_stream) throw new Error(`posts.json for ${topicId} returned nothing`);
+    posts.push(...parseTopic({ id: topicId, post_stream: { stream: [], posts: chunk.post_stream.posts ?? [] } }).posts);
+  }
+  return { posts, complete: rest.length === missing.length };
+}
+
+async function syncPosts(postCategories: ReadonlySet<number>, now: string, problems: string[]): Promise<number> {
+  const db = getDb();
+  const ids = [...postCategories];
+  if (ids.length === 0) return 0;
+  const due = db.prepare(`SELECT id FROM forum_topics WHERE category_id IN (${ids.map(() => '?').join(',')})
+      AND (posts_synced_at IS NULL OR last_post_at > posts_synced_at OR posts_synced_at < strftime('%Y-%m-%dT%H:%M:%fZ', 'now', ?))
+      ORDER BY last_post_at DESC LIMIT ?`).all(...ids, `-${REREAD_DAYS} days`, POST_TOPICS) as { id: number }[];
+  const ins = db.prepare(`INSERT INTO forum_posts (id, topic_id, post_number, username, created_at, cooked, like_count, synced_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET cooked = excluded.cooked, like_count = excluded.like_count, synced_at = excluded.synced_at`);
+  const mark = db.prepare('UPDATE forum_topics SET posts_synced_at = ? WHERE id = ?');
+  const storedIds = db.prepare('SELECT id FROM forum_posts WHERE topic_id = ?');
+  const delPost = db.prepare('DELETE FROM forum_posts WHERE id = ?');
+  let read = 0;
+  for (const { id } of due) {
+    try {
+      const { posts, complete } = await readPosts(id);
+      db.transaction(() => {
+        for (const p of posts) ins.run(p.id, p.topic_id, p.post_number, p.username, p.created_at, p.cooked, p.like_count, now);
+        // A post hidden, deleted or withdrawn since the last read is no longer
+        // served; only after a complete read, or a partial one would delete
+        // the posts it skipped.
+        if (complete) {
+          const live = new Set(posts.map((p) => p.id));
+          for (const r of storedIds.all(id) as { id: number }[]) if (!live.has(r.id)) delPost.run(r.id);
+        }
+        mark.run(now, id);
+      })();
+      read++;
+    } catch (e) {
+      problems.push(`topic ${id}: ${(e as Error).message}`);
+      // Stamped anyway so a topic that always fails (removed, made private)
+      // waits for its next post or the reread clock instead of taking one of
+      // the run's slots every 15 minutes.
+      mark.run(now, id);
+    }
+    await sleep(PACE_MS);
+  }
+  return read;
+}
+
+async function main(): Promise<void> {
+  const db = getDb();
+  const now = new Date().toISOString();
+  const problems: string[] = [];
+  const { count: cats, postCategories } = await syncCategories(now);
+  let topics = 0;
+  for (const l of FORUM_LISTINGS) {
+    try {
+      const r = await syncListing(l.id, now);
+      topics += r.topics;
+      if (!r.complete) problems.push(`listing ${l.id}: stopped at ${MAX_PAGES} pages`);
+    } catch (e) {
+      problems.push(`listing ${l.id}: ${(e as Error).message}`);
+    }
+  }
+  const threads = await syncPosts(postCategories, now, problems);
+  try { db.exec("INSERT INTO forum_fts(forum_fts) VALUES('rebuild')"); } catch (e) { problems.push(`forum_fts rebuild: ${(e as Error).message}`); }
+  logRun('forum', { status: problems.length ? 'partial' : 'success', items: topics, error: problems.length ? problems.join(' ; ').slice(0, 1000) : undefined }, db);
+  console.log(`[sync-forum] ${cats} categories, ${topics} topics written, posts read for ${threads} threads${problems.length ? `; ${problems.length} problems` : ''}`);
+  for (const p of problems) console.warn(`  ${p}`);
+}
+
+if (isEntrypoint(import.meta.url)) {
+  guardSync('forum', main).catch((e) => {
+    console.error(e);
+    process.exit(1);
+  });
+}
