@@ -49,6 +49,12 @@ export interface Matchers {
   urls?: string[];
   /** Config keys or values (`state_sync.sync`, `ExternalStorage`). */
   config?: string[];
+  /**
+   * A text match is not a finding when one of these words sits within a few
+   * lines of it: a view_access_key_list call that already passes `limit` or
+   * `after_key` is the fixed form, not the broken one.
+   */
+  unlessNearby?: string[];
 }
 
 export interface Evidence {

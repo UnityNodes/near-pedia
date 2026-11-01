@@ -47,6 +47,8 @@ import { rankRows, likeTokens, escLike } from './lib/rank.js';
 import { radarLiveSql } from './lib/constants.js';
 import { deadlinePassed } from './lib/radar.js';
 import { allDeprecations, evidenceOf, findDeprecations, getDeprecation, renderDeprecation } from './lib/deprecations.js';
+import { checkCode, MAX_CODE_CHARS, renderCheck } from './lib/check-code.js';
+import { LANGUAGES as CODE_LANGUAGES, type Language } from './lib/code-scan.js';
 import { isStableTag, latestStableByLine, type ReleaseRow } from './lib/yourchain-versions.js';
 import type {
   BlogPostsRow, CipAttachmentsRow, CipStatusHistoryRow, CipsRow, DocPagesRow, EcosystemProjectsRow,
@@ -2081,6 +2083,24 @@ server.tool('check_deprecation',
   }
 );
 
+// ── check_code ───────────────────────────────────────────────────────────────
+server.tool('check_code',
+  'Check NEAR code before you ship it: finds the lines that import, depend on, call or configure something removed, deprecated, changed or superseded in NEAR (archived SDKs, removed protocol actions, deprecated RPC methods, retired endpoints), and dependencies that are yanked or whole breaking lines behind, each with the replacement and the source and date of the claim. Accepts one file: JavaScript/TypeScript, Rust, Cargo.toml, package.json or a JSON config. Use it on code written from memory, or when reviewing NEAR code. NEAR only. For one name rather than a file use check_deprecation.',
+  {
+    code: z.string().min(1).max(MAX_CODE_CHARS).describe(`The file contents, up to ${MAX_CODE_CHARS} characters.`),
+    filename: z.string().max(200).optional().describe('The file name, e.g. "contract.ts", "Cargo.toml", "package.json". Picks the language.'),
+    language: z.enum(CODE_LANGUAGES).optional().describe('Overrides the language detected from the file name or content.'),
+  },
+  async ({ code, filename, language }) => {
+    try {
+      return { content: [{ type: 'text', text: renderCheck(checkCode(getDb(), code, { filename, language: language as Language | undefined }), fenceUntrustedInline) }] };
+    } catch (e) {
+      const msg = (e as Error).message;
+      return { content: [{ type: 'text', text: /no such table/.test(msg) ? 'The deprecation index has not been built yet on this server, so the code cannot be checked.' : `check_code failed: ${msg}` }] };
+    }
+  }
+);
+
 // ── get_radar ────────────────────────────────────────────────────────────────
 server.tool('get_radar', 'Get the NEAR Radar, nearpedia\'s curated feed of time-sensitive ecosystem alerts: breaking changes, upgrade deadlines, protocol changes and required node-operator/application actions, each with deadline, affected components and source link. Filter by level (critical/important/ecosystem/all). NEAR-only. Use when a user asks what\'s changing, what\'s about to break, or what deadlines are approaching on NEAR.',
   {
@@ -2281,6 +2301,11 @@ const app = express();
 // ERR_ERL_UNEXPECTED_X_FORWARDED_FOR warning). 'loopback' trusts that header only
 // from a request that came from this host, so an outside client cannot forge it.
 app.set('trust proxy', 'loopback');
+// check-code takes a whole file, up to MAX_CODE_CHARS; JSON-escaped, quotes and
+// line breaks push a 95k-character file past the global 100 kB limit, which
+// broke the documented maximum. Its own parser runs first; the global one then
+// sees an already-parsed body and leaves it alone.
+app.use('/api/v1/check-code', express.json({ limit: '1mb' }));
 app.use(express.json());
 
 // ── Rate limiting ─────────────────────────────────────────────────────────────
@@ -2617,6 +2642,21 @@ app.get('/api/v1/deprecations', (req, res) => {
       built_at: (db.prepare('SELECT MAX(built_at) at FROM deprecations').get() as { at: string | null }).at,
       items: filtered.slice(o, o + n).map((d) => ({ ...d, url: `${SITE.url}/api/v1/deprecations/${encodeURIComponent(d.id)}` })),
     });
+  } catch (e) {
+    if (/no such table/.test((e as Error).message)) return res.status(503).json({ error: 'deprecation index not built yet' });
+    throw e;
+  }
+});
+
+// POST /api/v1/check-code { code, filename?, language? } - the check_code tool over REST.
+app.post('/api/v1/check-code', (req, res) => {
+  const body = req.body as { code?: unknown; filename?: unknown; language?: unknown } | undefined;
+  if (!body || typeof body.code !== 'string' || !body.code.trim()) return res.status(400).json({ error: 'Body must be { code: string, filename?: string, language?: string }' });
+  if (body.code.length > MAX_CODE_CHARS) return res.status(400).json({ error: `code is ${body.code.length} characters; send at most ${MAX_CODE_CHARS}, one file per request`, max: MAX_CODE_CHARS });
+  const language = typeof body.language === 'string' && (CODE_LANGUAGES as readonly string[]).includes(body.language) ? body.language as Language : undefined;
+  if (body.language !== undefined && !language) return res.status(400).json({ error: `language must be one of ${CODE_LANGUAGES.join(', ')}` });
+  try {
+    res.json(checkCode(getDb(), body.code, { filename: typeof body.filename === 'string' ? body.filename.slice(0, 200) : undefined, language }));
   } catch (e) {
     if (/no such table/.test((e as Error).message)) return res.status(503).json({ error: 'deprecation index not built yet' });
     throw e;
@@ -3505,6 +3545,7 @@ app.get('/api/v1', (_req, res) => {
     version: '1',
     base: `${SITE.url}/api/v1`,
     endpoints: [
+      { path: '/api/v1/check-code', params: 'POST { code, filename?, language? }' },
       { path: '/api/v1/deprecations', params: 'q, kind, status, limit, offset' },
       { path: '/api/v1/deprecations/:id', params: 'entry id, e.g. near-sdk-js' },
       { path: '/api/v1/cips', params: 'status, type, limit, offset' },
@@ -3556,6 +3597,9 @@ app.get('/health', (_req, res) => {
 app.use((err: unknown, req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error(`[mcp-server] unhandled error on ${req.method} ${req.path}:`, err instanceof Error ? err.message : err);
   if (res.headersSent) return;
+  const status = (err as { status?: number; type?: string })?.status;
+  if (status === 413) return res.status(413).json({ error: 'request body too large' });
+  if (status === 400 && (err as { type?: string }).type === 'entity.parse.failed') return res.status(400).json({ error: 'request body is not valid JSON' });
   res.status(500).json({ error: 'internal_error' });
 });
 

@@ -29,7 +29,7 @@ Package registries rarely flag any of this, so the agent finds out when the buil
 | Engine: SQLite store with FTS5 and `sqlite-vec` search, MCP server, REST API, web UI, cron sync runner, standing checks | inherited from the baseline (see below), rebranded |
 | NEAR sources | syncs written and run locally against the live sources: docs.near.org (198 pages), npm and crates.io (88 packages with every version, deprecation and yank flags), GitHub (804 repositories in 8 NEAR orgs, archived state and README deprecation notices), releases of 10 products from nearcore to near-api-js. Every change they see is logged. Not yet exposed as MCP tools |
 | Deprecation engine and seed entries | built and run locally: 133 entries from five automatic signals (archived repos, README notices, registry flags, release-note removals, the docs RPC reference's `[Deprecated]` marker) plus a weak dormancy signal, and 15 curated entries whose quotes are re-checked against the synced sources on every build. Served by the `check_deprecation` MCP tool and `/api/v1/deprecations` |
-| `check_code` | not started |
+| `check_code` | built: one JS/TS, Rust, Cargo.toml, package.json or JSON file in, the lines that import, depend on, call or configure something stale out, plus yanked pins and dependencies whole breaking lines behind. MCP tool and `POST /api/v1/check-code` |
 | RPC protocol state, House of Stake, radar | not started |
 | `/ask` through NEAR AI Cloud, daily database hash written to NEAR | not started |
 
@@ -45,7 +45,20 @@ npm run build && npm run start       # web UI on :3130
 npx tsx mcp-server.ts                # MCP + REST on :3131
 ```
 
-Then `curl http://127.0.0.1:3131/api/v1` lists the REST routes, and `claude mcp add --transport http nearpedia http://127.0.0.1:3131/mcp` connects Claude Code to the local server. Until the NEAR syncs land the database is empty, so the tools return no results.
+Fill the database once, so the tools have something to answer from (a `GITHUB_TOKEN` in the environment keeps the GitHub syncs inside their rate limit):
+
+```bash
+for s in sync-docs sync-packages sync-repos sync-github-releases build-deprecations; do npx tsx scripts/$s.ts; done
+```
+
+Then check a file written from memory:
+
+```bash
+curl -s -X POST http://127.0.0.1:3131/api/v1/check-code -H 'Content-Type: application/json' \
+  -d '{"filename":"contract.ts","code":"import { near } from \"near-sdk-js\";\nconst a = { DelegateV2: signed };"}'
+```
+
+You see two findings: line 1 imports near-sdk-js, which is archived (use near-sdk in Rust), and line 2 builds a DelegateV2 action, which nearcore 2.14.0 removed (use Delegate, signed with a regular access key), each with its sources. `claude mcp add --transport http nearpedia http://127.0.0.1:3131/mcp` gives Claude Code the same checks as the `check_code` and `check_deprecation` tools.
 
 ## What was built before the hackathon, and what during it
 
