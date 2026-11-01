@@ -12,7 +12,9 @@ export type ActivityKind =
   | 'new_forum_topic'
   | 'new_blog_post'
   | 'new_release'
-  | 'new_radar_item';
+  | 'new_radar_item'
+  /** A change the NEAR syncs observed: a repo archived, a package deprecated, a release, a protocol upgrade, an incident, a vote. */
+  | 'change_event';
 
 export interface ActivityItem {
   kind: ActivityKind;
@@ -42,6 +44,7 @@ const EMPTY_COUNTS: Record<ActivityKind, number> = {
   new_blog_post: 0,
   new_release: 0,
   new_radar_item: 0,
+  change_event: 0,
 };
 
 /**

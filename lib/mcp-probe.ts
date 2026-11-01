@@ -93,7 +93,7 @@ export async function startScratchMcp(opts: StartOptions): Promise<ScratchMcp> {
   // holding the stdio pipes is the classic way to leak an MCP server per run.
   const child: ChildProcess = spawn('npx', ['tsx', 'mcp-server.ts'], {
     cwd: repoPath(),
-    env: { ...process.env, DB_PATH: copy, MCP_PORT: String(port), MCP_RATE_LIMIT_MAX: '20000' },
+    env: { ...process.env, DB_PATH: copy, MCP_PORT: String(port), MCP_RATE_LIMIT_MAX: '20000', MCP_TOOLSET: 'full' },
     stdio: 'ignore',
     detached: true,
   });

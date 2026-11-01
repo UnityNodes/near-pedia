@@ -44,7 +44,8 @@ export function rpcClient(network: Network, userAgent: string, endpoints: readon
             const err = new RpcError(method, body.error, url);
             // A height with no block is the chain's answer, not the endpoint's
             // fault; asking the next endpoint only doubles the request.
-            if (body.error.cause?.name === 'UNKNOWN_BLOCK') { preferred = i; throw Object.assign(err, { final: true }); }
+            // Same for an account that does not exist.
+            if (body.error.cause?.name === 'UNKNOWN_BLOCK' || body.error.cause?.name === 'UNKNOWN_ACCOUNT') { preferred = i; throw Object.assign(err, { final: true }); }
             throw err;
           }
           preferred = i;

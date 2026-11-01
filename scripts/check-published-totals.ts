@@ -21,7 +21,6 @@
 
 import { getDb } from '../lib/db';
 import { logRun } from '../lib/sync-log';
-import { BLOG_TABS, KIND_SQL, NEWS_STUB_CHARS } from '../lib/blog';
 import { radarLiveSql } from '../lib/constants';
 
 const BASE = process.env.MCP_URL ?? 'http://127.0.0.1:3131/mcp';
@@ -36,21 +35,6 @@ interface Published {
 }
 
 const PUBLISHED: Published[] = [
-  { tool: 'list_cips', args: { limit: 1 }, sql: 'SELECT COUNT(*) c FROM cips' },
-  { tool: 'list_ecosystem_projects', args: { limit: 1 }, sql: 'SELECT COUNT(*) c FROM ecosystem_projects' },
-  { tool: 'list_github_discussions', args: { limit: 1 }, sql: 'SELECT COUNT(*) c FROM github_discussions' },
-  { tool: 'list_videos', args: { limit: 1 }, sql: 'SELECT COUNT(*) c FROM youtube_videos' },
-  {
-    tool: 'list_blog_posts', args: { limit: 1 },
-    sql: `WITH p AS (
-            SELECT ${KIND_SQL} AS kind, length(coalesce(content_text, '')) AS n,
-                   ROW_NUMBER() OVER (PARTITION BY lower(title), coalesce(tags, '') ORDER BY published_at DESC, id ASC) AS dup
-            FROM blog_posts)
-          SELECT COUNT(*) c FROM p
-          WHERE dup = 1 AND kind IN (${BLOG_TABS.filter(t => t.inAll).map(t => `'${t.key}'`).join(', ')})
-            AND NOT (kind = 'news' AND n < ${NEWS_STUB_CHARS})`,
-    why: 'what the Blog page shows under All: first-party writing once per title, without short news headlines, release notes, partner press and reprints, which have tabs of their own',
-  },
   {
     tool: 'get_radar', args: { limit: 1 },
     // The tool's own filter, imported rather than restated: a second copy of
@@ -60,11 +44,6 @@ const PUBLISHED: Published[] = [
     // both be wrong.
     sql: `SELECT COUNT(*) c FROM radar_items WHERE ${radarLiveSql()}`,
     why: 'live alerts only, not everything the table has ever held: the tool has always filtered expired items',
-  },
-  {
-    tool: 'get_trending', args: {},
-    sql: 'SELECT json_array_length(payload) c FROM trending_snapshot WHERE id = 1',
-    why: 'every item in the current trending snapshot; the tool ranks them and shows the top 15',
   },
 ];
 

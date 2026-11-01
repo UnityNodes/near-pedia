@@ -624,6 +624,26 @@ export interface McpCallsRow {
   duration_ms: number | null;
 }
 
+export interface NepStandardsRow {
+  nep: number;
+  title: string;
+  status: string | null;
+  type: string | null;
+  category: string | null;
+  authors: string | null;
+  created: string | null;
+  replaces: string;
+  requires: string;
+  superseded_by: string;
+  discussion_url: string | null;
+  path: string;
+  url: string;
+  archived: number;
+  content_md: string;
+  content_hash: string;
+  synced_at: string;
+}
+
 export interface NetworkStatsRow {
   id: number;
   snapshot_at: string;

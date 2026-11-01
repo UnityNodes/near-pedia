@@ -34,6 +34,7 @@
  *   npx tsx scripts/check-agent-errors.ts
  */
 
+import { PUBLIC_TOOLS } from '../lib/mcp-toolset';
 import { getDb } from '../lib/db';
 import { logRun } from '../lib/sync-log';
 import { isoNowSql } from '../lib/formats';
@@ -46,10 +47,13 @@ function main(): void {
   const db = getDb();
   const since = isoNowSql(`'-${WINDOW_DAYS} days'`);
 
-  // A tool that has ever succeeded is the real, registered surface.
+  // A tool that has ever succeeded and is still offered (lib/mcp-toolset.ts)
+  // is the registered surface. Tools taken off the public list keep getting
+  // called by clients with a cached tool list; those failures are expected.
   const registered = new Set(
     (db.prepare(`SELECT DISTINCT tool FROM mcp_calls WHERE status = 'ok'`).all() as Array<{ tool: string }>)
-      .map(r => r.tool),
+      .map(r => r.tool)
+      .filter(t => PUBLIC_TOOLS.has(t)),
   );
 
   const rows = db.prepare(`

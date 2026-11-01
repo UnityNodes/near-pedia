@@ -42,6 +42,7 @@ const POLICY: Record<string, { reason: Reason; why: string; sweeps?: boolean }> 
   // lifecycle mechanism.
   'sync-cips': { reason: 'covered', why: 'check-completeness compares the CIP set against the your-org/CIPs git tree exactly; a stale row would show as surplus' },
   'sync-ecosystem': { reason: 'covered', why: 'check-completeness compares ecosystem_projects against the same NEAR Catalog project list sync-ecosystem.ts reads' },
+  'sync-neps': { reason: 'permanent', why: 'a NEP is a published standard: one retired upstream moves to a final status or to neps/archive/, it is not erased, and the tree listing is read whole on every run' },
   'sync-incidents': { reason: 'permanent', why: 'a security incident is a historical record: DefiLlama edits amounts and recovered funds in place (ON CONFLICT DO UPDATE), and a hack does not stop having happened' },
 
   // check-completeness.ts explicitly excludes these two from its scope (see

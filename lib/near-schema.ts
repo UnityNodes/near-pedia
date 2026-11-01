@@ -202,6 +202,26 @@ export function initNearSchema(db: Database.Database): void {
       active_proposals INTEGER NOT NULL
     );
 
+    CREATE TABLE IF NOT EXISTS nep_standards (
+      nep INTEGER PRIMARY KEY,
+      title TEXT NOT NULL,
+      status TEXT,
+      type TEXT,
+      category TEXT,
+      authors TEXT,
+      created TEXT,
+      replaces TEXT NOT NULL DEFAULT '[]',
+      requires TEXT NOT NULL DEFAULT '[]',
+      superseded_by TEXT NOT NULL DEFAULT '[]',
+      discussion_url TEXT,
+      path TEXT NOT NULL,
+      url TEXT NOT NULL,
+      archived INTEGER NOT NULL DEFAULT 0,
+      content_md TEXT NOT NULL,
+      content_hash TEXT NOT NULL,
+      synced_at TEXT NOT NULL
+    );
+
     CREATE TABLE IF NOT EXISTS db_anchors (
       date TEXT PRIMARY KEY,
       hash TEXT NOT NULL,

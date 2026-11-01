@@ -1,0 +1,8 @@
+{
+  "name": "nearpedia",
+  "display_name": "NEAR-pedia",
+  "kind": "mcp_server",
+  "description": "Live NEAR knowledge: check NEAR code for removed or deprecated APIs and stale packages, explain NEAR errors, read standards, protocol upgrades, House of Stake votes, incidents and contracts, each answer with a source and a date",
+  "keywords": ["near", "blockchain", "smart contracts", "deprecations", "web3"],
+  "url": "https://nearpedia.example/mcp"
+}

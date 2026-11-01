@@ -1,7 +1,7 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.UnityNodes/nearpedia",
-  "description": "Live NEAR knowledge for AI agents: deprecations, breaking changes, protocol upgrades and docs, with a source and a date on every answer",
+  "description": "Live NEAR knowledge for agents: deprecations, breaking changes, protocol and contracts, dated",
   "version": "1.0.0",
   "websiteUrl": "https://nearpedia.example/for-ai",
   "repository": {
@@ -13,5 +13,6 @@
       "type": "streamable-http",
       "url": "https://nearpedia.example/mcp"
     }
-  ]
+  ],
+  "title": "NEAR-pedia"
 }
