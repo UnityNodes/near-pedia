@@ -29,8 +29,13 @@ import { hasNextPage } from '../lib/github-pages';
 
 const UA = `${SITE.slug}-sync/1.0 (+${SITE.publisher.url})`;
 const MAX_PAGES = 10;
-/** Bounds one run's wall clock; the rest are read on the next run, never-read first. */
-const README_CAP = 400;
+/**
+ * Bounds one run's wall clock; the rest are read on the next run, never-read
+ * first. `--all-readmes` lifts it, for filling a fresh database in one go
+ * (npm run sync:near): with the cap, a first run saw the READMEs of 400 of
+ * 804 repositories and missed half the "deprecated" notices.
+ */
+const README_CAP = process.argv.includes('--all-readmes') ? Number.POSITIVE_INFINITY : 400;
 const README_PACE_MS = 100;
 const README_NAMES = ['README.md', 'readme.md', 'README.rst', 'README'];
 
@@ -133,7 +138,11 @@ async function main(): Promise<void> {
     }
     await sleep(README_PACE_MS);
   }
-  if (toRead.length > README_CAP) console.log(`[sync-repos] ${toRead.length - README_CAP} READMEs left for the next run`);
+  const left = Math.max(0, toRead.length - README_CAP);
+  if (left) {
+    console.log(`[sync-repos] ${left} READMEs left for the next run`);
+    problems.push(`${left} READMEs not read yet: their deprecation notices are unknown until the next run`);
+  }
 
   const status = listed === 0 ? 'error' : problems.length ? 'partial' : 'success';
   logRun('repos', { status, items: listed, error: problems.length ? problems.join(' ; ').slice(0, 1000) : undefined }, db);

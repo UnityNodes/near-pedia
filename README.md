@@ -66,7 +66,7 @@ curl -s -X POST http://127.0.0.1:3131/api/v1/check-code -H 'Content-Type: applic
   -d '{"filename":"contract.ts","code":"import { near } from \"near-sdk-js\";\nconst a = { DelegateV2: signed };"}'
 ```
 
-You see two findings. Line 1 imports near-sdk-js, which is archived: use near-sdk in Rust. Line 2 builds a DelegateV2 action, which nearcore 2.14.0 removed: use Delegate, signed with a regular access key. Each finding carries its sources and dates.
+You see two findings. Line 1 imports near-sdk-js, which is archived: use near-sdk in Rust. Line 2 builds a DelegateV2 action, which nearcore 2.14.0 removed: use Delegate, signed with a regular access key. Each finding carries its sources, dated where the source has a date.
 
 **4. Ask what is changing:**
 
