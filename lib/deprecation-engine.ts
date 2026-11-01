@@ -67,7 +67,7 @@ export function verifyQuote(db: Database.Database, e: SeedEvidence): boolean | n
 
 function unionMatchers(a: Matchers, b: Matchers): Matchers {
   const out: Matchers = {};
-  for (const k of ['npm', 'crates', 'imports', 'identifiers', 'rpc', 'urls', 'config'] as const) {
+  for (const k of ['npm', 'crates', 'imports', 'identifiers', 'rpc', 'urls', 'config', 'unlessNearby'] as const) {
     const v = [...new Set([...(a[k] ?? []), ...(b[k] ?? [])])];
     if (v.length) out[k] = v;
   }

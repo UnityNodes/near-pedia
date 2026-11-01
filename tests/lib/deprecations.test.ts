@@ -68,7 +68,11 @@ describe('findDeprecations', () => {
   });
 
   it('returns nothing for a name no entry knows', () => {
-    expect(findDeprecations(getDb(), 'near-workspaces')).toEqual([]);
+    expect(findDeprecations(getDb(), 'near-gas')).toEqual([]);
+  });
+
+  it('reports near-workspaces as the replacement of near-sdk-sim', () => {
+    expect(findDeprecations(getDb(), 'near-workspaces').map((d) => [d.id, d.match])).toEqual([['near-sdk-sim', 'replacement']]);
   });
 
   it('renders status, replacement, dates and how each piece of evidence was checked', () => {

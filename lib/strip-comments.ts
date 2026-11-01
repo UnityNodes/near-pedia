@@ -129,3 +129,78 @@ function regexEnd(src: string, start: number): number {
 export function stripShellComments(src: string): string {
   return src.replace(/(^|[^$])#.*$/gm, (_m, p1) => p1);
 }
+
+/**
+ * Rust comments, replaced by whitespace of the same shape, for check_code.
+ * Block comments nest in Rust; string, raw-string and char literals are kept
+ * whole so an RPC method name or URL inside one is still seen. A lone `'` is a
+ * lifetime, not a char literal, and is copied as is.
+ */
+export function stripRustComments(src: string): string {
+  const out: string[] = [];
+  let i = 0;
+  const blank = (s: string) => s.replace(/[^\n]/g, ' ');
+  while (i < src.length) {
+    const c = src[i];
+    const next = src[i + 1];
+    if (c === '/' && next === '/') {
+      const end = src.indexOf('\n', i);
+      i = end < 0 ? src.length : end;
+      continue;
+    }
+    if (c === '/' && next === '*') {
+      let depth = 1;
+      let j = i + 2;
+      while (j < src.length && depth > 0) {
+        if (src[j] === '/' && src[j + 1] === '*') { depth++; j += 2; continue; }
+        if (src[j] === '*' && src[j + 1] === '/') { depth--; j += 2; continue; }
+        j++;
+      }
+      out.push(blank(src.slice(i, j)));
+      i = j;
+      continue;
+    }
+    const raw = c === 'r' && !/\w/.test(src[i - 1] ?? '') ? src.slice(i).match(/^r(#*)"/) : null;
+    if (raw) {
+      const close = src.indexOf(`"${raw[1]}`, i + raw[0].length);
+      const end = close < 0 ? src.length : close + 1 + raw[1].length;
+      out.push(src.slice(i, end));
+      i = end;
+      continue;
+    }
+    if (c === '"') {
+      // Rust strings run across lines; the JS helper stops at a newline and
+      // would leave the rest of a multi-line string to be read as code.
+      let j = i + 1;
+      while (j < src.length && src[j] !== '"') j += src[j] === '\\' ? 2 : 1;
+      out.push(src.slice(i, j + 1));
+      i = j + 1;
+      continue;
+    }
+    if (c === "'") {
+      const lit = src.slice(i).match(/^'(?:\\(?:x[0-9a-fA-F]{2}|u\{[0-9a-fA-F]+\}|.)|[^'\\\n])'/);
+      if (lit) { out.push(lit[0]); i += lit[0].length; continue; }
+    }
+    out.push(c);
+    i++;
+  }
+  return out.join('');
+}
+
+/** TOML `#` comments outside strings, for Cargo.toml scans. */
+export function stripTomlComments(src: string): string {
+  return src.split('\n').map((line) => {
+    let quote: string | null = null;
+    for (let i = 0; i < line.length; i++) {
+      const c = line[i];
+      if (quote) {
+        if (c === '\\' && quote === '"') { i++; continue; }
+        if (c === quote) quote = null;
+        continue;
+      }
+      if (c === '"' || c === "'") { quote = c; continue; }
+      if (c === '#') return line.slice(0, i) + ' '.repeat(line.length - i);
+    }
+    return line;
+  }).join('\n');
+}

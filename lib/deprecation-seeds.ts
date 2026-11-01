@@ -76,6 +76,22 @@ export const SEEDS: readonly Seed[] = [
     ],
   },
   {
+    id: 'near-sdk-sim',
+    title: 'near-sdk-sim (simulation tests)',
+    kind: 'crate',
+    status: 'removed',
+    summary: 'near-sdk-sim was deprecated and removed in near-sdk 4.0.0; contract tests run against a sandbox with near-workspaces. Only near-sdk 4.0.0-pre.9 still pairs with it.',
+    replacement: 'near-workspaces',
+    replacement_url: 'https://github.com/near/near-workspaces-rs',
+    since: '2022-05-25',
+    effective: 'near-sdk 4.0.0',
+    matchers: { crates: ['near-sdk-sim'], imports: ['near_sdk_sim'] },
+    subjects: ['crates:near-sdk-sim'],
+    evidence: [
+      { signal: 'release_removal', strength: 'strong', source_url: 'https://github.com/near/near-sdk-rs/releases/tag/4.0.0', quote: 'Deprecate and remove `near-sdk-sim`. Removes `sim` proxy struct from `#[near_bindgen]`.', upstream_date: '2022-05-25' },
+    ],
+  },
+  {
     id: 'delegate-v2',
     title: 'DelegateV2 meta-transaction action',
     kind: 'protocol',
@@ -134,7 +150,7 @@ export const SEEDS: readonly Seed[] = [
     replacement_url: 'https://docs.near.org/api/rpc/contracts',
     since: '2026-10-26',
     effective: 'nearcore 2.14.0',
-    matchers: { rpc: ['view_access_key_list'] },
+    matchers: { rpc: ['view_access_key_list'], unlessNearby: ['limit', 'after_key'] },
     subjects: ['id:view_access_key_list'],
     evidence: [
       { signal: 'docs_statement', strength: 'strong', source_url: 'https://docs.near.org/api/rpc/contracts', quote: 'From nearcore 2.14.0, a request without `limit` or `after_key` fails with `TOO_MANY_ACCESS_KEYS` if the account has more than 100 keys (the default limit).', upstream_date: null },
