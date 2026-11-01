@@ -1,4 +1,5 @@
 import OpenAI from 'openai';
+import { withRetry } from './retry';
 
 const OPENAI_MODEL = 'text-embedding-3-small';
 export const DIMENSIONS = 1536;
@@ -9,6 +10,8 @@ export const DIMENSIONS = 1536;
 // embedBatch is only ever the nightly embedding build, where a slower
 // ceiling doesn't cost anyone a wait.
 const INTERACTIVE_TIMEOUT_MS = 5_000;
+/** Three attempts with the default 0.5 s and 1.5 s waits fit inside this, as before the move to lib/retry. */
+const INTERACTIVE_BUDGET_MS = 3 * INTERACTIVE_TIMEOUT_MS + 2_000;
 const BATCH_TIMEOUT_MS = 120_000;
 
 let _openai: OpenAI | null = null;
@@ -21,24 +24,6 @@ function getOpenAI(): OpenAI {
   return _openai;
 }
 
-async function withRetry<T>(fn: () => Promise<T>): Promise<T> {
-  const delays = [500, 1500];
-  let lastError: unknown;
-  for (let attempt = 0; attempt <= delays.length; attempt++) {
-    try {
-      return await fn();
-    } catch (err: unknown) {
-      lastError = err;
-      // Do not retry on 4xx client errors (bad input, auth, etc.)
-      const status = (err as { status?: number })?.status;
-      if (status !== undefined && status >= 400 && status < 500) throw err;
-      if (attempt < delays.length) {
-        await new Promise(resolve => setTimeout(resolve, delays[attempt]));
-      }
-    }
-  }
-  throw lastError;
-}
 
 export async function embedText(text: string): Promise<number[]> {
   const res = await withRetry(() =>
@@ -48,7 +33,8 @@ export async function embedText(text: string): Promise<number[]> {
         input: text.trim(),
       },
       { timeout: INTERACTIVE_TIMEOUT_MS },
-    )
+    ),
+    INTERACTIVE_BUDGET_MS,
   );
   return res.data[0].embedding;
 }

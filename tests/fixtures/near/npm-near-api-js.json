@@ -1,0 +1,129 @@
+{
+ "name": "near-api-js",
+ "description": "JavaScript library to interact with NEAR Protocol via RPC API",
+ "dist-tags": {
+  "preview": "0.28.0-preview",
+  "next": "5.0.0-next.18",
+  "rc": "7.0.0-rc.7",
+  "latest": "7.4.0"
+ },
+ "repository": {
+  "url": "git+https://github.com/near/near-api-js.git",
+  "type": "git"
+ },
+ "homepage": "https://github.com/near/near-api-js",
+ "versions": {
+  "7.0.0-rc.7": {
+   "name": "near-api-js",
+   "version": "7.0.0-rc.7",
+   "repository": {
+    "url": "git+https://github.com/near/near-api-js.git",
+    "type": "git"
+   }
+  },
+  "7.0.0": {
+   "name": "near-api-js",
+   "version": "7.0.0",
+   "repository": {
+    "url": "git+https://github.com/near/near-api-js.git",
+    "type": "git"
+   }
+  },
+  "7.0.1": {
+   "name": "near-api-js",
+   "version": "7.0.1",
+   "repository": {
+    "url": "git+https://github.com/near/near-api-js.git",
+    "type": "git"
+   }
+  },
+  "7.0.2": {
+   "name": "near-api-js",
+   "version": "7.0.2",
+   "repository": {
+    "url": "git+https://github.com/near/near-api-js.git",
+    "type": "git"
+   }
+  },
+  "7.0.3": {
+   "name": "near-api-js",
+   "version": "7.0.3",
+   "repository": {
+    "url": "git+https://github.com/near/near-api-js.git",
+    "type": "git"
+   }
+  },
+  "7.0.4": {
+   "name": "near-api-js",
+   "version": "7.0.4",
+   "repository": {
+    "url": "git+https://github.com/near/near-api-js.git",
+    "type": "git"
+   }
+  },
+  "7.1.0": {
+   "name": "near-api-js",
+   "version": "7.1.0",
+   "repository": {
+    "url": "git+https://github.com/near/near-api-js.git",
+    "type": "git"
+   }
+  },
+  "7.1.1": {
+   "name": "near-api-js",
+   "version": "7.1.1",
+   "repository": {
+    "url": "git+https://github.com/near/near-api-js.git",
+    "type": "git"
+   }
+  },
+  "7.2.0": {
+   "name": "near-api-js",
+   "version": "7.2.0",
+   "repository": {
+    "url": "git+https://github.com/near/near-api-js.git",
+    "type": "git"
+   }
+  },
+  "7.3.0": {
+   "name": "near-api-js",
+   "version": "7.3.0",
+   "repository": {
+    "url": "git+https://github.com/near/near-api-js.git",
+    "type": "git"
+   }
+  },
+  "7.3.1": {
+   "name": "near-api-js",
+   "version": "7.3.1",
+   "repository": {
+    "url": "git+https://github.com/near/near-api-js.git",
+    "type": "git"
+   }
+  },
+  "7.4.0": {
+   "name": "near-api-js",
+   "version": "7.4.0",
+   "repository": {
+    "url": "git+https://github.com/near/near-api-js.git",
+    "type": "git"
+   }
+  }
+ },
+ "time": {
+  "created": "2020-04-08T07:52:47.266Z",
+  "modified": "2026-10-23T22:06:11.905Z",
+  "7.0.0-rc.7": "2026-01-18T12:15:13.275Z",
+  "7.0.0": "2026-01-19T16:59:10.991Z",
+  "7.0.1": "2026-01-21T19:34:44.632Z",
+  "7.0.2": "2026-01-22T13:31:46.210Z",
+  "7.0.3": "2026-01-22T17:43:39.066Z",
+  "7.0.4": "2026-01-25T16:59:25.721Z",
+  "7.1.0": "2026-02-04T13:36:43.096Z",
+  "7.1.1": "2026-02-13T21:36:11.096Z",
+  "7.2.0": "2026-03-08T13:06:00.674Z",
+  "7.3.0": "2026-07-30T14:43:40.266Z",
+  "7.3.1": "2026-08-12T20:33:08.902Z",
+  "7.4.0": "2026-10-23T22:06:11.442Z"
+ }
+}

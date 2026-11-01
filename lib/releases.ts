@@ -3,7 +3,7 @@ import { marked } from 'marked';
 import { getDb } from './db';
 import { isStableRelease, latestStableByLine } from './yourchain-versions';
 import type { ReleaseRow } from './yourchain-versions';
-import { RELEASE_REPOS, repoName } from './release-sources';
+import { RELEASE_PRODUCT_SPECS, RELEASE_REPOS, versionFromTag } from './release-sources';
 import { notesHtml, releaseSummary } from './release-text';
 import { compareVersions, releaseLine } from './release-version';
 
@@ -13,7 +13,7 @@ export interface ReleaseProduct {
   repo: string;
 }
 
-export const RELEASE_PRODUCTS: readonly ReleaseProduct[] = RELEASE_REPOS.map(repo => ({ key: repoName(repo), label: repoName(repo), repo }));
+export const RELEASE_PRODUCTS: readonly ReleaseProduct[] = RELEASE_PRODUCT_SPECS.map(({ key, label, repo }) => ({ key, label, repo }));
 
 export interface ReleaseItem {
   id: string;
@@ -38,22 +38,46 @@ interface GithubRow extends ReleaseRow {
   body: string | null;
 }
 
-function versionOfTag(tag: string): string {
-  return tag.replace(/^v/, '');
-}
-
 function placeholders(n: number): string {
   return Array.from({ length: n }, () => '?').join(', ');
 }
 
 function rowsOf(db: Database.Database): GithubRow[] {
-  return db.prepare(`SELECT id, repo, tag, name, body, published_at, url, prerelease FROM github_releases WHERE repo IN (${placeholders(RELEASE_PRODUCTS.length)}) ORDER BY published_at DESC`)
-    .all(...RELEASE_PRODUCTS.map(p => p.repo)) as GithubRow[];
+  return db.prepare(`SELECT id, repo, tag, name, body, published_at, url, prerelease FROM github_releases WHERE repo IN (${placeholders(RELEASE_REPOS.length)}) ORDER BY published_at DESC`)
+    .all(...RELEASE_REPOS) as GithubRow[];
 }
 
-function itemOf(r: GithubRow): ReleaseItem {
-  const product = RELEASE_PRODUCTS.find(p => p.repo === r.repo)!;
-  const version = versionOfTag(r.tag);
+interface ProductRow {
+  row: GithubRow;
+  product: ReleaseProduct;
+  version: string;
+}
+
+/**
+ * Each release row under the product its tag belongs to. A tag of another
+ * package in the same repository (near-sys-v0.4.0 in near-sdk-rs) matches no
+ * product and is left out.
+ */
+function productRowsOf(rows: GithubRow[]): ProductRow[] {
+  const out: ProductRow[] = [];
+  for (const row of rows) {
+    for (const spec of RELEASE_PRODUCT_SPECS) {
+      if (spec.repo !== row.repo) continue;
+      const version = versionFromTag(spec, row.tag);
+      if (version === null) continue;
+      out.push({ row, product: RELEASE_PRODUCTS.find(p => p.key === spec.key)!, version });
+      break;
+    }
+  }
+  return out;
+}
+
+/** The row with its tag reduced to the bare version, for the stable-line helpers that read `tag`. */
+function asVersionRow({ row, version }: ProductRow): GithubRow {
+  return { ...row, tag: version };
+}
+
+function itemOf({ row: r, product, version }: ProductRow): ReleaseItem {
   return {
     id: `${product.key}-${version}`,
     product: product.key,
@@ -65,7 +89,7 @@ function itemOf(r: GithubRow): ReleaseItem {
     line: releaseLine(version),
     sourceUrl: r.url,
     sourceLabel: 'Open on GitHub',
-    prerelease: !isStableRelease(r),
+    prerelease: !isStableRelease({ tag: version, prerelease: r.prerelease }),
     latestInLine: false,
     repo: r.repo,
     tag: r.tag,
@@ -90,8 +114,8 @@ function newestFirst(a: ReleaseItem, b: ReleaseItem): number {
 }
 
 function stampOf(db: Database.Database): string {
-  const row = db.prepare(`SELECT COUNT(*) n, MAX(synced_at) s FROM github_releases WHERE repo IN (${placeholders(RELEASE_PRODUCTS.length)})`)
-    .get(...RELEASE_PRODUCTS.map(p => p.repo)) as { n: number; s: string | null };
+  const row = db.prepare(`SELECT COUNT(*) n, MAX(synced_at) s FROM github_releases WHERE repo IN (${placeholders(RELEASE_REPOS.length)})`)
+    .get(...RELEASE_REPOS) as { n: number; s: string | null };
   return `${row.n}|${row.s}`;
 }
 
@@ -106,7 +130,7 @@ let cache: { db: Database.Database; feed: Feed } | null = null;
 function feedOf(db: Database.Database): Feed {
   const stamp = stampOf(db);
   if (cache && cache.db === db && cache.feed.stamp === stamp) return cache.feed;
-  const items = markLatestInLine(rowsOf(db).map(itemOf)).sort(newestFirst);
+  const items = markLatestInLine(productRowsOf(rowsOf(db)).map(itemOf)).sort(newestFirst);
   const byId = new Map<string, ReleaseItem>();
   for (const item of items) {
     if (!byId.has(item.id)) byId.set(item.id, item);
@@ -188,9 +212,9 @@ export interface CurrentVersion {
 
 export function currentReleases(db: Database.Database = getDb()): CurrentVersion[] {
   const feed = feedOf(db);
-  const rows = rowsOf(db);
+  const rows = productRowsOf(rowsOf(db));
   return RELEASE_PRODUCTS.map(product => {
-    const lines = latestStableByLine(rows.filter(r => r.repo === product.repo)).map(l => ({
+    const lines = latestStableByLine(rows.filter(r => r.product.key === product.key).map(asVersionRow)).map(l => ({
       label: `${l.line}.x`,
       version: l.latest.version,
       date: l.latest.releasedAt,

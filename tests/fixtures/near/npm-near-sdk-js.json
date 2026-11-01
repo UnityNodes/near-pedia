@@ -1,0 +1,73 @@
+{
+ "name": "near-sdk-js",
+ "description": "High Level JavaScript SDK for building smart contracts on NEAR",
+ "dist-tags": {
+  "next": "0.6.0-0",
+  "latest": "2.0.0"
+ },
+ "repository": {
+  "type": "git",
+  "url": "git+https://github.com/near/near-sdk-js.git"
+ },
+ "homepage": "https://github.com/near/near-sdk-js",
+ "versions": {
+  "0.7.0-5": {
+   "name": "near-sdk-js",
+   "version": "0.7.0-5",
+   "repository": {
+    "url": "git+https://github.com/near/near-sdk-js.git",
+    "type": "git"
+   }
+  },
+  "0.7.0": {
+   "name": "near-sdk-js",
+   "version": "0.7.0",
+   "repository": {
+    "url": "git+https://github.com/near/near-sdk-js.git",
+    "type": "git"
+   }
+  },
+  "1.0.0-0": {
+   "name": "near-sdk-js",
+   "version": "1.0.0-0",
+   "repository": {
+    "url": "git+https://github.com/near/near-sdk-js.git",
+    "type": "git"
+   }
+  },
+  "1.0.0": {
+   "name": "near-sdk-js",
+   "version": "1.0.0",
+   "repository": {
+    "url": "git+https://github.com/near/near-sdk-js.git",
+    "type": "git"
+   }
+  },
+  "2.0.0-0": {
+   "name": "near-sdk-js",
+   "version": "2.0.0-0",
+   "repository": {
+    "url": "git+https://github.com/near/near-sdk-js.git",
+    "type": "git"
+   }
+  },
+  "2.0.0": {
+   "name": "near-sdk-js",
+   "version": "2.0.0",
+   "repository": {
+    "type": "git",
+    "url": "git+https://github.com/near/near-sdk-js.git"
+   }
+  }
+ },
+ "time": {
+  "created": "2022-05-19T10:45:11.038Z",
+  "modified": "2024-06-07T01:42:26.451Z",
+  "0.7.0-5": "2023-01-19T10:05:28.252Z",
+  "0.7.0": "2023-01-26T01:42:43.027Z",
+  "1.0.0-0": "2023-02-24T03:19:31.337Z",
+  "1.0.0": "2023-03-01T06:01:39.811Z",
+  "2.0.0-0": "2024-04-28T16:57:38.699Z",
+  "2.0.0": "2024-06-07T01:42:26.287Z"
+ }
+}

@@ -1,0 +1,95 @@
+[
+ {
+  "id": 151331938,
+  "name": "nearcore",
+  "full_name": "near/nearcore",
+  "html_url": "https://github.com/near/nearcore",
+  "description": "Reference client for NEAR Protocol",
+  "fork": false,
+  "archived": false,
+  "disabled": false,
+  "pushed_at": "2026-10-31T14:55:34Z",
+  "created_at": "2018-10-02T22:30:39Z",
+  "updated_at": "2026-10-30T17:01:33Z",
+  "default_branch": "master",
+  "stargazers_count": 2621,
+  "language": "Rust",
+  "topics": [
+   "blockchain",
+   "nearprotocol",
+   "rust",
+   "webassembly"
+  ],
+  "homepage": "https://near.org"
+ },
+ {
+  "id": 190815700,
+  "name": "near-sdk-rs",
+  "full_name": "near/near-sdk-rs",
+  "html_url": "https://github.com/near/near-sdk-rs",
+  "description": "Rust library for writing NEAR smart contracts",
+  "fork": false,
+  "archived": false,
+  "disabled": false,
+  "pushed_at": "2026-10-30T17:20:21Z",
+  "created_at": "2019-06-07T22:08:29Z",
+  "updated_at": "2026-10-30T16:37:28Z",
+  "default_branch": "master",
+  "stargazers_count": 515,
+  "language": "Rust",
+  "topics": [
+   "blockchain",
+   "nearprotocol",
+   "rust",
+   "sdk",
+   "wasm"
+  ],
+  "homepage": "https://docs.near.org/build/smart-contracts/what-is"
+ },
+ {
+  "id": 438463863,
+  "name": "near-sdk-js",
+  "full_name": "near/near-sdk-js",
+  "html_url": "https://github.com/near/near-sdk-js",
+  "description": "Tools for building NEAR smart contracts in JavaScript",
+  "fork": false,
+  "archived": true,
+  "disabled": false,
+  "pushed_at": "2026-10-30T16:22:37Z",
+  "created_at": "2021-12-15T02:05:40Z",
+  "updated_at": "2026-10-30T16:22:53Z",
+  "default_branch": "develop",
+  "stargazers_count": 198,
+  "language": "TypeScript",
+  "topics": [
+   "near",
+   "near-protocol",
+   "sdk",
+   "smart-contract-tools"
+  ],
+  "homepage": "https://near-sdk-js.gitbook.io/near-sdk-js"
+ },
+ {
+  "id": 184860689,
+  "name": "near-api-js",
+  "full_name": "near/near-api-js",
+  "html_url": "https://github.com/near/near-api-js",
+  "description": "JavaScript library to interact with NEAR Protocol via RPC API",
+  "fork": false,
+  "archived": false,
+  "disabled": false,
+  "pushed_at": "2026-10-26T04:29:46Z",
+  "created_at": "2019-05-04T06:33:50Z",
+  "updated_at": "2026-10-27T13:51:58Z",
+  "default_branch": "master",
+  "stargazers_count": 429,
+  "language": "TypeScript",
+  "topics": [
+   "blockchain",
+   "hacktoberfest",
+   "javascript",
+   "smartcontracts"
+  ],
+  "homepage": "https://near.github.io/near-api-js"
+ }
+]

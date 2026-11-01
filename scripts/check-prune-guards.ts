@@ -45,6 +45,7 @@ import { stripJsComments } from '../lib/strip-comments';
 const NOT_URL_KEYED: Record<string, string> = {
   'sync-github-releases': 'keyed on the numeric GitHub release id, not a URL. The prune runs per repo only when the listing was paged to its last page, the mirrored blog_posts rows are pruned from the same listing, and prune() refuses an empty live set and a large share of the scope.',
   'sync-github-discussions': 'keyed on the GitHub discussion id, not a URL. The prune runs per repo only when the GraphQL pager reached the last page, and prune() refuses an empty live set and a large share of the scope.',
+  'sync-repos': 'keyed on the GitHub full_name (owner/repo), not a URL. The prune runs per organisation only when the repository listing was paged to its last page, and prune() refuses an empty live set and a large share of the scope.',
   'sync-youtube': 'keyed on the video id, not a URL. The playlist walk must have finished, every id the uploads playlist no longer lists is probed once through oEmbed and kept when it still resolves, and minDeleteAlways keeps the ratio guard on from the second row.',
 };
 
@@ -80,7 +81,6 @@ const RAW_PRUNE_GUARDED: Record<string, string> = {};
  * must route through prune() or declare its own guard here.
  */
 const JS_PRUNE_GUARDED: Record<string, string> = {
-  'sync-docs': "keyed on url within the docs.yourchain.example namespace; an empty fetch throws before this code runs, and the delete-share is refused outright above 20% (process.exitCode=1, nothing deleted) rather than going through - narrower protection than pruneConfirmingUrls' per-URL 404 confirmation, but a genuine completeness gate, not a guess",
 };
 
 async function main(): Promise<void> {

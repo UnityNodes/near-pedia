@@ -17,6 +17,8 @@ export const SOURCE_META: Record<string, SourceMeta> = {
   github_release:    { name: 'Releases',     href: '/releases',    script: 'sync-github-releases' },
   github_discussion: { name: 'Discussions',  href: '/discussions', script: 'sync-github-discussions' },
   ecosystem_project: { name: 'Ecosystem',    href: '/ecosystem',   script: 'sync-ecosystem' },
+  package:           { name: 'npm + crates.io packages', href: null, script: 'sync-packages' },
+  github_repo:       { name: 'GitHub repositories',      href: null, script: 'sync-repos' },
 };
 
 export const BUCKET_CADENCE: Record<string, string> = {

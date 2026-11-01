@@ -27,7 +27,7 @@ Package registries rarely flag any of this, so the agent finds out when the buil
 | Part | State |
 |---|---|
 | Engine: SQLite store with FTS5 and `sqlite-vec` search, MCP server, REST API, web UI, cron sync runner, standing checks | inherited from the baseline (see below), rebranded |
-| NEAR sources (nearcore, docs.near.org, npm, crates.io, GitHub `near/*`) | not started |
+| NEAR sources | syncs written and run locally against the live sources: docs.near.org (198 pages), npm and crates.io (88 packages with every version, deprecation and yank flags), GitHub (804 repositories in 8 NEAR orgs, archived state and README deprecation notices), releases of 10 products from nearcore to near-api-js. Every change they see is logged. Not yet exposed as MCP tools |
 | Deprecation engine and seed entries | not started |
 | `check_code` | not started |
 | RPC protocol state, House of Stake, radar | not started |
@@ -54,6 +54,8 @@ Hackathon rules count work from 19 October 2026; everything earlier is a baselin
 **Baseline, not hackathon work.** The engine is a copy of `pedia-template`, the ecosystem-neutral engine we extracted from our earlier knowledge hubs [CCPEDIA](https://ccpedia.xyz) (Canton) and Blobpedia (Celestia). It brings the database layer, search and embeddings, the MCP and REST servers, the web UI, the sync runner and the standing checks. The repository's first commit is that copy, tagged [`pre-hackathon`](https://github.com/UnityNodes/nearpedia/tree/pre-hackathon).
 
 **Hackathon work.** Everything after that tag: the NEAR rebrand, the NEAR sources, the deprecation engine, `check_code`, the RPC and House of Stake readers, the NEAR AI Cloud integration and the on-chain database hash. The full difference is one link (Q-003): [`pre-hackathon...main`](https://github.com/UnityNodes/nearpedia/compare/pre-hackathon...main).
+
+**Code from our other projects.** `lib/retry.ts` and `lib/polite-fetch.ts` are ported from Monpedia, our Monad knowledge hub (October 2026); the port added conditional requests.
 
 **Third-party code.** Open-source libraries listed in `package.json` (Next.js, React, better-sqlite3, sqlite-vec, the MCP SDK, Express, zod and others), each under its own license. Two Lottie animations are credited in `public/animations/CREDITS.txt`.
 

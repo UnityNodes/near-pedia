@@ -60,6 +60,17 @@ export interface CategoriesRow {
   synced_at: string | null;
 }
 
+export interface ChangeEventsRow {
+  id: number;
+  kind: string;
+  subject: string;
+  title: string | null;
+  detail: string | null;
+  source_url: string | null;
+  observed_at: string;
+  dedupe_key: string;
+}
+
 export interface CipAlertSentRow {
   cip_id: string;
   event: string;
@@ -189,6 +200,7 @@ export interface DocPagesRow {
   last_modified: string | null;
   synced_at: string | null;
   environment: string | null;
+  content_hash: string | null;
 }
 
 export interface DocsFtsRow {
@@ -452,6 +464,36 @@ export interface GithubReleasesRow {
   prerelease: number | null;
 }
 
+export interface GithubReposRow {
+  full_name: string;
+  org: string;
+  html_url: string;
+  description: string | null;
+  fork: number;
+  archived: number;
+  archived_observed_at: string | null;
+  pushed_at: string | null;
+  created_at: string | null;
+  default_branch: string | null;
+  stars: number | null;
+  language: string | null;
+  topics: string | null;
+  homepage: string | null;
+  readme_notice: string | null;
+  readme_marker: string | null;
+  readme_replacement: string | null;
+  readme_strength: string | null;
+  readme_checked_pushed_at: string | null;
+  readme_checked_at: string | null;
+  synced_at: string;
+}
+
+export interface HttpValidatorsRow {
+  url: string;
+  etag: string;
+  checked_at: string;
+}
+
 export interface LogRollupRow {
   table_name: string;
   metric: string;
@@ -485,6 +527,33 @@ export interface NetworkStatsRow {
   blog_posts: number;
   radar_critical: number;
   radar_important: number;
+}
+
+export interface PackageVersionsRow {
+  package_id: string;
+  version: string;
+  published_at: string | null;
+  deprecated: string | null;
+  yanked: number;
+  yank_message: string | null;
+}
+
+export interface PackagesRow {
+  id: string;
+  registry: string;
+  name: string;
+  description: string | null;
+  latest_version: string | null;
+  latest_published_at: string | null;
+  latest_stable_version: string | null;
+  deprecated: string | null;
+  repository_url: string | null;
+  homepage: string | null;
+  registry_url: string;
+  versions_count: number;
+  modified_at: string | null;
+  discovered_by: string;
+  synced_at: string;
 }
 
 export interface RadarItemsRow {
@@ -649,6 +718,7 @@ export interface DbRowByTable {
   "blog_posts_fts_docsize": BlogPostsFtsDocsizeRow;
   "blog_posts_fts_idx": BlogPostsFtsIdxRow;
   "categories": CategoriesRow;
+  "change_events": ChangeEventsRow;
   "cip_alert_sent": CipAlertSentRow;
   "cip_attachments": CipAttachmentsRow;
   "cip_attachments_fts": CipAttachmentsFtsRow;
@@ -700,9 +770,13 @@ export interface DbRowByTable {
   "github_discussions": GithubDiscussionsRow;
   "github_items": GithubItemsRow;
   "github_releases": GithubReleasesRow;
+  "github_repos": GithubReposRow;
+  "http_validators": HttpValidatorsRow;
   "log_rollup": LogRollupRow;
   "mcp_calls": McpCallsRow;
   "network_stats": NetworkStatsRow;
+  "package_versions": PackageVersionsRow;
+  "packages": PackagesRow;
   "radar_items": RadarItemsRow;
   "search_log": SearchLogRow;
   "sync_log": SyncLogRow;

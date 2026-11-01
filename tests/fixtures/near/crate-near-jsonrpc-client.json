@@ -1,0 +1,40 @@
+{
+ "crate": {
+  "name": "near-jsonrpc-client",
+  "description": "Lower-level API for interfacing with the NEAR Protocol via JSONRPC",
+  "max_version": "0.23.0",
+  "max_stable_version": "0.23.0",
+  "newest_version": "0.23.0",
+  "updated_at": "2026-10-26T21:48:40.216334Z",
+  "created_at": "2021-11-03T17:39:05.341986Z",
+  "repository": "https://github.com/near/near-jsonrpc-client-rs",
+  "homepage": null,
+  "documentation": null
+ },
+ "versions": [
+  {
+   "num": "0.23.0",
+   "created_at": "2026-10-26T21:48:40.216334Z",
+   "yanked": false,
+   "yank_message": null
+  },
+  {
+   "num": "0.11.0",
+   "created_at": "2024-08-09T14:20:10.299573Z",
+   "yanked": false,
+   "yank_message": null
+  },
+  {
+   "num": "0.10.2",
+   "created_at": "2024-08-09T10:18:10.586765Z",
+   "yanked": true,
+   "yank_message": null
+  },
+  {
+   "num": "0.10.1",
+   "created_at": "2024-06-19T09:23:10.996848Z",
+   "yanked": false,
+   "yank_message": null
+  }
+ ]
+}
