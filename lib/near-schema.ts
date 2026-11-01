@@ -202,6 +202,26 @@ export function initNearSchema(db: Database.Database): void {
       active_proposals INTEGER NOT NULL
     );
 
+    CREATE TABLE IF NOT EXISTS db_anchors (
+      date TEXT PRIMARY KEY,
+      hash TEXT NOT NULL,
+      tables INTEGER NOT NULL,
+      rows INTEGER NOT NULL,
+      manifest TEXT NOT NULL,
+      computed_at TEXT NOT NULL,
+      status TEXT NOT NULL CHECK(status IN ('local','recorded','failed')),
+      network TEXT,
+      contract TEXT,
+      account TEXT,
+      tx_hash TEXT,
+      block_height INTEGER,
+      error TEXT
+    );
+    CREATE TRIGGER IF NOT EXISTS db_anchors_recorded_is_final_update BEFORE UPDATE ON db_anchors
+      WHEN OLD.status = 'recorded' BEGIN SELECT RAISE(ABORT, 'a recorded anchor is final'); END;
+    CREATE TRIGGER IF NOT EXISTS db_anchors_recorded_is_final_delete BEFORE DELETE ON db_anchors
+      WHEN OLD.status = 'recorded' BEGIN SELECT RAISE(ABORT, 'a recorded anchor is final'); END;
+
     CREATE TABLE IF NOT EXISTS incidents (
       id TEXT PRIMARY KEY,
       name TEXT NOT NULL,

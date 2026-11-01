@@ -95,3 +95,6 @@ mcp-publisher
 # deploy build directories (see CLAUDE.md, Deploying)
 /.next.new/
 /.next.prev/
+
+# Rust build output of contracts/*
+contracts/*/target/
