@@ -25,7 +25,8 @@
     "digest": "tsx scripts/build-weekly-digest.ts",
     "sync:discussions": "tsx scripts/sync-github-discussions.ts",
     "sync:yt-transcripts": "tsx scripts/sync-youtube-transcripts.ts",
-    "migrate:vocab": "tsx scripts/migrate-vocab.ts"
+    "migrate:vocab": "tsx scripts/migrate-vocab.ts",
+    "sync:near": "for s in sync-docs sync-partner-docs sync-packages sync-repos sync-github-releases build-deprecations sync-protocol sync-forum sync-hos sync-ecosystem sync-incidents sync-neps refresh-radar; do echo \"== $s\"; tsx scripts/$s.ts || exit 1; done"
   },
   "dependencies": {
     "@base-ui/react": "^1.4.1",
