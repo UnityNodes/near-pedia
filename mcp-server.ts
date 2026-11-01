@@ -46,6 +46,7 @@ import { cookedToSnippet } from './lib/forum.js';
 import { rankRows, likeTokens, escLike } from './lib/rank.js';
 import { radarLiveSql } from './lib/constants.js';
 import { deadlinePassed } from './lib/radar.js';
+import { allDeprecations, evidenceOf, findDeprecations, getDeprecation, renderDeprecation } from './lib/deprecations.js';
 import { isStableTag, latestStableByLine, type ReleaseRow } from './lib/yourchain-versions.js';
 import type {
   BlogPostsRow, CipAttachmentsRow, CipStatusHistoryRow, CipsRow, DocPagesRow, EcosystemProjectsRow,
@@ -2052,6 +2053,34 @@ server.tool('get_latest_release',
   }
 );
 
+// ── check_deprecation ────────────────────────────────────────────────────────
+server.tool('check_deprecation',
+  'Check whether a NEAR package, crate, repository, RPC method, protocol feature, config key or hosted service is deprecated, removed or changed, and what to use instead, with the source and date of every claim. Pass the name as code or a config uses it: "near-sdk-js", "@near-wallet-selector/core", "near-lake-framework", "DelegateV2", "EXPERIMENTAL_tx_status", "near/near-cli", "rpc.testnet.pagoda.co". Use before writing or reviewing NEAR code that names a package or API from memory. NEAR only: for packages of other chains use their own tools.',
+  {
+    name: z.string().min(1).max(200).describe('Package, crate, repository (owner/repo or GitHub URL), RPC method, identifier, config key or endpoint host.'),
+    limit: z.number().int().min(1).max(10).optional().describe('Most entries to return (default 3).'),
+  },
+  async ({ name, limit }) => {
+    const db = getDb();
+    try {
+      const meta = db.prepare('SELECT COUNT(*) n, MAX(built_at) at FROM deprecations').get() as { n: number; at: string | null };
+      if (meta.n === 0) return { content: [{ type: 'text', text: 'The deprecation index has not been built yet on this server, so nothing can be said either way.' }] };
+      const found = findDeprecations(db, name, limit ?? 3);
+      if (found.length === 0) {
+        return { content: [{ type: 'text', text: [
+          `No deprecation on record for "${fenceUntrustedInline(name)}" among ${meta.n} entries (built ${meta.at?.slice(0, 16)} UTC).`,
+          'That is not proof it is current: the entries come from archived NEAR repositories, README notices, npm and crates.io flags, nearcore and SDK release notes, the docs.near.org RPC reference and curated findings. Check the latest version of a package with its registry before pinning one from memory.',
+        ].join('\n') }] };
+      }
+      const header = `${found.length} entr${found.length === 1 ? 'y' : 'ies'} for "${fenceUntrustedInline(name)}" (as of ${found[0].built_at.slice(0, 16)} UTC). ${UNTRUSTED_INLINE_LEGEND}`;
+      return { content: [{ type: 'text', text: [header, ...found.map((d) => renderDeprecation(d, fenceUntrustedInline))].join('\n\n') }] };
+    } catch (e) {
+      const msg = (e as Error).message;
+      return { content: [{ type: 'text', text: /no such table/.test(msg) ? 'The deprecation index has not been built yet on this server.' : `check_deprecation failed: ${msg}` }] };
+    }
+  }
+);
+
 // ── get_radar ────────────────────────────────────────────────────────────────
 server.tool('get_radar', 'Get the NEAR Radar, nearpedia\'s curated feed of time-sensitive ecosystem alerts: breaking changes, upgrade deadlines, protocol changes and required node-operator/application actions, each with deadline, affected components and source link. Filter by level (critical/important/ecosystem/all). NEAR-only. Use when a user asks what\'s changing, what\'s about to break, or what deadlines are approaching on NEAR.',
   {
@@ -2568,6 +2597,44 @@ app.use('/api', (_req, res, next) => {
 });
 
 // ── REST API v1 ───────────────────────────────────────────────────────────────
+
+// GET /api/v1/deprecations?q=near-sdk-js&kind=package&status=removed&limit=50&offset=0
+const firstQuery = (v: unknown): string | undefined => (Array.isArray(v) ? v[0] : v) as string | undefined;
+
+app.get('/api/v1/deprecations', (req, res) => {
+  const db = getDb();
+  const q = firstQuery(req.query.q), kind = firstQuery(req.query.kind), status = firstQuery(req.query.status);
+  const n = clampLimit(firstQuery(req.query.limit) ?? '50', 50, 200);
+  const o = Math.max(parseInt(firstQuery(req.query.offset) ?? '0') || 0, 0);
+  try {
+    // The list carries no evidence (fetch one entry for that); undefined drops out of the JSON.
+    const pool = q ? findDeprecations(db, q, Number.MAX_SAFE_INTEGER).map((d) => ({ ...d, evidence: undefined })) : allDeprecations(db);
+    const filtered = pool.filter((d) => (!kind || d.kind === kind) && (!status || d.status === status));
+    res.json({
+      total: filtered.length,
+      limit: n,
+      offset: o,
+      built_at: (db.prepare('SELECT MAX(built_at) at FROM deprecations').get() as { at: string | null }).at,
+      items: filtered.slice(o, o + n).map((d) => ({ ...d, url: `${SITE.url}/api/v1/deprecations/${encodeURIComponent(d.id)}` })),
+    });
+  } catch (e) {
+    if (/no such table/.test((e as Error).message)) return res.status(503).json({ error: 'deprecation index not built yet' });
+    throw e;
+  }
+});
+
+// GET /api/v1/deprecations/:id - one entry with its evidence.
+app.get('/api/v1/deprecations/:id', (req, res) => {
+  const db = getDb();
+  try {
+    const d = getDeprecation(db, req.params.id);
+    if (!d) return res.status(404).json({ error: 'not found', id: req.params.id });
+    res.json({ ...d, evidence: evidenceOf(db, d.id) });
+  } catch (e) {
+    if (/no such table/.test((e as Error).message)) return res.status(503).json({ error: 'deprecation index not built yet' });
+    throw e;
+  }
+});
 
 // GET /api/v1/cips?status=Draft&type=Standards+Track&limit=20&offset=0
 app.get('/api/v1/cips', (req, res) => {
@@ -3438,6 +3505,8 @@ app.get('/api/v1', (_req, res) => {
     version: '1',
     base: `${SITE.url}/api/v1`,
     endpoints: [
+      { path: '/api/v1/deprecations', params: 'q, kind, status, limit, offset' },
+      { path: '/api/v1/deprecations/:id', params: 'entry id, e.g. near-sdk-js' },
       { path: '/api/v1/cips', params: 'status, type, limit, offset' },
       { path: '/api/v1/cips/:id', params: 'id (e.g. 0042, CIP-0042)' },
       { path: '/api/v1/cips/:id/history', params: 'CIP status change history' },
