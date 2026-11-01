@@ -282,6 +282,19 @@ export interface EcosystemProjectsRow {
   fail_streak: number | null;
   dead_since: string | null;
   last_activity_at: string | null;
+  tagline: string | null;
+  website: string | null;
+  phase: string | null;
+  catalog_status: string | null;
+  github: string | null;
+  twitter: string | null;
+  dapp: string | null;
+  tokens: string | null;
+  catalog_updated_at: string | null;
+  detail_synced_at: string | null;
+  tvl_usd: number | null;
+  tvl_components: string | null;
+  tvl_at: string | null;
 }
 
 export interface EmbeddingChunksRow {
@@ -573,6 +586,24 @@ export interface HttpValidatorsRow {
   url: string;
   etag: string;
   checked_at: string;
+}
+
+export interface IncidentsRow {
+  id: string;
+  name: string;
+  date: string;
+  amount_usd: number | null;
+  returned_usd: number | null;
+  chains: string;
+  classification: string | null;
+  technique: string | null;
+  target_type: string | null;
+  bridge_hack: number;
+  description: string | null;
+  source_url: string;
+  relevance: string;
+  catalog_slug: string | null;
+  synced_at: string;
 }
 
 export interface LogRollupRow {
