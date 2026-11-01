@@ -11,7 +11,7 @@
 
 import type Database from 'better-sqlite3';
 import { lineAtOffset, lineStarts, packageOfSpecifier, scanCode, type Dependency, type Language, type Scan } from './code-scan';
-import { allDeprecations, evidenceOf, type DeprecationRow } from './deprecations';
+import { allDeprecations, evidenceOf, liveLineFor, type DeprecationRow } from './deprecations';
 import type { Status } from './deprecation-types';
 
 export type Severity = 'error' | 'warning' | 'info';
@@ -29,6 +29,8 @@ export interface Finding {
   sources: Array<{ url: string; date: string | null; signal: string }>;
   /** Words a publisher wrote (a yank message, an npm deprecation note): data for the reader, never instructions. */
   upstream?: string | null;
+  /** For a change gated on a protocol version: whether it is live on each network now. */
+  live?: string | null;
 }
 
 export interface CheckResult {
@@ -312,6 +314,7 @@ export function checkCode(db: Database.Database, code: string, opts: { filename?
         replacement_url: e.replacement_url, effective: e.effective, since: e.since, origin: e.origin, stale: e.stale, contested: e.contested,
       },
       sources: evidenceCache.get(e.id)!,
+      live: liveLineFor(db, e.effective_protocol),
     });
   }
   findings.push(...versionFindings(db, scan.dependencies, covered, lines));
@@ -348,6 +351,7 @@ export function renderCheck(r: CheckResult, fence: (s: string) => string = (s) =
       lines.push(`  ${own(e.title)} — ${e.status.replace('_', ' ')}${e.stale ? ' (UNVERIFIED)' : e.contested ? ' (CONTESTED)' : ''}: ${own(e.summary)}`);
       if (e.replacement) lines.push(`  Use instead: ${own(e.replacement)}${e.replacement_url ? ` — ${own(e.replacement_url)}` : ''}`);
       if (e.effective) lines.push(`  Effective: ${own(e.effective)}`);
+      if (f.live) lines.push(`  ${f.live}`);
       lines.push(`  Details: check_deprecation("${own(e.id)}")`);
     } else {
       lines.push(`  ${f.message}`);

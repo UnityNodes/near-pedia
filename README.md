@@ -30,7 +30,8 @@ Package registries rarely flag any of this, so the agent finds out when the buil
 | NEAR sources | syncs written and run locally against the live sources: docs.near.org (198 pages), npm and crates.io (88 packages with every version, deprecation and yank flags), GitHub (804 repositories in 8 NEAR orgs, archived state and README deprecation notices), releases of 10 products from nearcore to near-api-js. Every change they see is logged. Not yet exposed as MCP tools |
 | Deprecation engine and seed entries | built and run locally: 133 entries from five automatic signals (archived repos, README notices, registry flags, release-note removals, the docs RPC reference's `[Deprecated]` marker) plus a weak dormancy signal, and 15 curated entries whose quotes are re-checked against the synced sources on every build. Served by the `check_deprecation` MCP tool and `/api/v1/deprecations` |
 | `check_code` | built: one JS/TS, Rust, Cargo.toml, package.json or JSON file in, the lines that import, depend on, call or configure something stale out, plus yanked pins and dependencies whole breaking lines behind. MCP tool and `POST /api/v1/check-code` |
-| RPC protocol state, House of Stake, radar | not started |
+| RPC protocol state | built: mainnet and testnet protocol version, nearcore version, epoch progress, the stake-weighted upgrade vote of the block producers, the threshold from RPC and the voting schedule from the nearcore release notes, every 15 minutes. `get_protocol_status` and `/api/v1/protocol`; protocol-gated deprecations (DelegateV2, the gas rebate) say whether they are live on each network |
+| House of Stake, radar | not started |
 | `/ask` through NEAR AI Cloud, daily database hash written to NEAR | not started |
 
 ## Try it locally

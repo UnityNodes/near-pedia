@@ -80,6 +80,8 @@ export interface Entry {
   since: string | null;
   /** When it bites, if not at once: a protocol version, a node version. */
   effective: string | null;
+  /** The protocol version the change takes effect at, for a live check against each network. */
+  effective_protocol?: number | null;
   matchers: Matchers;
   /** Keys that identify the same subject across signals: `github:near/near-sdk-js`, `npm:near-sdk-js`, `id:DelegateV2`. */
   subjects: string[];

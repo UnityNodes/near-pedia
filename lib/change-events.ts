@@ -22,7 +22,8 @@ export type ChangeKind =
   | 'doc_added'
   | 'doc_changed'
   | 'doc_removed'
-  | 'deprecation_added';
+  | 'deprecation_added'
+  | 'protocol_upgraded';
 
 export interface ChangeEvent {
   kind: ChangeKind;

@@ -27,6 +27,9 @@ export class HttpError extends Error {
 export interface PoliteOptions {
   userAgent: string;
   headers?: Record<string, string>;
+  /** POST for JSON-RPC; GET when omitted. */
+  method?: 'GET' | 'POST';
+  body?: string;
   /** Sent as If-None-Match; a 304 answer comes back as `notModified`. */
   etag?: string | null;
   timeoutMs?: number;
@@ -71,7 +74,7 @@ async function attempt(url: string, opts: PoliteOptions): Promise<PoliteResponse
   const sleep = opts.sleep ?? realSleep;
   const headers: Record<string, string> = { 'User-Agent': o.userAgent, ...(opts.headers ?? {}) };
   if (opts.etag) headers['If-None-Match'] = opts.etag;
-  const res = await fetch(url, { headers, signal: AbortSignal.timeout(o.timeoutMs) });
+  const res = await fetch(url, { method: opts.method ?? 'GET', body: opts.body, headers, signal: AbortSignal.timeout(o.timeoutMs) });
   if (res.status === 304) return { kind: 'not-modified' };
   if (res.status === 404) return { kind: 'not-found' };
   if (res.status === 429) {

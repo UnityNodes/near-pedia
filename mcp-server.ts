@@ -48,6 +48,8 @@ import { radarLiveSql } from './lib/constants.js';
 import { deadlinePassed } from './lib/radar.js';
 import { allDeprecations, evidenceOf, findDeprecations, getDeprecation, renderDeprecation } from './lib/deprecations.js';
 import { checkCode, MAX_CODE_CHARS, renderCheck } from './lib/check-code.js';
+import { protocolReport, renderProtocol } from './lib/protocol.js';
+import { NETWORKS } from './lib/near-sources.js';
 import { LANGUAGES as CODE_LANGUAGES, type Language } from './lib/code-scan.js';
 import { isStableTag, latestStableByLine, type ReleaseRow } from './lib/yourchain-versions.js';
 import type {
@@ -2101,6 +2103,22 @@ server.tool('check_code',
   }
 );
 
+// ── get_protocol_status ──────────────────────────────────────────────────────
+server.tool('get_protocol_status',
+  'Live NEAR protocol state of mainnet and testnet: the protocol version each runs and the newest its nodes support, the nearcore version, epoch progress, the stake-weighted upgrade vote of the block producers this epoch (with how much of the stake it was read from), the threshold, when voting for the next version starts according to the nearcore release notes, and which deprecations wait on that upgrade. Use when asked whether a protocol change (DelegateV2 removal, the gas rebate) is live yet, or when the next upgrade lands.',
+  {
+    network: z.enum(['mainnet', 'testnet']).optional().describe('One network; both when omitted.'),
+  },
+  async ({ network }) => {
+    try {
+      return { content: [{ type: 'text', text: renderProtocol(protocolReport(getDb(), network ? [network] : NETWORKS), new Date()) }] };
+    } catch (e) {
+      const msg = (e as Error).message;
+      return { content: [{ type: 'text', text: /no such table/.test(msg) ? 'No protocol snapshot on this server yet: the protocol sync has not run.' : `get_protocol_status failed: ${msg}` }] };
+    }
+  }
+);
+
 // ── get_radar ────────────────────────────────────────────────────────────────
 server.tool('get_radar', 'Get the NEAR Radar, nearpedia\'s curated feed of time-sensitive ecosystem alerts: breaking changes, upgrade deadlines, protocol changes and required node-operator/application actions, each with deadline, affected components and source link. Filter by level (critical/important/ecosystem/all). NEAR-only. Use when a user asks what\'s changing, what\'s about to break, or what deadlines are approaching on NEAR.',
   {
@@ -2644,6 +2662,21 @@ app.get('/api/v1/deprecations', (req, res) => {
     });
   } catch (e) {
     if (/no such table/.test((e as Error).message)) return res.status(503).json({ error: 'deprecation index not built yet' });
+    throw e;
+  }
+});
+
+// GET /api/v1/protocol?network=mainnet - protocol version, vote, epoch and schedule per network.
+app.get('/api/v1/protocol', (req, res) => {
+  const raw = req.query.network;
+  const network = (Array.isArray(raw) ? raw[0] : raw) as string | undefined;
+  if (network !== undefined && !(NETWORKS as string[]).includes(network)) return res.status(400).json({ error: `network must be one of ${NETWORKS.join(', ')}` });
+  try {
+    const report = protocolReport(getDb(), network ? [network] : NETWORKS);
+    if (report.networks.length === 0) return res.status(503).json({ error: 'protocol sync has not run yet', ...report });
+    res.json(report);
+  } catch (e) {
+    if (/no such table/.test((e as Error).message)) return res.status(503).json({ error: 'protocol sync has not run yet' });
     throw e;
   }
 });
@@ -3545,6 +3578,7 @@ app.get('/api/v1', (_req, res) => {
     version: '1',
     base: `${SITE.url}/api/v1`,
     endpoints: [
+      { path: '/api/v1/protocol', params: 'network (mainnet|testnet)' },
       { path: '/api/v1/check-code', params: 'POST { code, filename?, language? }' },
       { path: '/api/v1/deprecations', params: 'q, kind, status, limit, offset' },
       { path: '/api/v1/deprecations/:id', params: 'entry id, e.g. near-sdk-js' },

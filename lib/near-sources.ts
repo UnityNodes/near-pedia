@@ -57,3 +57,16 @@ export const CRATES = [
   'near-indexer-primitives',
   'omni-transaction',
 ] as const;
+
+/**
+ * Public RPC endpoints per network, tried in order. FastNEAR first: the
+ * NEAR-run endpoints are listed as "severely rate limited" on docs.near.org's
+ * RPC providers page (2026-11-01).
+ */
+export const RPC_ENDPOINTS = {
+  mainnet: ['https://free.rpc.fastnear.com', 'https://rpc.mainnet.near.org'],
+  testnet: ['https://test.rpc.fastnear.com', 'https://rpc.testnet.near.org'],
+} as const;
+
+export type Network = keyof typeof RPC_ENDPOINTS;
+export const NETWORKS = Object.keys(RPC_ENDPOINTS) as Network[];

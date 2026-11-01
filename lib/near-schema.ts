@@ -90,6 +90,7 @@ export function initNearSchema(db: Database.Database): void {
       replacement_url TEXT,
       since TEXT,
       effective TEXT,
+      effective_protocol INTEGER,
       matchers TEXT NOT NULL,
       subjects TEXT NOT NULL,
       origin TEXT NOT NULL CHECK(origin IN ('seed','signal')),
@@ -113,6 +114,44 @@ export function initNearSchema(db: Database.Database): void {
       PRIMARY KEY (deprecation_id, signal, source_url, quote)
     );
 
+    CREATE TABLE IF NOT EXISTS protocol_snapshots (
+      network TEXT NOT NULL,
+      observed_at TEXT NOT NULL,
+      chain_id TEXT NOT NULL,
+      protocol_version INTEGER NOT NULL,
+      latest_protocol_version INTEGER NOT NULL,
+      node_version TEXT,
+      block_height INTEGER NOT NULL,
+      block_time TEXT NOT NULL,
+      epoch_id TEXT NOT NULL,
+      epoch_height INTEGER,
+      epoch_start_height INTEGER NOT NULL,
+      epoch_length INTEGER,
+      threshold_num INTEGER,
+      threshold_den INTEGER,
+      endpoint TEXT NOT NULL,
+      PRIMARY KEY (network, observed_at)
+    );
+
+    CREATE TABLE IF NOT EXISTS validator_stakes (
+      network TEXT NOT NULL,
+      epoch_id TEXT NOT NULL,
+      account_id TEXT NOT NULL,
+      stake TEXT NOT NULL,
+      block_producer INTEGER NOT NULL,
+      PRIMARY KEY (network, epoch_id, account_id)
+    );
+
+    CREATE TABLE IF NOT EXISTS validator_votes (
+      network TEXT NOT NULL,
+      epoch_id TEXT NOT NULL,
+      account_id TEXT NOT NULL,
+      voted_version INTEGER NOT NULL,
+      block_height INTEGER NOT NULL,
+      block_time TEXT NOT NULL,
+      PRIMARY KEY (network, epoch_id, account_id)
+    );
+
     CREATE TABLE IF NOT EXISTS http_validators (
       url TEXT PRIMARY KEY,
       etag TEXT NOT NULL,
@@ -120,8 +159,17 @@ export function initNearSchema(db: Database.Database): void {
     );
   `);
 
-  const docCols = db.prepare('PRAGMA table_info(doc_pages)').all() as Array<{ name: string }>;
-  if (docCols.length > 0 && !docCols.some((c) => c.name === 'content_hash')) {
-    db.exec('ALTER TABLE doc_pages ADD COLUMN content_hash TEXT');
-  }
+  // Columns added after their table first shipped. CREATE TABLE IF NOT
+  // EXISTS leaves an older table as it was, and the first INSERT naming the
+  // new column then fails the whole build.
+  ensureColumns(db, 'doc_pages', [['content_hash', 'TEXT']]);
+  ensureColumns(db, 'github_repos', [['readme_marker', 'TEXT'], ['readme_strength', "TEXT CHECK(readme_strength IN ('strong','weak'))"]]);
+  ensureColumns(db, 'deprecations', [['effective_protocol', 'INTEGER'], ['contested', 'INTEGER NOT NULL DEFAULT 0']]);
+  ensureColumns(db, 'deprecation_evidence', [['expired', 'INTEGER NOT NULL DEFAULT 0']]);
+}
+
+function ensureColumns(db: Database.Database, table: string, columns: ReadonlyArray<[string, string]>): void {
+  const have = new Set((db.prepare(`PRAGMA table_info(${table})`).all() as Array<{ name: string }>).map((c) => c.name));
+  if (have.size === 0) return;
+  for (const [name, decl] of columns) if (!have.has(name)) db.exec(`ALTER TABLE ${table} ADD COLUMN ${name} ${decl}`);
 }
