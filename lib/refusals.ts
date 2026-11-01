@@ -24,6 +24,9 @@
  * actually owns, not the whole table.
  */
 
+import { RADAR_SOURCE_TYPES } from './near-radar';
+import { DOCS_ORIGIN } from './near-docs';
+
 /** A row as read back out of the table the rule governs. */
 export type HeldRow = Record<string, unknown>;
 
@@ -102,7 +105,7 @@ export function isSpamTopic(t: { id: number; title: string }): boolean {
 // ---------------------------------------------------------------------------
 
 /** sync-docs.ts:94 - only pages under this host are this sync's own. */
-const DOCS_HOST = 'https://docs.yourchain.example/';
+const DOCS_HOST = `${DOCS_ORIGIN}/`;
 
 // ---------------------------------------------------------------------------
 // arXiv relevance
@@ -119,9 +122,8 @@ const PAPER_RELEVANT = /yourchain|your topic/i;
 // radar_items (refresh-radar.ts)
 // ---------------------------------------------------------------------------
 
-/** refresh-radar.ts's processForumOutreach: on-topic vs junk keywords. */
-const RADAR_FORUM_ON_TOPIC = /grant|CIP|governance|vote|proposal|launch|partner|integrat|ecosystem|new app|mainnet|approved/i;
-const RADAR_FORUM_JUNK = /balance 0|help|issue|error|problem/i;
+/** refresh-radar.ts writes only lib/near-radar.ts's source types, each with an expiry. */
+const RADAR_TYPES: ReadonlySet<string> = new Set(RADAR_SOURCE_TYPES);
 
 export const REFUSALS: Refusal[] = [
   {
@@ -150,7 +152,7 @@ export const REFUSALS: Refusal[] = [
   },
   {
     id: 'docs-host-guard',
-    what: "a doc_pages row that is neither sync-docs.ts's own output (under docs.yourchain.example) nor the other known, legitimate source='docs' content (github.com/yoursdk/docs/*.md - sync-docs.ts's own prune-scope comment names this coexistence explicitly, since it deletes by URL namespace rather than by source for exactly this reason)",
+    what: "a doc_pages row that is neither sync-docs.ts's own output (under docs.near.org) nor the other known, legitimate source='docs' content (github.com/yoursdk/docs/*.md - sync-docs.ts's own prune-scope comment names this coexistence explicitly, since it deletes by URL namespace rather than by source for exactly this reason)",
     table: 'doc_pages',
     sql: `SELECT id, url FROM doc_pages WHERE source = 'docs'`,
     refuses: (r) => {
@@ -186,44 +188,12 @@ export const REFUSALS: Refusal[] = [
     label: (r) => `${r.id}`,
   },
   {
-    id: 'radar-forum-junk-keywords',
-    what: 'a forum_ecosystem radar item whose title fails refresh-radar.ts\'s own on-topic/junk keyword gate',
+    id: 'radar-unknown-source-or-no-expiry',
+    what: 'a radar item of a source type lib/near-radar.ts does not produce, or one with no expires_at: every alert carries the date it stops being true',
     table: 'radar_items',
-    sql: `SELECT id, title FROM radar_items WHERE source_type = 'forum_ecosystem'`,
-    refuses: (r) => {
-      const t = String(r.title ?? '');
-      return RADAR_FORUM_JUNK.test(t) || !RADAR_FORUM_ON_TOPIC.test(t);
-    },
-    label: (r) => `${r.id} (${r.title})`,
-  },
-  {
-    id: 'radar-github-release-snapshot-rc',
-    what: 'a github_release radar item pointing at a snapshot/rc-tagged release, which refresh-radar.ts excludes at query time',
-    table: 'radar_items',
-    sql: `
-      SELECT ri.id, gr.tag FROM radar_items ri
-      JOIN github_releases gr ON gr.id = ri.source_id
-      WHERE ri.source_type = 'github_release'
-    `,
-    refuses: (r) => /-snapshot|-rc/i.test(String(r.tag ?? '')),
-    label: (r) => `${r.id} (${r.tag})`,
-  },
-  {
-    id: 'radar-github-breaking-bot-or-non-breaking',
-    what: 'a github_issue radar item that is a dependency-bump/CI bot item, or whose body does not mention a breaking-change phrase, both excluded by refresh-radar.ts\'s query',
-    table: 'radar_items',
-    sql: `
-      SELECT ri.id, gi.title, gi.body FROM radar_items ri
-      JOIN github_items gi ON gi.id = ri.source_id
-      WHERE ri.source_type = 'github_issue'
-    `,
-    refuses: (r) => {
-      const title = String(r.title ?? '');
-      const body = String(r.body ?? '').toLowerCase();
-      if (/^Bump |^\[ci\]|^chore\(deps\)/.test(title)) return true;
-      return !/breaking change|mandatory|must upgrade/.test(body);
-    },
-    label: (r) => `${r.id} (${r.title})`,
+    sql: `SELECT id, source_type, expires_at FROM radar_items`,
+    refuses: (r) => !RADAR_TYPES.has(String(r.source_type)) || !r.expires_at,
+    label: (r) => `${r.id} (${r.source_type}, expires ${r.expires_at ?? 'never'})`,
   },
 ];
 

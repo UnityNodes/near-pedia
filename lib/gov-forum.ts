@@ -26,6 +26,13 @@ export const FORUM_LISTINGS: readonly Listing[] = [
   { id: 68, label: 'Dev / proposals', posts: false },
 ];
 
+/**
+ * Where House of Stake proposals are drafted: the House of Stake category
+ * and its Proposals subcategory (ids read from /categories.json on
+ * 2026-11-01). An "HSP-040: …" title posted anywhere else is not a draft.
+ */
+export const HSP_CATEGORY_IDS: readonly number[] = [158, 168];
+
 export interface TopicRow {
   id: number;
   title: string;
