@@ -9,7 +9,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start",
+    "start": "next start -p 3130",
     "lint": "eslint",
     "test": "vitest run --passWithNoTests",
     "test:watch": "vitest",
