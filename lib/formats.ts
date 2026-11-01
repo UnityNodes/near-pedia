@@ -87,6 +87,12 @@ export const OPAQUE: Exception[] = [
       'alongside real URLs. Stored for triage, never parsed as a URL.',
   },
   {
+    table: 'github_repos', column: 'readme_replacement', format: 'opaque',
+    why:
+      'The pointer a README deprecation notice gives, as written: "label (url)", a bare URL, or a ' +
+      'package name from a code span (lib/github-repos.ts firstLink). Shown as text, never parsed.',
+  },
+  {
     table: 'csp_violation_log', column: 'source_file', format: 'opaque',
     why:
       'Browser-supplied, and Chrome sends a bare scheme ("chrome-extension", "about") for ' +

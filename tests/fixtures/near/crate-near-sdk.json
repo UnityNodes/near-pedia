@@ -1,0 +1,76 @@
+{
+ "crate": {
+  "name": "near-sdk",
+  "description": "Rust library for writing NEAR smart contracts.\n",
+  "max_version": "5.30.0",
+  "max_stable_version": "5.30.0",
+  "newest_version": "5.30.0",
+  "updated_at": "2026-10-27T15:06:44.241807Z",
+  "created_at": "2020-03-20T00:53:17.086691Z",
+  "repository": "https://github.com/near/near-sdk-rs",
+  "homepage": "https://docs.near.org/",
+  "documentation": null
+ },
+ "versions": [
+  {
+   "num": "5.30.0",
+   "created_at": "2026-10-27T15:06:44.241807Z",
+   "yanked": false,
+   "yank_message": null
+  },
+  {
+   "num": "5.30.0-rc.2",
+   "created_at": "2026-10-26T20:46:40.781137Z",
+   "yanked": false,
+   "yank_message": null
+  },
+  {
+   "num": "5.30.0-rc.1",
+   "created_at": "2026-10-19T17:11:52.076783Z",
+   "yanked": false,
+   "yank_message": null
+  },
+  {
+   "num": "5.29.1",
+   "created_at": "2026-09-17T15:01:47.704690Z",
+   "yanked": false,
+   "yank_message": null
+  },
+  {
+   "num": "5.29.0",
+   "created_at": "2026-07-13T17:53:15.670871Z",
+   "yanked": false,
+   "yank_message": null
+  },
+  {
+   "num": "5.29.0-rc.2",
+   "created_at": "2026-07-08T16:27:35.687685Z",
+   "yanked": false,
+   "yank_message": null
+  },
+  {
+   "num": "5.29.0-rc.1",
+   "created_at": "2026-07-02T00:06:40.186718Z",
+   "yanked": false,
+   "yank_message": null
+  },
+  {
+   "num": "5.28.3",
+   "created_at": "2026-06-27T00:01:31.718752Z",
+   "yanked": false,
+   "yank_message": null
+  },
+  {
+   "num": "5.28.2",
+   "created_at": "2026-06-18T15:11:09.354868Z",
+   "yanked": false,
+   "yank_message": null
+  },
+  {
+   "num": "5.28.1",
+   "created_at": "2026-06-09T17:34:53.689371Z",
+   "yanked": false,
+   "yank_message": null
+  }
+ ]
+}

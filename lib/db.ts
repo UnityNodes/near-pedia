@@ -4,6 +4,7 @@ import fs from 'fs';
 import { fileURLToPath } from 'url';
 import * as sqliteVec from 'sqlite-vec';
 import { registerCipCitesFn } from './cip-mention-patterns';
+import { initNearSchema } from './near-schema';
 
 // The default database is resolved from this module's own location, not from
 // process.cwd(). A cwd-relative default means code from one checkout silently
@@ -471,6 +472,7 @@ export function initSchema(db: Database.Database = getDb()): void {
   `);
 
   runMigrations(db);
+  initNearSchema(db);
 }
 
 function runMigrations(db: Database.Database): void {

@@ -1,0 +1,40 @@
+{
+ "crate": {
+  "name": "cargo-near",
+  "description": "Cargo extension for building Rust smart contracts on NEAR",
+  "max_version": "0.23.0-rc.2",
+  "max_stable_version": "0.22.0",
+  "newest_version": "0.23.0-rc.2",
+  "updated_at": "2026-10-19T17:15:15.416130Z",
+  "created_at": "2022-06-01T09:04:27.238114Z",
+  "repository": "https://github.com/near/cargo-near",
+  "homepage": null,
+  "documentation": null
+ },
+ "versions": [
+  {
+   "num": "0.23.0-rc.2",
+   "created_at": "2026-10-19T17:15:15.416130Z",
+   "yanked": false,
+   "yank_message": null
+  },
+  {
+   "num": "0.23.0-rc.1",
+   "created_at": "2026-10-09T20:24:10.264010Z",
+   "yanked": false,
+   "yank_message": null
+  },
+  {
+   "num": "0.22.0",
+   "created_at": "2026-07-14T22:08:43.574748Z",
+   "yanked": false,
+   "yank_message": null
+  },
+  {
+   "num": "0.22.0-rc.1",
+   "created_at": "2026-07-02T07:13:19.500206Z",
+   "yanked": false,
+   "yank_message": null
+  }
+ ]
+}

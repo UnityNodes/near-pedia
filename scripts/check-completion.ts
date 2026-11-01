@@ -39,6 +39,7 @@ const SERVING = [
   'mcp-server.ts',
   'lib/llm-cascade.ts',
   'lib/embeddings.ts',
+  'lib/retry.ts',
   'lib/reranker.ts',
   'lib/vector-store.ts',
   'lib/search.ts',
@@ -61,7 +62,7 @@ interface Site {
 
 const SITES: Site[] = [
   {
-    file: 'lib/embeddings.ts',
+    file: 'lib/retry.ts',
     loop: 'for (let attempt = 0; attempt <= delays.length; attempt++)',
     exhaustion: 'throws',
     why: 'withRetry rethrows lastError once the attempts are spent, so a failed embedding can never be returned as a vector',
