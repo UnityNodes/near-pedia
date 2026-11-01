@@ -15,7 +15,7 @@ export const revalidate = 300;
 
 export const metadata = pageMetadata({
   title: 'NEAR Radar',
-  description: 'Critical deadlines, breaking changes, and ecosystem updates for NEAR node operators, application developers, and validators.',
+  description: 'What is changing on NEAR now and needs action: protocol upgrades and the validator vote, House of Stake votes, security incidents, nearcore security releases. Every alert leaves when its subject resolves.',
   path: '/radar',
 });
 
@@ -29,6 +29,7 @@ interface RadarItem {
   affects: string;
   deadline: string | null;
   published_at: string;
+  expires_at: string | null;
 }
 
 const LEVELS: readonly RadarLevel[] = ['critical', 'important', 'ecosystem'];
@@ -67,6 +68,16 @@ function getSources(): string[] {
   const db = getDb();
   const rows = db.prepare(`SELECT DISTINCT source_type FROM radar_items WHERE source_type IS NOT NULL ORDER BY source_type`).all() as Array<{ source_type: string }>;
   return rows.map(r => r.source_type);
+}
+
+/**
+ * A protocol alert's expiry is a heartbeat, renewed with every fresh RPC
+ * snapshot, not a planned end: its date read as "ends today" for an upgrade
+ * due in three days. It ends when the network upgrades.
+ */
+function untilLabel(item: RadarItem): string | null {
+  if (item.source_type === 'protocol_upgrade') return 'the network upgrades';
+  return item.expires_at ? item.expires_at.slice(0, 10) : null;
 }
 
 function parseAffects(raw: string | null): string[] {
@@ -134,8 +145,8 @@ export default async function RadarPage({ searchParams }: PageProps) {
     <>
       {totalCounts.critical > 0 && <>{totalCounts.critical} critical, </>}
       {totalCounts.important > 0 && <>{totalCounts.important} important, </>}
-      {totalCounts.ecosystem} ecosystem {totalCounts.ecosystem === 1 ? 'item' : 'items'}: breaking changes,
-      deadlines, and network updates.
+      {totalCounts.ecosystem} ecosystem {totalCounts.ecosystem === 1 ? 'item' : 'items'}. Only what is true now:
+      each alert carries the date it expires, and leaves on the next 15-minute refresh once its subject resolves.
     </>
   );
 
@@ -210,6 +221,7 @@ export default async function RadarPage({ searchParams }: PageProps) {
                       ]}
                       deadline={item.deadline}
                       published={item.published_at}
+                      until={untilLabel(item)}
                       index={i}
                     />
                   ))}

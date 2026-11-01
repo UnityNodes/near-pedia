@@ -40,11 +40,18 @@ function MobileMenu({
         </div>
         <nav className="mobile-nav">
           <Link
-            href="/cips"
-            className={`mobile-nav-item${pathname.startsWith('/cips') ? ' active' : ''}`}
+            href="/deprecations"
+            className={`mobile-nav-item${pathname.startsWith('/deprecations') ? ' active' : ''}`}
             onClick={onClose}
           >
-            {t.nav_cips}
+            Deprecations
+          </Link>
+          <Link
+            href="/ask"
+            className={`mobile-nav-item${pathname.startsWith('/ask') ? ' active' : ''}`}
+            onClick={onClose}
+          >
+            Ask
           </Link>
           {groups.map(group => (
             <div key={group.label}>
@@ -159,7 +166,7 @@ export function Topbar() {
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
-  const groups = NAV_GROUPS.filter(g => g.key !== 'governance' && g.key !== 'build');
+  const groups = NAV_GROUPS.filter(g => g.key !== 'check' && g.key !== 'build');
 
   return (
     <>
@@ -175,8 +182,11 @@ export function Topbar() {
           </Link>
 
           <nav className="nav-list">
-            <Link href="/cips" className={pathname.startsWith('/cips') || pathname.startsWith('/proposals') ? 'active' : ''}>
-              <span className="nav-label">{t.nav_cips}</span>
+            <Link href="/deprecations" className={pathname.startsWith('/deprecations') ? 'active' : ''}>
+              <span className="nav-label">Deprecations</span>
+            </Link>
+            <Link href="/ask" className={pathname.startsWith('/ask') ? 'active' : ''}>
+              <span className="nav-label">Ask</span>
             </Link>
             {groups.map(group => (
               <NavDropdown

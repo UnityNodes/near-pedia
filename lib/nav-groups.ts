@@ -1,6 +1,6 @@
 import {
-  Activity, BookOpen, BookText, Boxes, CirclePlay, Code2, Database, FileText,
-  Library, MessagesSquare, Newspaper, PenLine, Plug, Radar, ScrollText, ShieldCheck, Tag, TrendingUp,
+  Activity, BookOpen, BookText, Boxes, Code2, Database, Gauge, MessageCircleQuestion,
+  MessagesSquare, PenLine, Plug, Radar, ShieldAlert, Tag,
   type LucideIcon,
 } from 'lucide-react';
 import { TRANSLATIONS } from './i18n';
@@ -14,7 +14,7 @@ export interface NavItem {
   Icon: LucideIcon;
 }
 
-export type NavGroupKey = 'governance' | 'learn' | 'community' | 'build' | 'monitor';
+export type NavGroupKey = 'check' | 'now' | 'learn' | 'ecosystem' | 'build';
 
 export interface NavGroup {
   key: NavGroupKey;
@@ -24,32 +24,40 @@ export interface NavGroup {
 
 export const NAV_GROUPS: NavGroup[] = [
   {
-    key: 'governance',
-    label: t.nav_governance,
+    key: 'check',
+    label: 'Check',
     items: [
-      { href: '/cips', label: t.nav_cips, hint: 'Every proposal and its history', Icon: FileText },
-      { href: '/whitepapers', label: t.nav_papers, hint: 'Research papers', Icon: ScrollText },
+      { href: '/deprecations', label: 'Deprecations', hint: 'What NEAR removed, deprecated or replaced', Icon: ShieldAlert },
+      { href: '/ask', label: 'Ask', hint: 'Answered through NEAR AI Cloud, verified', Icon: MessageCircleQuestion },
+    ],
+  },
+  {
+    key: 'now',
+    label: 'Now',
+    items: [
+      { href: '/radar', label: t.nav_radar, hint: 'What is changing, until it resolves', Icon: Radar },
+      { href: '/protocol', label: 'Protocol', hint: 'Versions and the validator vote', Icon: Gauge },
+      { href: '/feed', label: t.nav_feed, hint: 'Everything as it happens', Icon: Activity },
+      { href: '/sources', label: t.nav_sources, hint: 'What is indexed, and how fresh', Icon: Database },
     ],
   },
   {
     key: 'learn',
     label: t.nav_learn,
     items: [
-      { href: '/docs', label: t.nav_docs, hint: 'Guides and reference', Icon: BookOpen },
-      { href: '/glossary', label: t.nav_glossary, hint: 'Terms, explained', Icon: BookText },
+      { href: '/docs', label: t.nav_docs, hint: 'docs.near.org and partner docs', Icon: BookOpen },
       { href: '/releases', label: t.nav_releases, hint: 'What shipped and when', Icon: Tag },
-      { href: '/videos', label: t.nav_videos, hint: 'Talks with transcripts', Icon: CirclePlay },
-      { href: '/digest', label: t.nav_digest, hint: 'The week in one read', Icon: Newspaper },
+      { href: '/glossary', label: t.nav_glossary, hint: 'Terms, explained', Icon: BookText },
     ],
   },
   {
-    key: 'community',
-    label: t.nav_community,
+    key: 'ecosystem',
+    label: 'Ecosystem',
     items: [
-      { href: '/discussions', label: t.nav_forum, hint: 'Threads and answers', Icon: MessagesSquare },
+      { href: '/ecosystem', label: t.nav_ecosystem, hint: 'NEAR Catalog projects', Icon: Boxes },
+      { href: '/discussions', label: t.nav_forum, hint: 'gov.near.org threads', Icon: MessagesSquare },
+      { href: '/code', label: t.nav_code, hint: 'Repositories and issues', Icon: Code2 },
       { href: '/blog', label: t.nav_blog, hint: 'News and write-ups', Icon: PenLine },
-      { href: '/code', label: t.nav_code, hint: 'Repos, packages, examples', Icon: Code2 },
-      { href: '/ecosystem', label: t.nav_ecosystem, hint: 'Projects building here', Icon: Boxes },
     ],
   },
   {
@@ -57,18 +65,6 @@ export const NAV_GROUPS: NavGroup[] = [
     label: t.nav_build,
     items: [
       { href: '/for-ai', label: t.nav_for_ai, hint: 'Connect an agent in a minute', Icon: Plug },
-      { href: '/resources', label: t.nav_resources, hint: 'Starter paths and links', Icon: Library },
-    ],
-  },
-  {
-    key: 'monitor',
-    label: t.nav_monitor,
-    items: [
-      { href: '/radar', label: t.nav_radar, hint: 'What is coming next', Icon: Radar },
-      { href: '/validators', label: t.nav_validators, hint: 'Node operators', Icon: ShieldCheck },
-      { href: '/feed', label: t.nav_feed, hint: 'Everything as it happens', Icon: Activity },
-      { href: '/trending', label: t.nav_trending, hint: 'What people read now', Icon: TrendingUp },
-      { href: '/sources', label: t.nav_sources, hint: 'What is indexed, and how fresh', Icon: Database },
     ],
   },
 ];

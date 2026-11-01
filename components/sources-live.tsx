@@ -8,29 +8,30 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 
-type GroupKey = 'governance' | 'learn' | 'community' | 'code';
+type GroupKey = 'code' | 'learn' | 'governance' | 'ecosystem';
 
 const GROUPS: { key: GroupKey; name: string }[] = [
+  { key: 'code', name: 'Code' },
+  { key: 'learn', name: 'Docs' },
   { key: 'governance', name: 'Governance' },
-  { key: 'learn', name: 'Learn' },
-  { key: 'community', name: 'Community' },
-  { key: 'code', name: 'Code & network' },
+  { key: 'ecosystem', name: 'Ecosystem' },
 ];
 
 const TYPE_MAP: Record<string, { name: string; Icon: LucideIcon; group: GroupKey; href: string }> = {
-  cip:               { name: 'CIPs',         Icon: FileText,       group: 'governance', href: '/cips' },
-  cip_pull_request:  { name: 'CIP PRs',      Icon: GitPullRequest, group: 'governance', href: '/proposals' },
-  doc:               { name: 'Docs',         Icon: BookOpen,       group: 'learn',      href: '/docs' },
-  whitepaper:        { name: 'Whitepapers',  Icon: ScrollText,     group: 'learn',      href: '/whitepapers' },
-  blog_post:         { name: 'Blog',         Icon: PenLine,        group: 'learn',      href: '/blog' },
-  youtube_video:     { name: 'Videos',       Icon: CirclePlay,     group: 'learn',      href: '/videos' },
-  forum_topic:       { name: 'Forum',        Icon: MessagesSquare, group: 'community',  href: '/discussions' },
-  github_discussion: { name: 'Discussions',  Icon: MessageCircle,  group: 'community',  href: '/discussions' },
-  github_item:       { name: 'GitHub items', Icon: GitBranch,      group: 'code',       href: '/code' },
+  package:           { name: 'npm + crates.io', Icon: Package,      group: 'code',       href: '/deprecations?kind=package' },
+  github_repo:       { name: 'Repositories', Icon: GitBranch,      group: 'code',       href: '/deprecations?kind=repo' },
   github_release:    { name: 'Releases',     Icon: Tag,            group: 'code',       href: '/releases' },
-  sdk_version:       { name: 'SDK versions', Icon: Package,        group: 'code',       href: '/code' },
-  radar_item:        { name: 'Radar',        Icon: Radar,          group: 'code',       href: '/radar' },
-  ecosystem_project: { name: 'Ecosystem',    Icon: Boxes,          group: 'code',       href: '/ecosystem' },
+  github_item:       { name: 'GitHub issues', Icon: GitPullRequest, group: 'code',      href: '/code' },
+  doc:               { name: 'Docs',         Icon: BookOpen,       group: 'learn',      href: '/docs' },
+  blog_post:         { name: 'Blog',         Icon: PenLine,        group: 'learn',      href: '/blog' },
+  whitepaper:        { name: 'Papers',       Icon: ScrollText,     group: 'learn',      href: '/whitepapers' },
+  youtube_video:     { name: 'Videos',       Icon: CirclePlay,     group: 'learn',      href: '/videos' },
+  hos_proposal:      { name: 'House of Stake', Icon: FileText,     group: 'governance', href: '/radar' },
+  forum_topic:       { name: 'gov.near.org', Icon: MessagesSquare, group: 'governance', href: '/discussions' },
+  github_discussion: { name: 'Discussions',  Icon: MessageCircle,  group: 'governance', href: '/discussions' },
+  ecosystem_project: { name: 'NEAR Catalog', Icon: Boxes,          group: 'ecosystem',  href: '/ecosystem' },
+  incident:          { name: 'Incidents',    Icon: Zap,            group: 'ecosystem',  href: '/radar' },
+  radar_item:        { name: 'Radar',        Icon: Radar,          group: 'ecosystem',  href: '/radar' },
 };
 
 const DAY_MS = 86_400_000;
@@ -136,7 +137,7 @@ export function SourcesLive({
 }: Props = {}) {
   const [data, setData] = useState<SourcesResponse>(initial ?? EMPTY);
   const [mode, setMode] = useState<Mode>(initial ? 'server' : 'unavailable');
-  const [group, setGroup] = useState<GroupKey>('governance');
+  const [group, setGroup] = useState<GroupKey>('code');
   const [userPicked, setUserPicked] = useState(false);
 
   const sources = normalize(data);
@@ -144,7 +145,7 @@ export function SourcesLive({
     GROUPS.map((g) => [g.key, sources.filter((s) => s.group === g.key).reduce((sum, s) => sum + s.count, 0)]),
   ) as Record<GroupKey, number>;
   const visibleGroups = GROUPS.filter((g) => sources.some((s) => s.group === g.key));
-  const activeGroup = visibleGroups.some((g) => g.key === group) ? group : (visibleGroups[0]?.key ?? 'governance');
+  const activeGroup = visibleGroups.some((g) => g.key === group) ? group : (visibleGroups[0]?.key ?? 'code');
   const rows = sources.filter((s) => s.group === activeGroup).sort((a, b) => b.count - a.count);
   const maxCount = Math.max(1, ...rows.map((r) => r.count));
   const total = sources.reduce((sum, s) => sum + s.count, 0);

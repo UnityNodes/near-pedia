@@ -49,7 +49,8 @@ function Sidebar({ group, active, counts }: { group: NavGroup; active: string; c
 
 export function PageShell({ href, title, description, kicker, stat, synced, source, children }: PageShellProps) {
   const found = findNavItem(href);
-  const group = found?.group ?? NAV_GROUPS[1];
+  // Pages outside the navigation (the engine's papers, videos, digest) sit under Learn.
+  const group = found?.group ?? NAV_GROUPS.find((g) => g.key === 'learn') ?? NAV_GROUPS[0];
   const Icon = found?.item.Icon ?? group.items[0].Icon;
   const counts = getSectionCounts();
 

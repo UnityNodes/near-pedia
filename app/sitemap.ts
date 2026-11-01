@@ -17,7 +17,10 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
   const staticRoutes: MetadataRoute.Sitemap = [
     { url: BASE, lastModified: now, changeFrequency: 'daily', priority: 1 },
-    { url: `${BASE}/cips`, lastModified: now, changeFrequency: 'daily', priority: 0.9 },
+    { url: `${BASE}/deprecations`, lastModified: now, changeFrequency: 'daily', priority: 0.9 },
+    { url: `${BASE}/radar`, lastModified: now, changeFrequency: 'hourly', priority: 0.8 },
+    { url: `${BASE}/protocol`, lastModified: now, changeFrequency: 'hourly', priority: 0.8 },
+    { url: `${BASE}/ask`, lastModified: now, changeFrequency: 'monthly', priority: 0.6 },
     { url: `${BASE}/discussions`, lastModified: now, changeFrequency: 'daily', priority: 0.8 },
     { url: `${BASE}/docs`, lastModified: now, changeFrequency: 'weekly', priority: 0.8 },
     { url: `${BASE}/whitepapers`, lastModified: now, changeFrequency: 'weekly', priority: 0.7 },
@@ -28,7 +31,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${BASE}/code`, lastModified: now, changeFrequency: 'daily', priority: 0.6 },
     { url: `${BASE}/sources`, lastModified: now, changeFrequency: 'daily', priority: 0.5 },
     { url: `${BASE}/ecosystem`, lastModified: now, changeFrequency: 'daily', priority: 0.6 },
-    { url: `${BASE}/cips/graph`, lastModified: now, changeFrequency: 'weekly', priority: 0.5 },
     { url: `${BASE}/trending`, lastModified: now, changeFrequency: 'hourly', priority: 0.6 },
     { url: `${BASE}/for-ai`, lastModified: now, changeFrequency: 'weekly', priority: 0.6 },
     { url: `${BASE}/search`, lastModified: now, changeFrequency: 'monthly', priority: 0.5 },
