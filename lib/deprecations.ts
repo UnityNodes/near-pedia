@@ -5,6 +5,7 @@
 
 import type Database from 'better-sqlite3';
 import type { EntryKind, Matchers, Status, Strength } from './deprecation-types';
+import { effectLine, effectOn } from './protocol';
 
 export interface DeprecationRow {
   id: string;
@@ -17,6 +18,7 @@ export interface DeprecationRow {
   replacement_url: string | null;
   since: string | null;
   effective: string | null;
+  effective_protocol: number | null;
   matchers: Matchers;
   subjects: string[];
   origin: 'seed' | 'signal';
@@ -46,6 +48,18 @@ export interface DeprecationMatch extends DeprecationRow {
    */
   match: 'exact' | 'replacement' | 'text';
   evidence: EvidenceRow[];
+  /** For a change gated on a protocol version: whether it is live on each network now. */
+  live: string | null;
+}
+
+/** The live line for an entry gated on a protocol version, or null; a missing snapshot table is "not observed". */
+export function liveLineFor(db: Database.Database, required: number | null): string | null {
+  if (required === null) return null;
+  try {
+    return effectLine(effectOn(db, required), required);
+  } catch {
+    return null;
+  }
 }
 
 interface RawRow extends Omit<DeprecationRow, 'matchers' | 'subjects' | 'stale' | 'contested'> { matchers: string; subjects: string; stale: number; contested: number }
@@ -135,7 +149,7 @@ export function findDeprecations(db: Database.Database, raw: string, limit = 5):
     ...text.map((d) => ({ ...d, match: 'text' as const })),
   ]
     .slice(0, limit)
-    .map((d) => ({ ...d, evidence: evidenceOf(db, d.id) }));
+    .map((d) => ({ ...d, evidence: evidenceOf(db, d.id), live: liveLineFor(db, d.effective_protocol) }));
 }
 
 const STATUS_LABEL: Record<Status, string> = {
@@ -179,6 +193,7 @@ export function renderDeprecation(d: DeprecationMatch, fence: (s: string) => str
   if (replacement) lines.push(replacement);
   const dates = [d.since ? `since ${d.since}` : null, d.effective ? `effective: ${own(d.effective)}` : null].filter(Boolean);
   if (dates.length) lines.push(dates.join(' | '));
+  if (d.live) lines.push(d.live);
   if (d.evidence.length) lines.push('Evidence:', ...d.evidence.map((e) => evidenceLine(e, fence)));
   if (d.match === 'text') lines.push('(Matched by text, not by name: check that this is the thing you asked about.)');
   return lines.join('\n');

@@ -226,14 +226,14 @@ export function writeEntries(db: Database.Database, entries: readonly BuiltEntry
     db.prepare('DELETE FROM deprecation_evidence').run();
     db.prepare('DELETE FROM deprecations').run();
     const ins = db.prepare(`INSERT INTO deprecations (id, title, kind, status, strength, summary, replacement, replacement_url, since, effective,
-        matchers, subjects, origin, stale, contested, built_at) VALUES (@id, @title, @kind, @status, @strength, @summary, @replacement, @replacement_url,
-        @since, @effective, @matchers, @subjects, @origin, @stale, @contested, @built_at)`);
+        effective_protocol, matchers, subjects, origin, stale, contested, built_at) VALUES (@id, @title, @kind, @status, @strength, @summary, @replacement,
+        @replacement_url, @since, @effective, @effective_protocol, @matchers, @subjects, @origin, @stale, @contested, @built_at)`);
     const insE = db.prepare(`INSERT OR IGNORE INTO deprecation_evidence (deprecation_id, signal, strength, source_url, quote, upstream_date, supports,
         verified, checked, expired) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
     for (const e of entries) {
       ins.run({
         id: e.id, title: e.title, kind: e.kind, status: e.status, strength: e.strength, summary: e.summary,
-        replacement: e.replacement, replacement_url: e.replacement_url, since: e.since, effective: e.effective,
+        replacement: e.replacement, replacement_url: e.replacement_url, since: e.since, effective: e.effective, effective_protocol: e.effective_protocol ?? null,
         matchers: JSON.stringify(e.matchers), subjects: JSON.stringify(e.subjects), origin: e.origin, stale: e.stale ? 1 : 0, contested: e.contested ? 1 : 0, built_at: now,
       });
       for (const v of e.evidence) {

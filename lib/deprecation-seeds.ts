@@ -101,6 +101,7 @@ export const SEEDS: readonly Seed[] = [
     replacement_url: 'https://docs.near.org/protocol/transactions/meta-tx',
     since: '2026-10-26',
     effective: 'protocol version 87 (nearcore 2.14.0); applies on a network once its validators vote the upgrade in',
+    effective_protocol: 87,
     matchers: { identifiers: ['DelegateV2'] },
     subjects: ['id:DelegateV2'],
     evidence: [
@@ -117,6 +118,7 @@ export const SEEDS: readonly Seed[] = [
     replacement_url: null,
     since: '2026-10-26',
     effective: 'protocol version 87 (nearcore 2.14.0); applies on a network once its validators vote the upgrade in',
+    effective_protocol: 87,
     matchers: { config: ['burnt_gas_reward'] },
     subjects: ['id:burnt_gas_reward'],
     evidence: [
