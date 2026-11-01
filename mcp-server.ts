@@ -50,6 +50,7 @@ import { allDeprecations, evidenceOf, findDeprecations, getDeprecation, renderDe
 import { checkCode, MAX_CODE_CHARS, renderCheck } from './lib/check-code.js';
 import { protocolReport, renderProtocol } from './lib/protocol.js';
 import { countProposals, getProposal, hosSynced, listProposals, proposalsForHsp, renderProposal } from './lib/hos-read.js';
+import { PARTNERS, parseJson, catalogSynced, findProjects, getIncident, getPartner, getProject, incidentsSynced, listIncidents, partnerDocsCount, partnerOfProject, renderIncident, renderPartner, renderProject, topByTvl } from './lib/ecosystem-read.js';
 import { NETWORKS } from './lib/near-sources.js';
 import { LANGUAGES as CODE_LANGUAGES, type Language } from './lib/code-scan.js';
 import { isStableTag, latestStableByLine, type ReleaseRow } from './lib/yourchain-versions.js';
@@ -2165,6 +2166,89 @@ server.tool('get_proposal',
   }
 );
 
+// ── Ecosystem: NEAR Catalog projects, TVL, incidents, partners ───────────────
+const notSynced = (what: string) => ({ content: [{ type: 'text' as const, text: `${what} has not been synced on this server yet.` }] });
+
+server.tool('find_project',
+  'Find a NEAR ecosystem project in NEAR Catalog (340 projects) by name or by what it does: category, phase, website, GitHub, tokens with their NEAR contract, TVL on NEAR from DefiLlama, its security incidents, and whether it is a NEAR partner. Pass an empty query to list the projects with the most TVL on NEAR. Use for "what is Rhea Finance", "biggest DeFi on NEAR", "has Meta Pool been hacked".',
+  {
+    query: z.string().max(100).describe('Project name or a word for what it does ("lending", "liquid staking"); empty for the top projects by TVL.'),
+    category: z.string().max(60).optional().describe('NEAR Catalog category, e.g. "DeFi", "Liquid Staking".'),
+    limit: z.number().int().min(1).max(20).optional().describe('Most projects to return (default 5).'),
+  },
+  async ({ query, category, limit }) => {
+    try {
+      const db = getDb();
+      if (!catalogSynced(db)) return notSynced('NEAR Catalog');
+      const n = limit ?? 5;
+      const rows = query.trim() ? findProjects(db, query, { category, limit: n }) : topByTvl(db, n, category);
+      if (rows.length === 0) return { content: [{ type: 'text', text: `No NEAR Catalog project matches "${fenceUntrustedInline(query)}".` }] };
+      const withIncidents = (slug: string) => listIncidents(db, { project: slug, relevance: 'all', limit: 10 });
+      const head = query.trim() ? `${rows.length} NEAR Catalog project${rows.length === 1 ? '' : 's'} for "${fenceUntrustedInline(query)}"` : `${rows.length} NEAR Catalog projects${category ? ` in ${fenceUntrustedInline(category)}` : ''} with the most TVL on NEAR`;
+      return { content: [{ type: 'text', text: [`${head} (synced ${rows[0].synced_at?.slice(0, 16) ?? '?'} UTC). Names and descriptions are the projects' own listings. ${UNTRUSTED_INLINE_LEGEND}`, ...rows.map((r) => renderProject(r, fenceUntrustedInline, { incidents: withIncidents(r.slug), partner: partnerOfProject(r.slug) }))].join('\n\n') }] };
+    } catch (e) {
+      const msg = (e as Error).message;
+      return /no such (table|column)/.test(msg) ? notSynced('NEAR Catalog') : { content: [{ type: 'text', text: `find_project failed: ${msg}` }] };
+    }
+  }
+);
+
+server.tool('list_incidents',
+  'Security incidents in the NEAR ecosystem from DefiLlama\'s hacks dataset, newest first: date, amount lost and returned, technique, chains and source. "near" are hacks on NEAR or Aurora or of NEAR protocols (NEAR Intents, 2026-10-01, is filed under BSC by DefiLlama and counted here); "related" are NEAR Catalog projects hacked on another chain. Use before integrating a protocol, or for "has X been exploited".',
+  {
+    relevance: z.enum(['near', 'related', 'all']).optional().describe('Default "near".'),
+    query: z.string().max(100).optional().describe('Text in the name, technique or description, e.g. "oracle".'),
+    project: z.string().max(100).optional().describe('NEAR Catalog slug, e.g. "ref-finance".'),
+    limit: z.number().int().min(1).max(50).optional().describe('Most incidents to return (default 10).'),
+  },
+  async ({ relevance, query, project, limit }) => {
+    try {
+      const db = getDb();
+      if (!incidentsSynced(db)) return notSynced('The incident list');
+      const rows = listIncidents(db, { relevance: relevance ?? (project ? 'all' : 'near'), q: query, project, limit: limit ?? 10 });
+      if (rows.length === 0) return { content: [{ type: 'text', text: 'No incident matches.' }] };
+      return { content: [{ type: 'text', text: [`${rows.length} incident${rows.length === 1 ? '' : 's'} (DefiLlama, synced ${rows[0].synced_at.slice(0, 16)} UTC). ${UNTRUSTED_INLINE_LEGEND}`, ...rows.map((i) => renderIncident(i, fenceUntrustedInline))].join('\n\n') }] };
+    } catch (e) {
+      const msg = (e as Error).message;
+      return /no such table/.test(msg) ? notSynced('The incident list') : { content: [{ type: 'text', text: `list_incidents failed: ${msg}` }] };
+    }
+  }
+);
+
+server.tool('get_incident',
+  'One NEAR ecosystem security incident in full, with DefiLlama\'s description, by the id list_incidents prints (e.g. "llama-1546-2026-04-16").',
+  { id: z.string().min(3).max(120).describe('Incident id from list_incidents.') },
+  async ({ id }) => {
+    try {
+      const db = getDb();
+      const i = getIncident(db, id);
+      if (!i) return { content: [{ type: 'text', text: `No incident "${fenceUntrustedInline(id)}". list_incidents shows the ids.` }] };
+      const project = i.catalog_slug ? getProject(db, i.catalog_slug) : null;
+      const parts = [UNTRUSTED_INLINE_LEGEND, renderIncident(i, fenceUntrustedInline)];
+      if (i.description) parts.push(fenceUntrusted(i.description));
+      if (project) parts.push(renderProject(project, fenceUntrustedInline, { partner: partnerOfProject(project.slug) }));
+      return { content: [{ type: 'text', text: parts.join('\n\n') }] };
+    } catch (e) {
+      const msg = (e as Error).message;
+      return /no such table/.test(msg) ? notSynced('The incident list') : { content: [{ type: 'text', text: `get_incident failed: ${msg}` }] };
+    }
+  }
+);
+
+server.tool('get_partner',
+  `What an agent needs to build on a NEAR partner: what it is, its mainnet contract accounts, GitHub, docs and llms.txt, how much of its docs search_docs covers, its NEAR Catalog entry with TVL, and its security incidents. Partners: ${PARTNERS.map((p) => `${p.id} (${p.name})`).join(', ')}. Also takes a contract account ("intents.near") or a catalog slug.`,
+  { partner: z.string().min(2).max(80).describe(`Partner id, name, contract account or catalog slug, e.g. "${PARTNERS[0].id}".`) },
+  async ({ partner }) => {
+    try {
+      const p = getPartner(partner);
+      if (!p) return { content: [{ type: 'text', text: `"${fenceUntrustedInline(partner)}" is not a partner here. Partners: ${PARTNERS.map((x) => x.id).join(', ')}. find_project covers every NEAR Catalog project.` }] };
+      return { content: [{ type: 'text', text: `${UNTRUSTED_INLINE_LEGEND}\n\n${renderPartner(getDb(), p, fenceUntrustedInline)}` }] };
+    } catch (e) {
+      return { content: [{ type: 'text', text: `get_partner failed: ${(e as Error).message}` }] };
+    }
+  }
+);
+
 // ── get_radar ────────────────────────────────────────────────────────────────
 server.tool('get_radar', 'Get the NEAR Radar, nearpedia\'s curated feed of time-sensitive ecosystem alerts: breaking changes, upgrade deadlines, protocol changes and required node-operator/application actions, each with deadline, affected components and source link. Filter by level (critical/important/ecosystem/all). NEAR-only. Use when a user asks what\'s changing, what\'s about to break, or what deadlines are approaching on NEAR.',
   {
@@ -2739,6 +2823,92 @@ app.get('/api/v1/proposals/:ref', (req, res) => {
     if (/no such table/.test((e as Error).message)) return res.status(503).json({ error: 'House of Stake not synced yet' });
     throw e;
   }
+});
+
+// GET /api/v1/projects?q=rhea&category=DeFi&limit=20 - NEAR Catalog projects with TVL; no q = top by TVL.
+app.get('/api/v1/projects', (req, res) => {
+  const first = (v: unknown) => (Array.isArray(v) ? v[0] : v) as string | undefined;
+  try {
+    const db = getDb();
+    if (!catalogSynced(db)) return res.status(503).json({ error: 'NEAR Catalog not synced yet' });
+    const q = (first(req.query.q) ?? '').slice(0, 100);
+    const n = clampLimit(first(req.query.limit) ?? '20', 20, 100);
+    const category = first(req.query.category)?.slice(0, 60);
+    const rows = q.trim() ? findProjects(db, q, { category, limit: n }) : topByTvl(db, n, category);
+    res.json({ items: rows.map((r) => ({ ...r, tokens: parseJson(r.tokens, []), tvl_components: parseJson(r.tvl_components, []), partner: partnerOfProject(r.slug)?.id ?? null, api_url: `${SITE.url}/api/v1/projects/${r.slug}` })) });
+  } catch (e) {
+    if (/no such (table|column)/.test((e as Error).message)) return res.status(503).json({ error: 'NEAR Catalog not synced yet' });
+    throw e;
+  }
+});
+
+// GET /api/v1/projects/:slug - one project with its incidents.
+app.get('/api/v1/projects/:slug', (req, res) => {
+  try {
+    const db = getDb();
+    const p = getProject(db, req.params.slug);
+    if (!p) return res.status(404).json({ error: 'not found', slug: req.params.slug });
+    res.json({ ...p, tokens: parseJson(p.tokens, []), tvl_components: parseJson(p.tvl_components, []), partner: partnerOfProject(p.slug)?.id ?? null, incidents: listIncidents(db, { project: p.slug, relevance: 'all', limit: 50 }) });
+  } catch (e) {
+    if (/no such (table|column)/.test((e as Error).message)) return res.status(503).json({ error: 'NEAR Catalog not synced yet' });
+    throw e;
+  }
+});
+
+// GET /api/v1/incidents?relevance=near&q=oracle&project=ref-finance&limit=20 - security incidents.
+app.get('/api/v1/incidents', (req, res) => {
+  const first = (v: unknown) => (Array.isArray(v) ? v[0] : v) as string | undefined;
+  const relevance = first(req.query.relevance) ?? 'near';
+  if (!['near', 'related', 'all'].includes(relevance)) return res.status(400).json({ error: 'relevance must be near, related or all' });
+  try {
+    const db = getDb();
+    if (!incidentsSynced(db)) return res.status(503).json({ error: 'incidents not synced yet' });
+    const rows = listIncidents(db, { relevance: relevance as 'near' | 'related' | 'all', q: first(req.query.q)?.slice(0, 100), project: first(req.query.project), limit: clampLimit(first(req.query.limit) ?? '20', 20, 100) });
+    res.json({ items: rows.map((i) => ({ ...i, chains: parseJson(i.chains, []), bridge_hack: Boolean(i.bridge_hack) })) });
+  } catch (e) {
+    if (/no such table/.test((e as Error).message)) return res.status(503).json({ error: 'incidents not synced yet' });
+    throw e;
+  }
+});
+
+// GET /api/v1/incidents/:id - one incident.
+app.get('/api/v1/incidents/:id', (req, res) => {
+  try {
+    const i = getIncident(getDb(), req.params.id);
+    if (!i) return res.status(404).json({ error: 'not found', id: req.params.id });
+    res.json({ ...i, chains: parseJson(i.chains, []), bridge_hack: Boolean(i.bridge_hack) });
+  } catch (e) {
+    if (/no such table/.test((e as Error).message)) return res.status(503).json({ error: 'incidents not synced yet' });
+    throw e;
+  }
+});
+
+// GET /api/v1/partners and /api/v1/partners/:id - the partner registry with catalog and incident joins.
+app.get('/api/v1/partners', (_req, res) => {
+  const db = getDb();
+  res.json({ items: PARTNERS.map((p) => ({ ...p, docs_pages: partnerDocsCount(db, p), api_url: `${SITE.url}/api/v1/partners/${p.id}` })) });
+});
+
+app.get('/api/v1/partners/:id', (req, res) => {
+  const p = getPartner(req.params.id);
+  if (!p) return res.status(404).json({ error: 'not found', id: req.params.id, partners: PARTNERS.map((x) => x.id) });
+  const db = getDb();
+  // Only a table that does not exist yet reads as empty; any other failure is
+  // a 500, not "no incidents", which an agent would take as a clean record.
+  const unsynced = <T>(f: () => T, fallback: T): T => {
+    try {
+      return f();
+    } catch (e) {
+      if (/no such (table|column)/.test((e as Error).message)) return fallback;
+      throw e;
+    }
+  };
+  res.json({
+    ...p,
+    docs_pages: unsynced(() => partnerDocsCount(db, p), 0),
+    projects: unsynced(() => p.catalog_slugs.map((s) => getProject(db, s)).filter(Boolean), null),
+    incidents: unsynced(() => p.catalog_slugs.flatMap((s) => listIncidents(db, { project: s, relevance: 'all', limit: 50 })), null),
+  });
 });
 
 // GET /api/v1/protocol?network=mainnet - protocol version, vote, epoch and schedule per network.

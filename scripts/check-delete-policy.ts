@@ -41,7 +41,8 @@ const POLICY: Record<string, { reason: Reason; why: string; sweeps?: boolean }> 
   // would show there, so a delete path here would be a second, redundant
   // lifecycle mechanism.
   'sync-cips': { reason: 'covered', why: 'check-completeness compares the CIP set against the your-org/CIPs git tree exactly; a stale row would show as surplus' },
-  'sync-ecosystem': { reason: 'covered', why: 'check-completeness compares ecosystem_projects against the same ecosystemExplorer.js data file sync-ecosystem.ts evaluates' },
+  'sync-ecosystem': { reason: 'covered', why: 'check-completeness compares ecosystem_projects against the same NEAR Catalog project list sync-ecosystem.ts reads' },
+  'sync-incidents': { reason: 'permanent', why: 'a security incident is a historical record: DefiLlama edits amounts and recovered funds in place (ON CONFLICT DO UPDATE), and a hack does not stop having happened' },
 
   // check-completeness.ts explicitly excludes these two from its scope (see
   // that file's own SCOPE comment) for reasons of fetch complexity or the
@@ -49,8 +50,6 @@ const POLICY: Record<string, { reason: Reason; why: string; sweeps?: boolean }> 
   // record is disposable. Each is permanent in its own right regardless of
   // whether completeness-checking ever reaches it.
   'sync-foundation': { reason: 'permanent', why: 'foundation_kb is curated from the yourchain.example About page; content gets edited in place (ON CONFLICT DO UPDATE), never removed - there is no upstream "this entry no longer exists" signal to prune against' },
-  'sync-hos': { reason: 'permanent', why: 'vote.dao has no way to delete a proposal: get_num_proposals only grows, and a withdrawn, rejected or expired proposal stays with its status' },
-  'sync-forum': { reason: 'permanent', why: 'gov.near.org governance threads are edited in place (title, counts and post bodies are rewritten on each read); a thread a moderator removes stays here until a sitemap-confirmed prune exists, which for the five governance and developer listings read has not been needed' },
   'sync-packages': { reason: 'permanent', why: 'a published npm or crates.io version is not retracted upstream (crates.io only yanks; npm unpublish is limited to 72 hours and leaves a tombstone); packages and package_versions keep the last-known state, and deprecation or a yank is a status change written in place' },
   'sync-papers': { reason: 'permanent', why: 'arXiv and IACR ePrint papers (whitepapers table) are permanent published records; check-completeness excludes this source only because no upstream total means the same thing as our row count' },
 

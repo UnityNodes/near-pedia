@@ -1,0 +1,115 @@
+{
+ "ref-finance": {
+  "slug": "ref-finance",
+  "profile": {
+   "name": "Rhea Finance",
+   "tagline": "The Chain-Abstracted Liquidity Solution",
+   "image": {
+    "url": "https://indexer.nearcatalog.xyz/wp-content/uploads/2026/10/Rhea-Finance.jpg"
+   },
+   "tags": {
+    "dapp": "Dapp",
+    "prediction-market": "Prediction market",
+    "near-intents": "NEAR Intents",
+    "borrowing-lending": "Borrowing / Lending",
+    "chain-abstraction": "Chain Abstraction",
+    "defi": "DeFi",
+    "dex": "DEX"
+   },
+   "published_date": 1700812920,
+   "updated_date": 1790846775,
+   "updated_at": "2026-10-01 09:26:15",
+   "phase": "mainnet",
+   "status": "active",
+   "lnc": {
+    "score": 70003,
+    "slug": "reffinance"
+   }
+  }
+ },
+ "meta-pool": {
+  "slug": "meta-pool",
+  "profile": {
+   "name": "Meta Pool",
+   "tagline": "Liquid Staking Protocol built on NEAR.",
+   "image": {
+    "url": "https://indexer.nearcatalog.xyz/wp-content/uploads/2026/10/Meta-Pool.jpg"
+   },
+   "tags": {
+    "dapp": "Dapp",
+    "liquid-staking": "Liquid Staking",
+    "validator": "Validator"
+   },
+   "published_date": 1700812920,
+   "updated_date": 1791753406,
+   "updated_at": "2026-10-11 21:16:46",
+   "phase": "mainnet",
+   "status": "active",
+   "lnc": {
+    "score": 12013,
+    "slug": "metapool"
+   }
+  }
+ },
+ "banana-gun": {
+  "slug": "banana-gun",
+  "profile": {
+   "name": "Banana Gun",
+   "tagline": "Non-custodial trading bot and terminal \u2014 now live on NEAR",
+   "image": {
+    "url": "https://indexer.nearcatalog.xyz/wp-content/uploads/2026/10/Banana-Gun.jpg"
+   },
+   "tags": {
+    "dapp": "Dapp",
+    "bot": "Bot",
+    "dex": "DEX"
+   },
+   "published_date": 1790983969,
+   "updated_date": 1790984059,
+   "updated_at": "2026-10-02 23:34:19",
+   "phase": "mainnet",
+   "status": "active",
+   "lnc": ""
+  }
+ },
+ "sweat": {
+  "slug": "sweat",
+  "profile": {
+   "name": "SWEAT",
+   "tagline": "Sweatcoin is a global Top 10 Health & Fitness app that tracks physical movement, converting it into digital currency.",
+   "image": {
+    "url": "https://indexer.nearcatalog.xyz/wp-content/uploads/2026/10/SWEAT.jpg"
+   },
+   "tags": {
+    "dapp": "Dapp",
+    "sport": "Sport"
+   },
+   "published_date": 1700812920,
+   "updated_date": 1791753374,
+   "updated_at": "2026-10-11 21:16:14",
+   "phase": "mainnet",
+   "status": "active",
+   "lnc": ""
+  }
+ },
+ "binance": {
+  "slug": "binance",
+  "profile": {
+   "name": "Binance",
+   "tagline": "Leading blockchain infrastructure provider and largest digital asset exchange, empowering millions with a diverse portfolio of crypto products and services.",
+   "image": {
+    "url": "https://indexer.nearcatalog.xyz/wp-content/uploads/2026/10/Binance.jpg"
+   },
+   "tags": {
+    "other": "Other",
+    "cex": "CEX"
+   },
+   "published_date": 1723339178,
+   "updated_date": 1791756709,
+   "updated_at": "2026-10-11 22:11:49",
+   "phase": "mainnet",
+   "status": "",
+   "lnc": ""
+  }
+ }
+}

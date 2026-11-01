@@ -202,6 +202,32 @@ export function initNearSchema(db: Database.Database): void {
       active_proposals INTEGER NOT NULL
     );
 
+    CREATE TABLE IF NOT EXISTS incidents (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      date TEXT NOT NULL,
+      amount_usd REAL,
+      returned_usd REAL,
+      chains TEXT NOT NULL,
+      classification TEXT,
+      technique TEXT,
+      target_type TEXT,
+      bridge_hack INTEGER NOT NULL DEFAULT 0,
+      description TEXT,
+      source_url TEXT NOT NULL,
+      relevance TEXT NOT NULL CHECK(relevance IN ('near','related')),
+      catalog_slug TEXT,
+      synced_at TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_incidents_date ON incidents(date DESC);
+
+    CREATE TABLE IF NOT EXISTS ecosystem_projects (
+      slug TEXT PRIMARY KEY, title TEXT, description TEXT, category TEXT, url TEXT,
+      tags TEXT, source TEXT, tier TEXT DEFAULT 'secondary', synced_at TEXT, logo TEXT,
+      liveness TEXT, url_status TEXT, last_check_at TEXT, http_status INTEGER, check_note TEXT,
+      fail_streak INTEGER DEFAULT 0, dead_since TEXT, last_activity_at TEXT
+    );
+
     CREATE TABLE IF NOT EXISTS sync_state (
       key TEXT PRIMARY KEY,
       value TEXT NOT NULL,
@@ -222,6 +248,12 @@ export function initNearSchema(db: Database.Database): void {
   ensureColumns(db, 'github_repos', [['readme_marker', 'TEXT'], ['readme_strength', "TEXT CHECK(readme_strength IN ('strong','weak'))"]]);
   ensureColumns(db, 'deprecations', [['effective_protocol', 'INTEGER'], ['contested', 'INTEGER NOT NULL DEFAULT 0']]);
   ensureColumns(db, 'deprecation_evidence', [['expired', 'INTEGER NOT NULL DEFAULT 0']]);
+  ensureColumns(db, 'ecosystem_projects', [
+    ['logo', 'TEXT'], ['liveness', 'TEXT'], ['url_status', 'TEXT'], ['last_check_at', 'TEXT'], ['http_status', 'INTEGER'], ['check_note', 'TEXT'],
+    ['fail_streak', 'INTEGER DEFAULT 0'], ['dead_since', 'TEXT'], ['last_activity_at', 'TEXT'],
+    ['tagline', 'TEXT'], ['website', 'TEXT'], ['phase', 'TEXT'], ['catalog_status', 'TEXT'], ['github', 'TEXT'], ['twitter', 'TEXT'], ['dapp', 'TEXT'],
+    ['tokens', 'TEXT'], ['catalog_updated_at', 'TEXT'], ['detail_synced_at', 'TEXT'], ['tvl_usd', 'REAL'], ['tvl_components', 'TEXT'], ['tvl_at', 'TEXT'],
+  ]);
 }
 
 function ensureColumns(db: Database.Database, table: string, columns: ReadonlyArray<[string, string]>): void {

@@ -122,17 +122,13 @@ async function checkCips(): Promise<Outcome> {
 }
 
 async function checkEcosystem(): Promise<Outcome> {
-  const ours = count('SELECT COUNT(*) n FROM ecosystem_projects');
+  const ours = count("SELECT COUNT(*) n FROM ecosystem_projects WHERE source = 'nearcatalog.xyz'");
   const raw = await get(ECOSYSTEM_SRC);
   if (!raw) return judge('ecosystem_projects', ours, null);
   try {
-    // Same evaluation sync-ecosystem.ts does: strip the export, run the
-    // object literal, count .items. Not re-deriving the count differently -
-    // literally the same source, the same parse.
-    const src = raw.replace(/export\s+const\s+ecosystemData\s*=/, 'return ');
-    const data = new Function(src)() as { items?: unknown[] } | null;
-    const items = Array.isArray(data?.items) ? data.items.length : null;
-    return judge('ecosystem_projects', ours, items);
+    // The same NEAR Catalog list sync-ecosystem.ts reads, one entry per project.
+    const list = JSON.parse(raw) as Record<string, unknown> | null;
+    return judge('ecosystem_projects', ours, list && typeof list === 'object' ? Object.keys(list).length : null);
   } catch {
     return judge('ecosystem_projects', ours, null);
   }

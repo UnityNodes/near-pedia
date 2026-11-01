@@ -7,6 +7,9 @@
  *
  * The title may be empty: the home page's header is a bare `# ` (2026-11-01),
  * and a title-required pattern dropped exactly that one page out of 198.
+ *
+ * Partner sites on Mintlify (NEAR Intents, Trezu) ship the same format under
+ * their own origin, so the parser takes the origin whose pages it reads.
  */
 
 import { createHash } from 'node:crypto';
@@ -14,7 +17,13 @@ import { createHash } from 'node:crypto';
 export const DOCS_ORIGIN = 'https://docs.near.org';
 export const LLMS_URL = `${DOCS_ORIGIN}/llms-full.txt`;
 
-export const HEADER_RE = /^# (.*)\nSource: (https:\/\/docs\.near\.org\/\S*)$/gm;
+const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\/]/g, '\\$&');
+
+export function headerRe(origin: string): RegExp {
+  return new RegExp(`^# (.*)\\nSource: (${escapeRe(origin)}\\/\\S*)$`, 'gm');
+}
+
+export const HEADER_RE = headerRe(DOCS_ORIGIN);
 
 export interface NearDocPage {
   url: string;
@@ -42,7 +51,7 @@ export function breadcrumbFromUrl(url: string): string | null {
 
 function titleFromUrl(url: string): string {
   const last = new URL(url).pathname.split('/').filter(Boolean).pop();
-  if (!last || last === 'index') return 'NEAR Docs';
+  if (!last || last === 'index') return url.startsWith(DOCS_ORIGIN) ? 'NEAR Docs' : new URL(url).hostname;
   return last.replace(/[-_]/g, ' ').replace(/^\w/, (c) => c.toUpperCase());
 }
 
@@ -61,12 +70,12 @@ export function contentHash(text: string): string {
   return createHash('sha256').update(text).digest('hex').slice(0, 16);
 }
 
-export function parseLlmsFull(text: string): NearDocPage[] {
+export function parseLlmsFull(text: string, origin: string = DOCS_ORIGIN): NearDocPage[] {
+  const re = headerRe(origin);
   const headers: { title: string; url: string; start: number; end: number }[] = [];
-  HEADER_RE.lastIndex = 0;
   let m: RegExpExecArray | null;
-  while ((m = HEADER_RE.exec(text)) !== null) {
-    headers.push({ title: m[1].trim(), url: m[2], start: m.index, end: HEADER_RE.lastIndex });
+  while ((m = re.exec(text)) !== null) {
+    headers.push({ title: m[1].trim(), url: m[2], start: m.index, end: re.lastIndex });
   }
 
   const pages: NearDocPage[] = [];
@@ -93,9 +102,8 @@ export function parseLlmsFull(text: string): NearDocPage[] {
 }
 
 /** Every page URL llms-full.txt announces, including any with an empty body. */
-export function announcedUrls(text: string): string[] {
-  HEADER_RE.lastIndex = 0;
-  return [...new Set([...text.matchAll(HEADER_RE)].map((m) => canonicalDocUrl(m[2])))];
+export function announcedUrls(text: string, origin: string = DOCS_ORIGIN): string[] {
+  return [...new Set([...text.matchAll(headerRe(origin))].map((m) => canonicalDocUrl(m[2])))];
 }
 
 export type DocChange = { url: string; title: string; kind: 'doc_added' | 'doc_changed' };

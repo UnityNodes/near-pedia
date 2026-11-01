@@ -1,109 +1,167 @@
 /**
- * Sync the NEAR ecosystem directory (86 projects) from the official
- * yourchain.example ecosystemExplorer.js into the ecosystem_projects table that the
- * /ecosystem page reads. Creates the table if the template DB lacks it.
+ * The NEAR ecosystem from NEAR Catalog (api.nearcatalog.xyz) into
+ * ecosystem_projects, the table /ecosystem, find_project and
+ * check-ecosystem-liveness read, with TVL on NEAR from DefiLlama.
+ *
+ * The list carries name, tags, phase and an updated_date per project; the
+ * website, GitHub, tokens and full description are only in each project's
+ * detail document. A detail is fetched again when the list says the project
+ * changed, or when ours is older than DETAIL_MAX_AGE_DAYS, so a run after
+ * the first reads a handful of details, not 340.
+ *
+ * The upsert names only the columns this sync owns: the liveness columns
+ * belong to check-ecosystem-liveness, and a REPLACE here once reset them on
+ * every run.
+ *
+ *   npx tsx scripts/sync-ecosystem.ts
  */
+
 import 'dotenv/config';
-import { guardSync } from '../lib/sync-log';
+import { guardSync, logRun } from '../lib/sync-log';
 import { getDb } from '../lib/db';
 import { isEntrypoint } from '../lib/is-entrypoint';
-import { isoNowSql } from '../lib/formats';
+import { SITE } from '../lib/site.config';
+import { politeGetJson } from '../lib/polite-fetch';
+import { recordEvents } from '../lib/change-events';
+import {
+  CATALOG_DETAIL_URL, CATALOG_LIST_URL, CATALOG_PAGE_URL, PROTOCOLS_URL, SLUG_RE, fromCatalog, tagCounts, tvlByProject,
+  type CatalogList, type CatalogProject, type Profile, type RawProtocol,
+} from '../lib/near-catalog';
 
-// Upstream rewrote this file from .js to .ts (same `export const ecosystemData`
-// object literal, same { categories, items } shape - no type annotations, so it
-// still evaluates as plain JS). The old .js path 404s.
-// Exported so check-completeness.ts recounts the same file this sync reads,
-// rather than a second copy of the URL that can drift from it.
-export const SRC = 'https://raw.githubusercontent.com/your-org/yourchain.example/main/src/data/ecosystem/ecosystemExplorer.ts';
+/** Exported so check-completeness.ts counts the same list this sync reads. */
+export const SRC = CATALOG_LIST_URL;
 
-interface EcosystemItem { title?: string; url?: string; description?: string | null; categories: string; subcategory?: string | string[]; image?: string }
-interface EcosystemData { categories?: { id: string; name: string; subcategories?: { id: string; name: string }[] }[]; items?: EcosystemItem[] }
+const UA = `${SITE.slug}-sync/1.0 (+${SITE.publisher.url})`;
+const DETAIL_MAX_AGE_DAYS = 30;
+const DETAIL_CONCURRENCY = 4;
+const MIN_LIST_SIZE = 100;
+/** DefiLlama listed 46 protocols with TVL on NEAR on 2026-11-01; a list far shorter is a broken answer. */
+const MIN_PROTOCOLS = 1000;
+const SOURCE = 'nearcatalog.xyz';
 
-function slugify(s: string): string {
-  return s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60);
+interface Stored { slug: string; catalog_updated_at: string | null; detail_synced_at: string | null; website: string | null }
+
+function needsDetail(p: CatalogProject, s: Stored | undefined, now: number): boolean {
+  if (!s?.detail_synced_at) return true;
+  if (p.catalog_updated_at !== s.catalog_updated_at) return true;
+  return now - Date.parse(s.detail_synced_at) > DETAIL_MAX_AGE_DAYS * 86_400_000;
 }
 
-async function main() {
+async function fetchDetails(slugs: readonly string[]): Promise<{ details: Map<string, Profile>; failed: string[] }> {
+  const details = new Map<string, Profile>();
+  const failed: string[] = [];
+  const queue = [...slugs];
+  await Promise.all(Array.from({ length: DETAIL_CONCURRENCY }, async () => {
+    for (let slug = queue.shift(); slug; slug = queue.shift()) {
+      try {
+        const d = await politeGetJson<{ profile?: Profile }>(CATALOG_DETAIL_URL(slug), { userAgent: UA, timeoutMs: 30_000 });
+        if (d?.profile?.name) details.set(slug, d.profile);
+        else failed.push(slug);
+      } catch (e) {
+        console.warn(`[sync-ecosystem] detail ${slug}: ${(e as Error).message}`);
+        failed.push(slug);
+      }
+    }
+  }));
+  return { details, failed };
+}
+
+async function fetchProtocols(): Promise<RawProtocol[] | null> {
+  try {
+    const p = await politeGetJson<RawProtocol[]>(PROTOCOLS_URL, { userAgent: UA, timeoutMs: 60_000 });
+    return Array.isArray(p) && p.length >= MIN_PROTOCOLS ? p : null;
+  } catch (e) {
+    console.warn(`[sync-ecosystem] ${PROTOCOLS_URL}: ${(e as Error).message}`);
+    return null;
+  }
+}
+
+async function main(): Promise<number> {
   const db = getDb();
-  db.exec(`CREATE TABLE IF NOT EXISTS ecosystem_projects (
-    slug TEXT PRIMARY KEY, title TEXT, description TEXT, category TEXT, url TEXT,
-    tags TEXT, source TEXT, tier TEXT DEFAULT 'secondary', synced_at TEXT,
-    logo TEXT)`);
-  // Existing DBs predate later columns; CREATE TABLE IF NOT EXISTS won't add them.
-  const cols = db.prepare('PRAGMA table_info(ecosystem_projects)').all() as Array<{ name: string }>;
-  const has = (name: string) => cols.some((c) => c.name === name);
-  if (!has('logo')) db.exec('ALTER TABLE ecosystem_projects ADD COLUMN logo TEXT');
-  // check-ecosystem-liveness.ts's own columns. Declared here too, not just
-  // there, so this sync's INSERT keeps agreeing with the full column list
-  // below regardless of which script runs first on a fresh DB.
-  for (const [name, type] of [
-    ['liveness', 'TEXT'], ['url_status', 'TEXT'], ['last_check_at', 'TEXT'],
-    ['http_status', 'INTEGER'], ['check_note', 'TEXT'],
-    ['fail_streak', 'INTEGER DEFAULT 0'], ['dead_since', 'TEXT'], ['last_activity_at', 'TEXT'],
-  ]) {
-    if (!has(name)) db.exec(`ALTER TABLE ecosystem_projects ADD COLUMN ${name} ${type}`);
-  }
+  const nowIso = new Date().toISOString();
+  const list = await politeGetJson<CatalogList>(CATALOG_LIST_URL, { userAgent: UA, timeoutMs: 60_000 });
+  const entries = list && typeof list === 'object' ? Object.entries(list).filter(([key, e]) => SLUG_RE.test(e?.slug || key)) : [];
+  if (entries.length < MIN_LIST_SIZE) throw new Error(`${CATALOG_LIST_URL} returned ${entries.length} projects`);
 
-  const res = await fetch(SRC);
-  // Without this check the 404 BODY ("404: Not Found") was fed straight into
-  // new Function(), producing a bewildering `SyntaxError: Unexpected token ':'`
-  // instead of naming the real problem. The upstream file moved; fail loudly.
-  if (!res.ok) {
-    throw new Error(
-      `[sync-ecosystem] source unavailable: HTTP ${res.status} for ${SRC}. ` +
-      `The upstream ecosystem file moved - update SRC before this sync can run.`,
-    );
-  }
-  let src = await res.text();
-  src = src.replace(/export\s+const\s+ecosystemData\s*=/, 'return ');
-  const data = new Function(src)() as EcosystemData;
+  const stored = new Map((db.prepare(`SELECT slug, catalog_updated_at, detail_synced_at, website FROM ecosystem_projects WHERE source = ?`).all(SOURCE) as Stored[]).map((s) => [s.slug, s]));
+  const firstRun = stored.size === 0;
+  const counts = tagCounts(list!);
+  const fromList = entries.map(([key, e]) => fromCatalog(e.slug || key, e.profile ?? {}, undefined, counts));
+  const want = fromList.filter((p) => needsDetail(p, stored.get(p.slug), Date.now())).map((p) => p.slug);
+  const { details, failed } = await fetchDetails(want);
+  const listBySlug = new Map(entries.map(([key, e]) => [e.slug || key, e.profile ?? {}]));
+  const projects = fromList.map((p) => (details.has(p.slug) ? fromCatalog(p.slug, listBySlug.get(p.slug)!, details.get(p.slug), counts) : p));
 
-  const catName = new Map<string, string>();
-  const subName = new Map<string, string>();
-  for (const c of data.categories ?? []) {
-    catName.set(c.id, c.name);
-    for (const s of c.subcategories ?? []) subName.set(s.id, s.name);
-  }
+  const protocols = await fetchProtocols();
+  const joined = protocols ? tvlByProject(protocols, projects.map((p) => ({ slug: p.slug, name: p.name, website: details.has(p.slug) ? p.website : stored.get(p.slug)?.website ?? null }))) : null;
+  // No project at all with TVL means the join or the chain key broke, not
+  // that NEAR DeFi emptied: keep the last TVL rather than clear it.
+  const tvl = joined && joined.size > 0 ? joined : null;
 
-  const items: EcosystemItem[] = data.items ?? [];
-  // ON CONFLICT DO UPDATE, not INSERT OR REPLACE: a re-sync wiped
-  // check-ecosystem-liveness.ts's columns (liveness, fail_streak,
-  // dead_since, ...) back to their defaults on every run, because REPLACE
-  // deletes the row before re-inserting it and this statement never named
-  // them. Same trap this app's own CLAUDE.md documents for the mailing
-  // sync's cips upsert.
-  const ins = db.prepare(`INSERT INTO ecosystem_projects
-    (slug,title,description,category,url,tags,source,tier,synced_at,logo)
-    VALUES (?,?,?,?,?,?,?,?,${isoNowSql()},?)
-    ON CONFLICT(slug) DO UPDATE SET
-      title = excluded.title, description = excluded.description, category = excluded.category,
-      url = excluded.url, tags = excluded.tags, source = excluded.source, tier = excluded.tier,
-      synced_at = excluded.synced_at, logo = excluded.logo`);
-  let n = 0;
-  let withLogo = 0;
-  for (const it of items) {
-    if (!it.title || !it.url) continue;
-    const cat = catName.get(it.categories) ?? it.categories ?? 'Ecosystem';
-    const subs = Array.isArray(it.subcategory) ? it.subcategory.map((s: string) => subName.get(s) ?? s) : (it.subcategory ? [subName.get(it.subcategory) ?? it.subcategory] : []);
-    // Upstream stores site-relative paths (/images/app/ecosystem/x.png).
-    const logo = it.image
-      ? (/^https?:\/\//.test(it.image) ? it.image : `https://yourchain.example${it.image}`)
-      : null;
-    if (logo) withLogo++;
-    ins.run(slugify(it.title), it.title, it.description ?? null, cat, it.url, subs.join(', ') || null, 'yourchain.example', 'secondary', logo);
-    n++;
-  }
-  const total = (db.prepare('SELECT COUNT(*) c FROM ecosystem_projects').get() as { c: number }).c;
-  const cats = db.prepare('SELECT category, COUNT(*) c FROM ecosystem_projects GROUP BY category ORDER BY c DESC').all();
-  console.log(`ecosystem items ${items.length}, inserted ${n} (${withLogo} with logo), total ${total}`);
-  console.log('by category:', JSON.stringify(cats));
-  return n;
+  // A project without a fresh detail keeps the detail columns it had: the
+  // list entry alone has no website, and writing its null would unlink TVL
+  // and the liveness check from a project whose detail fetch failed once.
+  // catalog_updated_at is one of them: it is what needsDetail compares, and
+  // taking the list's value after a failed detail skipped the retry for 30 days.
+  const upsert = db.prepare(`INSERT INTO ecosystem_projects (slug, title, description, category, url, tags, source, tier, synced_at, logo,
+      tagline, website, phase, catalog_status, github, twitter, dapp, tokens, catalog_updated_at, detail_synced_at)
+    VALUES (@slug, @title, @description, @category, @url, @tags, '${SOURCE}', 'secondary', @now, @logo,
+      @tagline, @website, @phase, @status, @github, @twitter, @dapp, @tokens, @catalog_updated_at, @detail_synced_at)
+    ON CONFLICT(slug) DO UPDATE SET title = excluded.title, category = excluded.category, tags = excluded.tags, source = excluded.source,
+      synced_at = excluded.synced_at, logo = excluded.logo, tagline = excluded.tagline, phase = excluded.phase,
+      catalog_status = excluded.catalog_status,
+      catalog_updated_at = CASE WHEN excluded.detail_synced_at IS NOT NULL THEN excluded.catalog_updated_at ELSE ecosystem_projects.catalog_updated_at END,
+      description = CASE WHEN excluded.detail_synced_at IS NOT NULL THEN excluded.description ELSE ecosystem_projects.description END,
+      url = CASE WHEN excluded.detail_synced_at IS NOT NULL THEN excluded.url ELSE ecosystem_projects.url END,
+      website = CASE WHEN excluded.detail_synced_at IS NOT NULL THEN excluded.website ELSE ecosystem_projects.website END,
+      github = CASE WHEN excluded.detail_synced_at IS NOT NULL THEN excluded.github ELSE ecosystem_projects.github END,
+      twitter = CASE WHEN excluded.detail_synced_at IS NOT NULL THEN excluded.twitter ELSE ecosystem_projects.twitter END,
+      dapp = CASE WHEN excluded.detail_synced_at IS NOT NULL THEN excluded.dapp ELSE ecosystem_projects.dapp END,
+      tokens = CASE WHEN excluded.detail_synced_at IS NOT NULL THEN excluded.tokens ELSE ecosystem_projects.tokens END,
+      detail_synced_at = COALESCE(excluded.detail_synced_at, ecosystem_projects.detail_synced_at)`);
+  const setTvl = db.prepare('UPDATE ecosystem_projects SET tvl_usd = ?, tvl_components = ?, tvl_at = ? WHERE slug = ?');
+  const clearTvl = db.prepare('UPDATE ecosystem_projects SET tvl_usd = NULL, tvl_components = NULL, tvl_at = ? WHERE source = ?');
+
+  db.transaction(() => {
+    for (const p of projects) {
+      const fresh = details.has(p.slug);
+      upsert.run({
+        slug: p.slug, title: p.name, description: p.description ?? p.tagline, category: p.category,
+        url: p.website ?? p.dapp ?? CATALOG_PAGE_URL(p.slug), tags: Object.values(listBySlug.get(p.slug)?.tags ?? {}).join(', ') || null,
+        now: nowIso, logo: p.logo, tagline: p.tagline, website: p.website, phase: p.phase, status: p.status, github: p.github,
+        twitter: p.twitter, dapp: p.dapp, tokens: p.tokens.length ? JSON.stringify(p.tokens) : null,
+        catalog_updated_at: p.catalog_updated_at, detail_synced_at: fresh ? nowIso : null,
+      });
+    }
+    if (tvl) {
+      clearTvl.run(nowIso, SOURCE);
+      for (const [slug, t] of tvl) setTvl.run(t.tvl_usd, JSON.stringify(t.components), nowIso, slug);
+    }
+    if (!firstRun) {
+      recordEvents(db, projects.filter((p) => !stored.has(p.slug)).map((p) => ({
+        kind: 'project_added' as const,
+        subject: `project:${p.slug}`,
+        title: `New in NEAR Catalog: ${p.name}${p.tagline ? `: ${p.tagline}` : ''}`,
+        detail: { category: p.category, phase: p.phase },
+        source_url: CATALOG_PAGE_URL(p.slug),
+        key: p.slug,
+      })), nowIso);
+    }
+  })();
+
+  const partial = failed.length > 0 || !tvl;
+  logRun('ecosystem', {
+    status: partial ? 'partial' : 'success',
+    items: projects.length,
+    ...(partial ? { error: [failed.length ? `${failed.length} project details failed` : '', tvl ? '' : 'DefiLlama TVL unavailable or joined to no project, TVL kept from the last run'].filter(Boolean).join('; ') } : {}),
+  }, db);
+  console.log(`[sync-ecosystem] ${projects.length} projects, ${details.size}/${want.length} details read, ${tvl ? `${tvl.size} with TVL` : 'TVL skipped'}`);
+  return projects.length;
 }
-// isEntrypoint, not a bare call: check-completeness.ts imports SRC above so
-// its own count reads the same file this sync evaluates. Without this
-// guard, that import ran the whole sync against the live database -
-// discovered empirically on 2026-08-02 when check-completeness.ts's first
-// run did exactly that.
+
 if (isEntrypoint(import.meta.url)) {
-  guardSync('ecosystem', main).catch((e) => { console.error(e); process.exit(1); });
+  guardSync('ecosystem', main).catch((e) => {
+    console.error(e);
+    process.exit(1);
+  });
 }
