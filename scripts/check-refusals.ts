@@ -59,6 +59,12 @@ const NOT_A_REFUSAL: Record<string, string> = {
     'the shape a repo tree path must match to be considered a CIP file at all (requires digits between cip- and .md). Upstream-path state, never stored - cips.id holds only the derived number, not the path it came from',
   'sync-cips.ts:CIP_TEMPLATE_RE':
     'meant to exclude cip-template.md, but CIP_FILE_RE already requires digits in the filename and "template" has none, so this is unreachable dead code, not an active drop decision',
+  'sync-docs.ts:isoOrNull':
+    "normalises the feed's Last-Modified header to ISO or null; it drops nothing, every page is written whatever the header says",
+  'refresh-radar.ts:PRODUCED':
+    "the source types lib/near-radar.ts emits, used to decide which live rows a run may retire; it writes nothing and drops nothing on ingest. The stored-row side is registered as 'radar-unknown-source-or-no-expiry'",
+  'sync-hos.ts:ACTIVE':
+    'the proposal statuses counted as active in the hos_stats snapshot; a count, not a filter: every proposal is stored whatever its status',
 };
 
 interface Violation { rule: string; what: string; table: string; rows: string[] }

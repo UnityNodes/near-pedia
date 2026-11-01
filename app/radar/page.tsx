@@ -34,20 +34,23 @@ interface RadarItem {
 const LEVELS: readonly RadarLevel[] = ['critical', 'important', 'ecosystem'];
 
 const SOURCE_LABEL: Record<string, string> = {
-  forum_announcement: 'Forum',
-  cip_change:         'CIP',
-  github_release:     'Release',
-  github_issue:       'GitHub',
+  protocol_upgrade: 'Protocol',
+  node_release:     'nearcore',
+  hos_vote:         'House of Stake',
+  hos_timelock:     'House of Stake',
+  hsp_draft:        'Forum',
+  incident:         'Incident',
+  event:            'Event',
 };
 
 const AFFECT_LABEL: Record<string, string> = {
   validator:       'Validators',
   'node-operator': 'Node Operators',
-  'rollup-dev':    'App Devs',
   developer:       'Developers',
+  'venear-holder': 'veNEAR holders',
 };
 
-const ROLE_FILTERS = ['validator', 'node-operator', 'rollup-dev', 'developer'] as const;
+const ROLE_FILTERS = ['validator', 'node-operator', 'developer', 'venear-holder'] as const;
 
 function getItems(level?: string, role?: string, source?: string): RadarItem[] {
   const db = getDb();

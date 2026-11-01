@@ -29,6 +29,9 @@ const AFFECT_LABEL: Record<string, string> = {
   developer: 'Developers',
 };
 
+/** Radar titles and bodies quote proposals, forum threads and DefiLlama: escaped before Telegram parses them as HTML. */
+const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
 function formatMessage(item: RadarItem): string {
   const affects: string[] = JSON.parse(item.affects || '[]');
   const emoji = LEVEL_EMOJI[item.level] ?? '⚪';
@@ -37,10 +40,10 @@ function formatMessage(item: RadarItem): string {
 
   let msg = `${emoji} <b>${level}</b>`;
   if (affectsStr) msg += ` - ${affectsStr}`;
-  msg += `\n\n<b>${item.title}</b>`;
-  if (item.body) msg += `\n\n${item.body.slice(0, 300)}`;
-  if (item.deadline) msg += `\n\n⏰ <b>Deadline: ${item.deadline}</b>`;
-  if (item.source_url) msg += `\n\n<a href="${item.source_url}">Read more →</a>`;
+  msg += `\n\n<b>${esc(item.title)}</b>`;
+  if (item.body) msg += `\n\n${esc(item.body.slice(0, 300))}`;
+  if (item.deadline) msg += `\n\n⏰ <b>Deadline: ${esc(item.deadline)}</b>`;
+  if (item.source_url) msg += `\n\n<a href="${esc(item.source_url)}">Read more →</a>`;
   msg += `\n\n<i>via <a href="${SITE.url}/radar">${SITE.name} Radar</a></i>`;
   return msg;
 }
