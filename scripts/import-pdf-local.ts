@@ -4,7 +4,7 @@
 //
 // Usage:
 //   npx tsx scripts/import-pdf-local.ts \
-//     --file=/srv/yourpedia/<path>.pdf \
+//     --file=/srv/nearpedia/<path>.pdf \
 //     --slug=<slug> \
 //     --title="<Title>" \
 //     [--tag=<tag>] [--source=<url>] [--description="<...>"]

@@ -24,7 +24,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   if (!video) return { title: 'Not Found' };
   const title = `${video.title}`;
   const brandedTitle = `${title} | ${SITE.name}`;
-  const description = video.description?.slice(0, 160) ?? `Video by ${video.channel_name ?? 'YourChain'}`;
+  const description = video.description?.slice(0, 160) ?? `Video by ${video.channel_name ?? 'NEAR'}`;
   const thumbnail = video.thumbnail_url ?? `https://img.youtube.com/vi/${id}/hqdefault.jpg`;
   return {
     title,
@@ -64,7 +64,7 @@ export default async function VideoPage({ params }: PageProps) {
     contentUrl: video.url,
     thumbnailUrl: video.thumbnail_url ?? `https://img.youtube.com/vi/${id}/hqdefault.jpg`,
     uploadDate: video.published_at ?? undefined,
-    publisher: { '@type': 'Organization', name: video.channel_name ?? 'YourChain', url: 'https://yourchain.example' },
+    publisher: { '@type': 'Organization', name: video.channel_name ?? 'NEAR', url: 'https://near.org' },
     isPartOf: { '@type': 'WebSite', name: SITE.name, url: SITE.url },
   };
 

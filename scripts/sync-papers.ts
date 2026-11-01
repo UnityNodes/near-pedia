@@ -1,5 +1,5 @@
 /**
- * Sync research papers about YourChain into the whitepapers table.
+ * Sync research papers about NEAR into the whitepapers table.
  * arXiv (Atom API, no auth) for topic searches + a curated list of IACR
  * ePrint papers (hardcoded ids; PDFs public).
  */
@@ -9,9 +9,9 @@ import { getDb } from '../lib/db';
 import { isoNowSql } from '../lib/formats';
 
 const ARXIV_QUERIES = [
-  'abs:YourChain',
+  'abs:NEAR',
   'all:%22your+topic%22',
-  'ti:%22your+topic%22+AND+abs:YourChain',
+  'ti:%22your+topic%22+AND+abs:NEAR',
 ];
 const RELEVANT = /yourchain|your topic/i;
 

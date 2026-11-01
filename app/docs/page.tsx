@@ -24,7 +24,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const total = getDocSources().reduce((n, s) => n + s.count, 0);
   return pageMetadata({
     title: 'Documentation',
-    description: `Unified full-text search across the YourChain and ecosystem documentation, ${total.toLocaleString('en-US')} pages.`,
+    description: `Unified full-text search across the NEAR and ecosystem documentation, ${total.toLocaleString('en-US')} pages.`,
     path: '/docs',
   });
 }
@@ -89,7 +89,7 @@ export default async function DocsPage({ searchParams }: PageProps) {
     <PageShell
       href="/docs"
       title="Documentation"
-      description={`Pages from ${corpusSources.length.toLocaleString('en-US')} sources, kept in sync: the official YourChain documentation, documentation from teams building on YourChain, and readmes from their code. Search all of it, or start from a path below.`}
+      description={`Pages from ${corpusSources.length.toLocaleString('en-US')} sources, kept in sync: the official NEAR documentation, documentation from teams building on NEAR, and readmes from their code. Search all of it, or start from a path below.`}
       stat={{ value: corpusTotal, unit: corpusTotal === 1 ? 'page' : 'pages' }}
       synced={glance.synced}
       source={`${corpusSources.length.toLocaleString('en-US')} ${corpusSources.length === 1 ? 'source' : 'sources'}`}

@@ -11,8 +11,8 @@ import { registerCipCitesFn } from './cip-mention-patterns';
 // and its child scripts from cwd, run with cwd set to a sibling checkout,
 // opened that checkout's cips.db and spawned its sync-all.ts - which injected
 // 6 foreign whitepapers and four foreign sync_log sources.
-// Walking up to the package that owns this file pins yourpedia code to
-// yourpedia's data no matter where it was invoked from.
+// Walking up to the package that owns this file pins nearpedia code to
+// nearpedia's data no matter where it was invoked from.
 //
 // The walk falls back to cwd when this file has no real path on disk (a bundled
 // server build), which is also the case where cwd is already correct because
@@ -28,7 +28,7 @@ function ownRepoRoot(): string {
   for (let i = 0; i < 5; i++) {
     try {
       const pkg = JSON.parse(fs.readFileSync(path.join(dir, 'package.json'), 'utf8'));
-      if (pkg.name === 'yourpedia') return dir;
+      if (pkg.name === 'nearpedia') return dir;
     } catch { /* not this level - keep walking up */ }
     const parent = path.dirname(dir);
     if (parent === dir) break;

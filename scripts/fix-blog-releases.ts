@@ -1,5 +1,5 @@
 /**
- * Make /blog, /news and /releases show real YourChain data using the template's
+ * Make /blog, /news and /releases show real NEAR data using the template's
  * tag-driven blog machinery (releases live in blog_posts).
  *  - tag the real blog posts 'blog,news' so getBlogPosts(BLOG_TAGS) finds them
  *  - copy github_releases into blog_posts tagged 'release-notes' so

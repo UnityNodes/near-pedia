@@ -10,7 +10,7 @@ export const revalidate = 900;
 
 export const metadata = pageMetadata({
   title: 'Trending',
-  description: 'Top trending topics and discussions in the YourChain ecosystem this week.',
+  description: 'Top trending topics and discussions in the NEAR ecosystem this week.',
   path: '/trending',
 });
 
@@ -86,7 +86,7 @@ export default function TrendingPage() {
     <PageShell
       href="/trending"
       title="Trending"
-      description="The highest-activity content in the YourChain ecosystem this week, refreshed every 15 minutes."
+      description="The highest-activity content in the NEAR ecosystem this week, refreshed every 15 minutes."
       stat={{ value: items.length, unit: items.length === 1 ? 'entry' : 'entries' }}
       synced={updatedAt}
       source="trending snapshot"

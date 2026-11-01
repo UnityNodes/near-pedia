@@ -7,24 +7,24 @@ import { HomeHero } from '@/components/home-hero';
 import { SourcesLive } from '@/components/sources-live';
 import { getSourceInventory } from '@/lib/sources';
 import { getLatestReleases, getRecentFeed } from '@/lib/home-feed';
-import { SITE } from '@/lib/site.config';
+import { SITE, SITE_TITLE } from '@/lib/site.config';
 import type { Metadata } from 'next';
 import { JsonLd } from '@/components/json-ld';
 
 export const revalidate = 60;
 
 export const metadata: Metadata = {
-  title: 'YOURPEDIA | YourChain Knowledge Hub',
-  description: 'CIPs, docs, discussions and whitepapers for the YourChain ecosystem, indexed, searchable, always current.',
-  alternates: { canonical: 'https://yourpedia.example' },
+  title: SITE_TITLE,
+  description: 'CIPs, docs, discussions and whitepapers for the NEAR ecosystem, indexed, searchable, always current.',
+  alternates: { canonical: SITE.url },
   openGraph: {
-    title: 'YOURPEDIA | YourChain Knowledge Hub',
-    description: 'CIPs, docs, discussions and whitepapers for the YourChain ecosystem, indexed, searchable, always current.',
-    url: 'https://yourpedia.example',
+    title: SITE_TITLE,
+    description: 'CIPs, docs, discussions and whitepapers for the NEAR ecosystem, indexed, searchable, always current.',
+    url: SITE.url,
   },
   twitter: {
-    title: 'YOURPEDIA | YourChain Knowledge Hub',
-    description: 'CIPs, docs, discussions and whitepapers for the YourChain ecosystem, indexed, searchable, always current.',
+    title: SITE_TITLE,
+    description: 'CIPs, docs, discussions and whitepapers for the NEAR ecosystem, indexed, searchable, always current.',
   },
 };
 
@@ -34,28 +34,28 @@ const faqSchema = {
   mainEntity: [
     {
       '@type': 'Question',
-      name: 'What is YOURPEDIA?',
-      acceptedAnswer: { '@type': 'Answer', text: 'YOURPEDIA is the central knowledge hub for the YourChain ecosystem, indexing Chain Improvement Proposals (CIPs), technical documentation, governance discussions, whitepapers, and developer resources in one searchable, always-current platform.' },
+      name: `What is ${SITE.name}?`,
+      acceptedAnswer: { '@type': 'Answer', text: `${SITE.name} is the central knowledge hub for the NEAR ecosystem, indexing Chain Improvement Proposals (CIPs), technical documentation, governance discussions, whitepapers, and developer resources in one searchable, always-current platform.` },
     },
     {
       '@type': 'Question',
       name: 'What is a Chain Improvement Proposal (CIP)?',
-      acceptedAnswer: { '@type': 'Answer', text: 'A Chain Improvement Proposal (CIP) is a formal technical document that defines standards, protocols, and upgrades for YourChain, similar to Ethereum\'s EIPs or Bitcoin\'s BIPs. CIPs go through Draft, Review, Final, and other statuses before adoption.' },
+      acceptedAnswer: { '@type': 'Answer', text: 'A Chain Improvement Proposal (CIP) is a formal technical document that defines standards, protocols, and upgrades for NEAR, similar to Ethereum\'s EIPs or Bitcoin\'s BIPs. CIPs go through Draft, Review, Final, and other statuses before adoption.' },
     },
     {
       '@type': 'Question',
-      name: 'What is YourChain?',
-      acceptedAnswer: { '@type': 'Answer', text: 'YourChain is a blockchain network. Validators secure it, TKN is its native token, and protocol changes are proposed and discussed through Chain Improvement Proposals (CIPs). Developers can run nodes and build applications on it.' },
+      name: 'What is NEAR?',
+      acceptedAnswer: { '@type': 'Answer', text: 'NEAR is a blockchain network. Validators secure it, NEAR is its native token, and protocol changes are proposed and discussed through Chain Improvement Proposals (CIPs). Developers can run nodes and build applications on it.' },
     },
     {
       '@type': 'Question',
-      name: 'What content does YOURPEDIA index?',
-      acceptedAnswer: { '@type': 'Answer', text: 'YOURPEDIA indexes CIPs, the YourChain and node documentation, forum discussions from forum.yourchain.example, whitepapers, news, blog posts, and videos related to the YourChain ecosystem.' },
+      name: `What content does ${SITE.name} index?`,
+      acceptedAnswer: { '@type': 'Answer', text: `${SITE.name} indexes CIPs, the NEAR and node documentation, forum discussions from gov.near.org, whitepapers, news, blog posts, and videos related to the NEAR ecosystem.` },
     },
   ],
 };
 
-const HERO_HEADLINE = 'YourChain ecosystem';
+const HERO_HEADLINE = 'NEAR ecosystem';
 
 const PATHS: { k: string; t: string; d: string; links: { href: string; label: string; Icon: LucideIcon }[] }[] = [
   {

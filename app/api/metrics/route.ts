@@ -16,12 +16,12 @@ export const dynamic = 'force-dynamic';
  * node_exporter or the equivalent platform agent.
  *
  * Auth: a caller on the box is always allowed - that is how the hourly
- * check-sync-staleness.sh cron reads it (BASE_URL=http://127.0.0.1:3040).
+ * check-sync-staleness.sh cron reads it (BASE_URL=http://127.0.0.1:3130).
  * A caller from outside needs METRICS_TOKEN, as `?token=` or a bearer
  * header.
  *
  * IT USED TO FAIL OPEN. With METRICS_TOKEN unset (it was, on this box) the
- * endpoint was public - confirmed live: `curl yourpedia.example/api/metrics`
+ * endpoint was public - confirmed live: `curl nearpedia.example/api/metrics`
  * returned full operational telemetry (content counts, chat/search volume,
  * sync job names) with no auth at all. A default that publishes operational
  * telemetry when nobody has configured anything is the wrong default; the
@@ -75,20 +75,20 @@ export async function GET(req: Request) {
   const lines: string[] = [];
 
   // Content counts (gauges)
-  lines.push(fmt('yourpedia_cips_total', safeCount('SELECT COUNT(*) as c FROM cips'), 'Indexed CIPs'));
-  lines.push(fmt('yourpedia_forum_topics_total', safeCount('SELECT COUNT(*) as c FROM forum_topics'), 'Forum topics indexed'));
-  lines.push(fmt('yourpedia_forum_posts_total', safeCount('SELECT COUNT(*) as c FROM forum_posts'), 'Forum posts indexed'));
-  lines.push(fmt('yourpedia_docs_total', safeCount('SELECT COUNT(*) as c FROM doc_pages'), 'Documentation pages indexed'));
-  lines.push(fmt('yourpedia_whitepapers_total', safeCount('SELECT COUNT(*) as c FROM whitepapers'), 'Whitepapers indexed'));
-  lines.push(fmt('yourpedia_blog_posts_total', safeCount('SELECT COUNT(*) as c FROM blog_posts'), 'Blog posts indexed'));
-  lines.push(fmt('yourpedia_videos_total', safeCount('SELECT COUNT(*) as c FROM youtube_videos'), 'YouTube videos indexed'));
-  lines.push(fmt('yourpedia_github_items_total', safeCount('SELECT COUNT(*) as c FROM github_items'), 'GitHub issues and PRs indexed'));
-  lines.push(fmt('yourpedia_github_discussions_total', safeCount('SELECT COUNT(*) as c FROM github_discussions'), 'GitHub Discussions indexed'));
-  lines.push(fmt('yourpedia_radar_items_total', safeCount('SELECT COUNT(*) as c FROM radar_items'), 'Radar items'));
-  lines.push(fmt('yourpedia_radar_critical', safeCount("SELECT COUNT(*) as c FROM radar_items WHERE level = 'critical' AND (expires_at IS NULL OR expires_at > datetime('now'))"), 'Active critical radar alerts'));
-  lines.push(fmt('yourpedia_ecosystem_projects_total', safeCount('SELECT COUNT(*) as c FROM ecosystem_projects'), 'Ecosystem projects'));
-  lines.push(fmt('yourpedia_embedding_chunks_total', safeCount('SELECT COUNT(*) as c FROM embedding_chunks'), 'RAG embedding chunks'));
-  lines.push(fmt('yourpedia_youtube_transcripts_total', safeCount('SELECT COUNT(*) as c FROM youtube_videos WHERE transcript_text IS NOT NULL'), 'YouTube videos with transcripts'));
+  lines.push(fmt('nearpedia_cips_total', safeCount('SELECT COUNT(*) as c FROM cips'), 'Indexed CIPs'));
+  lines.push(fmt('nearpedia_forum_topics_total', safeCount('SELECT COUNT(*) as c FROM forum_topics'), 'Forum topics indexed'));
+  lines.push(fmt('nearpedia_forum_posts_total', safeCount('SELECT COUNT(*) as c FROM forum_posts'), 'Forum posts indexed'));
+  lines.push(fmt('nearpedia_docs_total', safeCount('SELECT COUNT(*) as c FROM doc_pages'), 'Documentation pages indexed'));
+  lines.push(fmt('nearpedia_whitepapers_total', safeCount('SELECT COUNT(*) as c FROM whitepapers'), 'Whitepapers indexed'));
+  lines.push(fmt('nearpedia_blog_posts_total', safeCount('SELECT COUNT(*) as c FROM blog_posts'), 'Blog posts indexed'));
+  lines.push(fmt('nearpedia_videos_total', safeCount('SELECT COUNT(*) as c FROM youtube_videos'), 'YouTube videos indexed'));
+  lines.push(fmt('nearpedia_github_items_total', safeCount('SELECT COUNT(*) as c FROM github_items'), 'GitHub issues and PRs indexed'));
+  lines.push(fmt('nearpedia_github_discussions_total', safeCount('SELECT COUNT(*) as c FROM github_discussions'), 'GitHub Discussions indexed'));
+  lines.push(fmt('nearpedia_radar_items_total', safeCount('SELECT COUNT(*) as c FROM radar_items'), 'Radar items'));
+  lines.push(fmt('nearpedia_radar_critical', safeCount("SELECT COUNT(*) as c FROM radar_items WHERE level = 'critical' AND (expires_at IS NULL OR expires_at > datetime('now'))"), 'Active critical radar alerts'));
+  lines.push(fmt('nearpedia_ecosystem_projects_total', safeCount('SELECT COUNT(*) as c FROM ecosystem_projects'), 'Ecosystem projects'));
+  lines.push(fmt('nearpedia_embedding_chunks_total', safeCount('SELECT COUNT(*) as c FROM embedding_chunks'), 'RAG embedding chunks'));
+  lines.push(fmt('nearpedia_youtube_transcripts_total', safeCount('SELECT COUNT(*) as c FROM youtube_videos WHERE transcript_text IS NOT NULL'), 'YouTube videos with transcripts'));
 
   // MCP usage (written by the MCP server's own writable handle).
   // + rollup(): scripts/prune-logs.ts deletes rows past 180 days and writes
@@ -96,9 +96,9 @@ export async function GET(req: Request) {
   // backwards the first night the pruner has something to take - Prometheus
   // reads a `_total` counter that decreases as a process restart and
   // discards every rate() computed across the drop.
-  lines.push(fmt('yourpedia_mcp_calls_total', safeCount('SELECT COUNT(*) as c FROM mcp_calls') + rollup('mcp_calls', 'total'), 'MCP requests served since logging began', 'counter'));
-  lines.push(fmt('yourpedia_mcp_calls_24h', safeCount("SELECT COUNT(*) as c FROM mcp_calls WHERE ts >= datetime('now','-1 day')"), 'MCP requests in the last 24h'));
-  lines.push(fmt('yourpedia_mcp_calls_error_24h', safeCount("SELECT COUNT(*) as c FROM mcp_calls WHERE status IN ('error','tool_error') AND ts >= datetime('now','-1 day')"), 'Failed MCP requests in the last 24h'));
+  lines.push(fmt('nearpedia_mcp_calls_total', safeCount('SELECT COUNT(*) as c FROM mcp_calls') + rollup('mcp_calls', 'total'), 'MCP requests served since logging began', 'counter'));
+  lines.push(fmt('nearpedia_mcp_calls_24h', safeCount("SELECT COUNT(*) as c FROM mcp_calls WHERE ts >= datetime('now','-1 day')"), 'MCP requests in the last 24h'));
+  lines.push(fmt('nearpedia_mcp_calls_error_24h', safeCount("SELECT COUNT(*) as c FROM mcp_calls WHERE status IN ('error','tool_error') AND ts >= datetime('now','-1 day')"), 'Failed MCP requests in the last 24h'));
 
   // TL;DR coverage - how many CIPs have a cached Gemini summary.
   // Tracks backfill progress and tells us when a refresh might be
@@ -106,18 +106,18 @@ export async function GET(req: Request) {
   // tldr_generated_at).
   const tldrTotal = safeCount('SELECT COUNT(*) as c FROM cips');
   const tldrCached = safeCount("SELECT COUNT(*) as c FROM cips WHERE tldr IS NOT NULL AND tldr <> ''");
-  lines.push(fmt('yourpedia_cips_with_tldr_total', tldrCached, 'CIPs that currently have a cached TL;DR'));
-  lines.push(fmt('yourpedia_cips_tldr_coverage_ratio', tldrTotal ? +(tldrCached / tldrTotal).toFixed(4) : 0, 'Ratio of CIPs with a cached TL;DR (0-1)'));
+  lines.push(fmt('nearpedia_cips_with_tldr_total', tldrCached, 'CIPs that currently have a cached TL;DR'));
+  lines.push(fmt('nearpedia_cips_tldr_coverage_ratio', tldrTotal ? +(tldrCached / tldrTotal).toFixed(4) : 0, 'Ratio of CIPs with a cached TL;DR (0-1)'));
 
   // Search analytics.
-  lines.push(fmt('yourpedia_search_total', safeCount('SELECT COUNT(*) as c FROM search_log') + rollup('search_log', 'total'), 'Total /search renders logged since launch', 'counter'));
-  lines.push(fmt('yourpedia_search_24h', safeCount('SELECT COUNT(*) as c FROM search_log WHERE timestamp >= ?', now - day), 'Searches in the last 24h'));
-  lines.push(fmt('yourpedia_search_zero_24h', safeCount('SELECT COUNT(*) as c FROM search_log WHERE timestamp >= ? AND result_count = 0', now - day), 'Searches in the last 24h that returned 0 results - content-gap signal'));
+  lines.push(fmt('nearpedia_search_total', safeCount('SELECT COUNT(*) as c FROM search_log') + rollup('search_log', 'total'), 'Total /search renders logged since launch', 'counter'));
+  lines.push(fmt('nearpedia_search_24h', safeCount('SELECT COUNT(*) as c FROM search_log WHERE timestamp >= ?', now - day), 'Searches in the last 24h'));
+  lines.push(fmt('nearpedia_search_zero_24h', safeCount('SELECT COUNT(*) as c FROM search_log WHERE timestamp >= ? AND result_count = 0', now - day), 'Searches in the last 24h that returned 0 results - content-gap signal'));
 
   // CSP violations - both a total counter and per-directive 7d slice
   // for alerting on a spike in a specific directive class.
-  lines.push(fmt('yourpedia_csp_violations_total', safeCount('SELECT COUNT(*) as c FROM csp_violation_log') + rollup('csp_violation_log', 'total'), 'CSP violations reported since launch', 'counter'));
-  lines.push(fmt('yourpedia_csp_violations_24h', safeCount('SELECT COUNT(*) as c FROM csp_violation_log WHERE timestamp >= ?', now - day), 'CSP violations reported in the last 24h - alertable'));
+  lines.push(fmt('nearpedia_csp_violations_total', safeCount('SELECT COUNT(*) as c FROM csp_violation_log') + rollup('csp_violation_log', 'total'), 'CSP violations reported since launch', 'counter'));
+  lines.push(fmt('nearpedia_csp_violations_24h', safeCount('SELECT COUNT(*) as c FROM csp_violation_log WHERE timestamp >= ?', now - day), 'CSP violations reported in the last 24h - alertable'));
   try {
     const db = getDb();
     const directiveRows = db.prepare(`
@@ -127,7 +127,7 @@ export async function GET(req: Request) {
       GROUP BY directive
     `).all(now - 7 * day) as Array<{ directive: string; c: number }>;
     for (const r of directiveRows) {
-      lines.push(fmt('yourpedia_csp_violations_by_directive_7d', r.c, 'CSP violations in the last 7d, by violated directive', 'gauge', { directive: r.directive }));
+      lines.push(fmt('nearpedia_csp_violations_by_directive_7d', r.c, 'CSP violations in the last 7d, by violated directive', 'gauge', { directive: r.directive }));
     }
   } catch { /* csp_violation_log not present on older DB */ }
 
@@ -136,17 +136,17 @@ export async function GET(req: Request) {
   // hence gauges: a restart resets them and that is not a counter reset to
   // reason about.
   const intake = intakeStats();
-  lines.push(fmt('yourpedia_csp_reports_dropped_duplicate', intake.duplicate, 'CSP reports dropped since boot as a repeat of one already stored in the dedupe window'));
-  lines.push(fmt('yourpedia_csp_reports_dropped_budget', intake.overBudget, 'CSP reports dropped since boot because the per-minute insert budget was spent - a flood'));
-  lines.push(fmt('yourpedia_csp_reports_dropped_oversized', intake.oversized, 'CSP reports refused since boot for exceeding the body size limit'));
+  lines.push(fmt('nearpedia_csp_reports_dropped_duplicate', intake.duplicate, 'CSP reports dropped since boot as a repeat of one already stored in the dedupe window'));
+  lines.push(fmt('nearpedia_csp_reports_dropped_budget', intake.overBudget, 'CSP reports dropped since boot because the per-minute insert budget was spent - a flood'));
+  lines.push(fmt('nearpedia_csp_reports_dropped_oversized', intake.oversized, 'CSP reports refused since boot for exceeding the body size limit'));
 
-  // yourpedia_sync_completion_age_seconds is the liveness signal: seconds
+  // nearpedia_sync_completion_age_seconds is the liveness signal: seconds
   // since a source last COMPLETED, where completed means anything that
   // isn't 'error' - 'partial' is an honest permanent state for some sources
   // (a multi-feed crawler that's missing one dead feed forever), and judging
   // those by a success-only MAX would make them read as stale for ever.
   //
-  // yourpedia_sync_tolerance_seconds is published alongside it, both derived
+  // nearpedia_sync_tolerance_seconds is published alongside it, both derived
   // from deploy/sync-tick.sh + sync-cf.sh in lib/schedule.ts, so
   // check-sync-staleness.sh has no second copy of the schedule to drift out
   // of sync with this one - which is exactly what happened before this pair
@@ -162,22 +162,22 @@ export async function GET(req: Request) {
     const tolerance = toleranceSecondsBySource();
     for (const r of rows) {
       const ageSec = r.t ? Math.floor((now - new Date(r.t).getTime()) / 1000) : -1;
-      lines.push(fmt('yourpedia_sync_completion_age_seconds', ageSec, "Seconds since the source last completed, where an error is not a completion", 'gauge', { source: r.source }));
+      lines.push(fmt('nearpedia_sync_completion_age_seconds', ageSec, "Seconds since the source last completed, where an error is not a completion", 'gauge', { source: r.source }));
       const tol = tolerance.get(r.source);
       // A source with no tolerance is not on a schedule - a one-off
       // migration or backfill - and has no cadence to be late against.
       if (tol !== undefined) {
-        lines.push(fmt('yourpedia_sync_tolerance_seconds', tol, 'How long this scheduled source may go without completing, from its cron bucket', 'gauge', { source: r.source }));
+        lines.push(fmt('nearpedia_sync_tolerance_seconds', tol, 'How long this scheduled source may go without completing, from its cron bucket', 'gauge', { source: r.source }));
       }
     }
   } catch { /* sync_log or schedule not ready */ }
 
   // Latest network snapshot ages
-  lines.push(fmt('yourpedia_network_snapshot_age_seconds', Math.max(0, Math.floor((now - safeMaxTimestamp('SELECT MAX(snapshot_at) as t FROM network_stats')) / 1000)), 'Seconds since the latest content-metrics snapshot'));
-  // On-chain state and TKN market are fetched live from Explorer/CoinGecko per
+  lines.push(fmt('nearpedia_network_snapshot_age_seconds', Math.max(0, Math.floor((now - safeMaxTimestamp('SELECT MAX(snapshot_at) as t FROM network_stats')) / 1000)), 'Seconds since the latest content-metrics snapshot'));
+  // On-chain state and NEAR market are fetched live from Explorer/CoinGecko per
   // request (lib/onchain.ts) and never stored, so there is no snapshot age to
   // report. The gauges that used to live here queried network_state and
-  // token_market - YourChain-era tables that do not exist - so safeMaxTimestamp
+  // token_market - NEAR-era tables that do not exist - so safeMaxTimestamp
   // returned 0 and both reported ~1.78e9 seconds, i.e. a permanent false alarm.
 
   return new NextResponse(lines.join(''), {

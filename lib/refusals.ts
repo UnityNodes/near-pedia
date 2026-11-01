@@ -1,5 +1,5 @@
 /**
- * What yourpedia refuses to hold, in one place, so every door reads one rulebook.
+ * What nearpedia refuses to hold, in one place, so every door reads one rulebook.
  *
  * A refusal is a statement about what we HOLD, not about what we let in next.
  * That distinction is the whole file. A rule enforced at the moment of insert

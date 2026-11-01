@@ -10,9 +10,9 @@ function insertDoc(db: ReturnType<typeof getDb>, overrides: Partial<{
     id: 1,
     url: 'https://docs.example.com/getting-started',
     title: 'Getting Started',
-    breadcrumb: 'YourChain SDK > Getting Started',
+    breadcrumb: 'NEAR SDK > Getting Started',
     excerpt: 'Learn how to set up validator nodes.',
-    content_text: 'Learn how to set up validator nodes on YourChain Network.',
+    content_text: 'Learn how to set up validator nodes on NEAR Network.',
     source: 'yourchain-sdk',
     last_modified: '2026-01-01',
   };
@@ -30,9 +30,9 @@ describe('getDocs', () => {
   beforeEach(() => {
     resetDb();
     const db = getDb();
-    insertDoc(db, { id: 1, title: 'Getting Started', breadcrumb: 'YourChain SDK > Getting Started', source: 'yourchain-sdk', content_text: 'Learn how to set up validator nodes on YourChain Network.' });
+    insertDoc(db, { id: 1, title: 'Getting Started', breadcrumb: 'NEAR SDK > Getting Started', source: 'yourchain-sdk', content_text: 'Learn how to set up validator nodes on NEAR Network.' });
     insertDoc(db, { id: 2, url: 'https://other-docs.example.com/transaction-semantics', title: 'Transaction Semantics', breadcrumb: 'Other Docs > Core Concepts', source: 'other-docs', content_text: 'Transactions are atomic and consistent.' });
-    insertDoc(db, { id: 3, url: 'https://docs.example.com/node-config', title: 'Node Configuration', breadcrumb: 'YourChain SDK > Operations', source: 'yourchain-sdk', content_text: 'Configure your YourChain node with these settings.' });
+    insertDoc(db, { id: 3, url: 'https://docs.example.com/node-config', title: 'Node Configuration', breadcrumb: 'NEAR SDK > Operations', source: 'yourchain-sdk', content_text: 'Configure your NEAR node with these settings.' });
     rebuildDocsFts(db);
   });
 

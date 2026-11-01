@@ -1,11 +1,11 @@
-/* YOURPEDIA Service Worker
+/* NEAR-pedia Service Worker
    v1: offline-resilient cache for shell + reads.
    v2: cache invalidation after Cloudflare Email Obfuscation removal —
        stale shells were still injecting cdn-cgi/email-decode script.
    Bumping the version below invalidates all old caches on next load. */
 const VERSION = 'v4';
-const RUNTIME = `yourpedia-runtime-${VERSION}`;
-const SHELL = `yourpedia-shell-${VERSION}`;
+const RUNTIME = `nearpedia-runtime-${VERSION}`;
+const SHELL = `nearpedia-shell-${VERSION}`;
 
 // Minimal app shell — what should load even with no network.
 const SHELL_URLS = [

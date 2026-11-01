@@ -1,25 +1,25 @@
 [Unit]
-Description=YourPedia MCP server (Model Context Protocol, Streamable HTTP)
+Description=NEAR-pedia MCP server (Model Context Protocol, Streamable HTTP)
 After=network.target
 
 [Service]
 Type=simple
 User=root
 Group=root
-WorkingDirectory=/srv/yourpedia
+WorkingDirectory=/srv/nearpedia
 Environment=NODE_ENV=production
-Environment=MCP_PORT=3041
+Environment=MCP_PORT=3131
 # This box has no IPv6 route (curl -6 to any host is refused) and upstreams resolve AAAA
 # first, so Node's fetch spends its whole connect budget on an address that never
 # answers. Ordering IPv4 first is the honest description of this machine.
 Environment=NODE_OPTIONS=--dns-result-order=ipv4first
-EnvironmentFile=-/srv/yourpedia/.env.production
-ExecStart=/root/.nvm/versions/node/v22.18.0/bin/node /srv/yourpedia/node_modules/.bin/tsx mcp-server.ts
+EnvironmentFile=-/srv/nearpedia/.env.production
+ExecStart=/root/.nvm/versions/node/v22.18.0/bin/node /srv/nearpedia/node_modules/.bin/tsx mcp-server.ts
 Restart=on-failure
 RestartSec=5
 StandardOutput=journal
 StandardError=journal
-SyslogIdentifier=yourpedia-mcp
+SyslogIdentifier=nearpedia-mcp
 NoNewPrivileges=true
 PrivateTmp=true
 ProtectKernelTunables=true

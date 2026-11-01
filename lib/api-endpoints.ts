@@ -40,7 +40,7 @@ export const ENDPOINTS = [
   { path: '/api/v1/cips/tldrs', desc: 'Batch cached TL;DRs for up to 50 CIPs in one call', params: 'ids=0001,CIP-0042,PR-117' },
   { path: '/api/v1/cips/:id/mentions', desc: 'Aggregated backlinks: forum threads, blog posts, sibling CIPs', params: 'CIP id' },
   { path: '/api/v1/sources', desc: 'Discovery: one row per content type with current count + last-synced timestamp', params: '' },
-  { path: '/api/v1/network', desc: 'LIVE YourChain on-chain state + TKN market (Explorer + CoinGecko)', params: '' },
+  { path: '/api/v1/network', desc: 'LIVE NEAR on-chain state + NEAR market (Explorer + CoinGecko)', params: '' },
   { path: '/api/v1/changes', desc: 'Unified activity feed: CIP transitions, forum threads, blog posts, releases, radar items - merged descending-by-time', params: 'days (1-90), limit (1-500)' },
   { path: '/api/v1/csp-violations', desc: 'Aggregated CSP violations grouped by directive - for security monitoring dashboards', params: 'window (days, 1-90), limit (top blocked_uris per directive, 1-25)' },
   { path: '/api/v1/openapi.json', desc: 'OpenAPI 3.1 description of every endpoint - feed to Swagger UI / OpenAI function-calling / Postman', params: '' },

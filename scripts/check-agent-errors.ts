@@ -22,10 +22,10 @@
  *   - A real volume+rate threshold, so one flaky call among many isn't noise.
  *
  * NO NON_AGENT EXCLUSION LIST. mcp_calls has exactly one writer (mcp-server.ts's
- * own request handler) and yourpedia has no internal component that calls its
+ * own request handler) and nearpedia has no internal component that calls its
  * own MCP endpoint over HTTP - every row here is a genuine external caller.
  *
- * NO "top failing shape" DIAGNOSTIC. yourpedia's mcp_calls schema (ts, method,
+ * NO "top failing shape" DIAGNOSTIC. nearpedia's mcp_calls schema (ts, method,
  * tool, source, status, duration_ms) does not capture call parameters at all,
  * so there is nothing to show beyond the tool name, count, and rate.
  *

@@ -5,13 +5,14 @@ config({ path: '.env.local' });
 import { getDb } from '../lib/db';
 import { capText } from '../lib/cap-text';
 import { isEntrypoint } from '../lib/is-entrypoint';
+import { SITE } from '../lib/site.config';
 
 const BASE = 'https://api.github.com';
 const TOKEN = process.env.GITHUB_TOKEN;
 const HEADERS: Record<string, string> = {
   'Accept': 'application/vnd.github+json',
   'X-GitHub-Api-Version': '2022-11-28',
-  'User-Agent': 'YOURPEDIA-sync/1.0',
+  'User-Agent': `${SITE.name}-sync/1.0`,
   ...(TOKEN ? { 'Authorization': `Bearer ${TOKEN}` } : {}),
 };
 if (!TOKEN) {
@@ -29,7 +30,7 @@ export interface SourceConfig {
 // org/repo/state list this sync reads, rather than a second, hand-typed copy
 // that can drift from it.
 export const SOURCES: SourceConfig[] = [
-  // YourChain core stack - open items only (active discussion / WIP), capped pages
+  // NEAR core stack - open items only (active discussion / WIP), capped pages
   {
     org: 'your-org',
     state: 'open',

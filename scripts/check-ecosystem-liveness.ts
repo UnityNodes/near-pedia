@@ -51,11 +51,12 @@
  */
 import { getDb } from '../lib/db';
 import { guardSync } from '../lib/sync-log';
+import { SITE } from '../lib/site.config';
 
 const CONCURRENCY = 10;          // simultaneous requests, not per host
 const TIMEOUT_MS = 15000;
 const DEAD_STREAK = 3;           // consecutive dead signals before condemning
-const UA = 'yourpedia-linkcheck/1.0 (+https://yourpedia.example)';
+const UA = `nearpedia-linkcheck/1.0 (+${SITE.url})`;
 
 const DRY_RUN = process.argv.includes('--dry-run');
 const LIMIT = (() => {

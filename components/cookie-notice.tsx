@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 
-const STORAGE_KEY = 'yourpedia-cookie-notice-ack';
+const STORAGE_KEY = 'nearpedia-cookie-notice-ack';
 
 /**
  * Non-blocking cookie notice.

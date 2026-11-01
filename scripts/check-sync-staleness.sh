@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# YOURPEDIA — sync staleness watchdog.
+# NEAR-pedia — sync staleness watchdog.
 #
 # Reads /api/metrics and exits non-zero (and prints to stderr) when a
 # scheduled source has not COMPLETED inside the deadline its cron bucket
@@ -13,27 +13,27 @@
 # nor a bucket.
 #
 # Cron — every hour, log to file, page on non-zero:
-#   0 * * * * /srv/yourpedia/scripts/check-sync-staleness.sh >> /var/log/yourpedia-staleness.log 2>&1
+#   0 * * * * /srv/nearpedia/scripts/check-sync-staleness.sh >> /var/log/nearpedia-staleness.log 2>&1
 #
 # Or wire to Alertmanager via a webhook; this script is a fallback
 # for installs that don't run Prometheus yet.
 #
 # Env:
-#   BASE_URL          — defaults to https://yourpedia.example
+#   BASE_URL          — defaults to https://nearpedia.example
 #   METRICS_TOKEN     — if /api/metrics is auth-gated
 #   FAIL_ON_STALE     — '1' to exit non-zero (default), '0' to log only
 #   SLACK_WEBHOOK_URL — POST stale list to Slack incoming webhook
 #   TELEGRAM_BOT_TOKEN + TELEGRAM_CHAT_ID — Telegram alert
 #   ALERT_QUIET_FILE  — touch this file to suppress alerts (e.g. during
 #                       a planned maintenance window); default
-#                       /var/run/yourpedia-quiet.
+#                       /var/run/nearpedia-quiet.
 
 set -uo pipefail
 
-BASE="${BASE_URL:-https://yourpedia.example}"
+BASE="${BASE_URL:-https://nearpedia.example}"
 TOKEN="${METRICS_TOKEN:-}"
 FAIL_ON_STALE="${FAIL_ON_STALE:-1}"
-QUIET_FILE="${ALERT_QUIET_FILE:-/var/run/yourpedia-quiet}"
+QUIET_FILE="${ALERT_QUIET_FILE:-/var/run/nearpedia-quiet}"
 
 # No threshold table here on purpose. There was one, keyed by SCRIPT name
 # against a gauge labelled by SOURCE name - "check-completeness" (the script)
@@ -44,7 +44,7 @@ QUIET_FILE="${ALERT_QUIET_FILE:-/var/run/yourpedia-quiet}"
 # underneath it doing nothing.
 #
 # The deadline now arrives with the reading: /api/metrics publishes
-# yourpedia_sync_tolerance_seconds beside yourpedia_sync_completion_age_seconds,
+# nearpedia_sync_tolerance_seconds beside nearpedia_sync_completion_age_seconds,
 # both computed from deploy/sync-tick.sh + sync-cf.sh in lib/schedule.ts, in
 # one place.
 
@@ -63,16 +63,16 @@ fi
 stale=()
 seen=()
 
-# yourpedia_sync_completion_age_seconds, NOT a success-only age. 'partial' is
+# nearpedia_sync_completion_age_seconds, NOT a success-only age. 'partial' is
 # an honest permanent state for some sources, and judging those by a
 # success-only MAX would make them read as stale for ever - an alarm that is
 # always on is one nobody reads.
 declare -A AGE=()
 declare -A TOL=()
 while IFS= read -r line; do
-  if [[ "$line" =~ ^yourpedia_sync_completion_age_seconds\{source=\"([^\"]+)\"\}[[:space:]]+(-?[0-9]+) ]]; then
+  if [[ "$line" =~ ^nearpedia_sync_completion_age_seconds\{source=\"([^\"]+)\"\}[[:space:]]+(-?[0-9]+) ]]; then
     AGE["${BASH_REMATCH[1]}"]="${BASH_REMATCH[2]}"
-  elif [[ "$line" =~ ^yourpedia_sync_tolerance_seconds\{source=\"([^\"]+)\"\}[[:space:]]+([0-9]+) ]]; then
+  elif [[ "$line" =~ ^nearpedia_sync_tolerance_seconds\{source=\"([^\"]+)\"\}[[:space:]]+([0-9]+) ]]; then
     TOL["${BASH_REMATCH[1]}"]="${BASH_REMATCH[2]}"
   fi
 done <<<"$metrics"
@@ -126,7 +126,7 @@ if [[ ! -f "$QUIET_FILE" ]]; then
   done
 
   if [[ -n "${SLACK_WEBHOOK_URL:-}" ]]; then
-    slack_text="*YOURPEDIA stale sources (${#stale[@]})*\n${stale_body}_(${BASE})_"
+    slack_text="*NEAR-pedia stale sources (${#stale[@]})*\n${stale_body}_(${BASE})_"
     curl -sS -m 10 -X POST -H 'Content-Type: application/json' \
       --data "$(printf '{"text":"%s"}' "${slack_text//\"/\\\"}")" \
       "$SLACK_WEBHOOK_URL" >/dev/null \
@@ -134,7 +134,7 @@ if [[ ! -f "$QUIET_FILE" ]]; then
   fi
 
   if [[ -n "${TELEGRAM_BOT_TOKEN:-}" && -n "${TELEGRAM_CHAT_ID:-}" ]]; then
-    tg_text="*YOURPEDIA stale sources (${#stale[@]})*\n${stale_body}_${BASE}_"
+    tg_text="*NEAR-pedia stale sources (${#stale[@]})*\n${stale_body}_${BASE}_"
     curl -sS -m 10 -X POST \
       "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
       --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" \

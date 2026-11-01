@@ -8,12 +8,13 @@ import { JsonLd } from '@/components/json-ld';
 import { EmptyAnimation } from '@/components/resources-empty-animation';
 import { PageShell, PgFoot, PgList, PgRow } from '@/components/page-shell';
 import { RadarRow, SectionHead, type RadarLevel } from '@/components/monitor-parts';
+import { SITE } from '@/lib/site.config';
 
 export const revalidate = 300;
 
 export const metadata = pageMetadata({
   title: 'Validators',
-  description: 'Operational hub for YourChain validators: critical alerts, upgrade schedule, validator roster, governance proposals.',
+  description: 'Operational hub for NEAR validators: critical alerts, upgrade schedule, validator roster, governance proposals.',
   path: '/validators',
 });
 
@@ -101,8 +102,8 @@ export default async function ValidatorsPage() {
 
   const schemas = [
     collectionPage({
-      name: 'YOURPEDIA for Validators',
-      description: 'Operational hub for YourChain validators: alerts, upgrades, validator roster, governance proposals, latest releases.',
+      name: `${SITE.name} for Validators`,
+      description: 'Operational hub for NEAR validators: alerts, upgrades, validator roster, governance proposals, latest releases.',
       path: '/validators',
       itemCount: vals.active,
     }),
@@ -116,10 +117,10 @@ export default async function ValidatorsPage() {
     ['Block Height', net.chain.height?.toLocaleString('en-US') ?? PLACEHOLDER],
     ['Active Validators', formatCount(vals.active)],
     ['Registered', vals.registered ? vals.registered.toLocaleString('en-US') : (net.chain.totalValidators?.toLocaleString('en-US') ?? PLACEHOLDER)],
-    ['TKN Supply', net.chain.totalSupplyTkn ? Math.round(net.chain.totalSupplyTkn).toLocaleString('en-US') : PLACEHOLDER],
+    ['NEAR Supply', net.chain.totalSupplyTkn ? Math.round(net.chain.totalSupplyTkn).toLocaleString('en-US') : PLACEHOLDER],
     ['Data Stored', formatBytes(net.chain.totalDataSizeBytes)],
     ['Transactions', net.chain.totalTx?.toLocaleString('en-US') ?? PLACEHOLDER],
-    ['TKN Price', net.market?.priceUsd != null ? `$${net.market.priceUsd.toFixed(2)}` : PLACEHOLDER],
+    ['NEAR Price', net.market?.priceUsd != null ? `$${net.market.priceUsd.toFixed(2)}` : PLACEHOLDER],
   ] : [];
 
   const hasContent = radarCritical.length > 0 || kpis.length > 0 || roster.length > 0 || proposals.length > 0 || recentReleases.length > 0;
@@ -128,7 +129,7 @@ export default async function ValidatorsPage() {
     <PageShell
       href="/validators"
       title="Validators"
-      description="Operational hub for YourChain validators: upgrade alerts, validator roster, infrastructure proposals, latest release tags."
+      description="Operational hub for NEAR validators: upgrade alerts, validator roster, infrastructure proposals, latest release tags."
       stat={activeTotal > 0 ? { value: activeTotal, unit: activeTotal === 1 ? 'active validator' : 'active validators' } : undefined}
       synced={net.chain ? net.fetchedAt : null}
       source="Explorer indexer"
@@ -207,7 +208,7 @@ export default async function ValidatorsPage() {
                             </a>
                           ) : v.moniker}
                         </td>
-                        <td className="vl-num">{v.votingPower != null ? `${Math.round(v.votingPower).toLocaleString('en-US')} TKN` : PLACEHOLDER}</td>
+                        <td className="vl-num">{v.votingPower != null ? `${Math.round(v.votingPower).toLocaleString('en-US')} NEAR` : PLACEHOLDER}</td>
                         <td className="vl-num">{v.commissionRate != null ? `${(v.commissionRate * 100).toFixed(0)}%` : PLACEHOLDER}</td>
                       </tr>
                     ))}

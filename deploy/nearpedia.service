@@ -1,25 +1,25 @@
 [Unit]
-Description=YourPedia Next.js production server
+Description=NEAR-pedia Next.js production server
 After=network.target
 
 [Service]
 Type=simple
 User=root
 Group=root
-WorkingDirectory=/srv/yourpedia
+WorkingDirectory=/srv/nearpedia
 Environment=NODE_ENV=production
-Environment=PORT=3040
+Environment=PORT=3130
 # This box has no IPv6 route (curl -6 to any host is refused) and upstreams resolve AAAA
 # first, so Node's fetch spends its whole connect budget on an address that never
 # answers. Ordering IPv4 first is the honest description of this machine.
 Environment=NODE_OPTIONS=--dns-result-order=ipv4first
-EnvironmentFile=/srv/yourpedia/.env.production
-ExecStart=/root/.nvm/versions/node/v22.18.0/bin/node /srv/yourpedia/node_modules/.bin/next start -p 3040 -H 127.0.0.1
+EnvironmentFile=/srv/nearpedia/.env.production
+ExecStart=/root/.nvm/versions/node/v22.18.0/bin/node /srv/nearpedia/node_modules/.bin/next start -p 3130 -H 127.0.0.1
 Restart=on-failure
 RestartSec=5
 StandardOutput=journal
 StandardError=journal
-SyslogIdentifier=yourpedia
+SyslogIdentifier=nearpedia
 NoNewPrivileges=true
 PrivateTmp=true
 ProtectKernelTunables=true

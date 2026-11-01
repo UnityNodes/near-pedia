@@ -16,7 +16,7 @@ describe('getVideos', () => {
   beforeEach(() => { resetDb(); });
 
   it('returns all videos sorted by published_at desc', () => {
-    seedVideo('v1', 'Old Video', 'YourChain Network', '2026-01-01T00:00:00Z');
+    seedVideo('v1', 'Old Video', 'NEAR Network', '2026-01-01T00:00:00Z');
     seedVideo('v2', 'New Video', 'Beta Channel', '2026-06-01T00:00:00Z');
     const { videos } = getVideos({});
     expect(videos[0].id).toBe('v2');
@@ -24,7 +24,7 @@ describe('getVideos', () => {
   });
 
   it('filters by channel_name', () => {
-    seedVideo('v1', 'YourChain Video', 'YourChain Network', '2026-01-01T00:00:00Z');
+    seedVideo('v1', 'NEAR Video', 'NEAR Network', '2026-01-01T00:00:00Z');
     seedVideo('v2', 'Beta Video', 'Beta Channel', '2026-01-02T00:00:00Z');
     const { videos } = getVideos({ channel: 'Beta Channel' });
     expect(videos).toHaveLength(1);
@@ -33,7 +33,7 @@ describe('getVideos', () => {
 
   it('paginates correctly', () => {
     for (let i = 1; i <= 25; i++) {
-      seedVideo(`v${i}`, `Video ${i}`, 'YourChain Network', `2026-01-${String(i).padStart(2,'0')}T00:00:00Z`);
+      seedVideo(`v${i}`, `Video ${i}`, 'NEAR Network', `2026-01-${String(i).padStart(2,'0')}T00:00:00Z`);
     }
     const { videos, total, totalPages } = getVideos({ page: 1, perPage: 20 });
     expect(videos).toHaveLength(20);
@@ -46,11 +46,11 @@ describe('getDistinctChannels', () => {
   beforeEach(() => { resetDb(); });
 
   it('returns distinct channel names sorted alphabetically', () => {
-    seedVideo('v1', 'Video 1', 'YourChain Network', '2026-01-01T00:00:00Z');
+    seedVideo('v1', 'Video 1', 'NEAR Network', '2026-01-01T00:00:00Z');
     seedVideo('v2', 'Video 2', 'Beta Channel', '2026-01-02T00:00:00Z');
-    seedVideo('v3', 'Video 3', 'YourChain Network', '2026-01-03T00:00:00Z');
+    seedVideo('v3', 'Video 3', 'NEAR Network', '2026-01-03T00:00:00Z');
     const channels = getDistinctChannels();
-    expect(channels).toEqual(['Beta Channel', 'YourChain Network']);
+    expect(channels).toEqual(['Beta Channel', 'NEAR Network']);
   });
 });
 
@@ -95,7 +95,7 @@ describe('getVideos search', () => {
   beforeEach(() => { resetDb(); });
 
   it('finds a video by what is said in it and returns the passage with its time', () => {
-    seedTalk('t1', 'Operations talk', 'YourChain Network', '2026-02-01T00:00:00Z', ['welcome', 'today we cover pruning of packages', 'and then upgrades']);
+    seedTalk('t1', 'Operations talk', 'NEAR Network', '2026-02-01T00:00:00Z', ['welcome', 'today we cover pruning of packages', 'and then upgrades']);
     seedTalk('t2', 'Other talk', 'Gamma Channel', '2026-03-01T00:00:00Z', ['nothing relevant', 'at all']);
     const { videos, total } = getVideos({ q: 'pruning' });
     expect(total).toBe(1);
@@ -106,7 +106,7 @@ describe('getVideos search', () => {
   });
 
   it('finds a video by its title and gives no passage when the transcript does not mention the word', () => {
-    seedTalk('t1', 'Atlas overview', 'YourChain Network', '2026-02-01T00:00:00Z', ['welcome', 'something else']);
+    seedTalk('t1', 'Atlas overview', 'NEAR Network', '2026-02-01T00:00:00Z', ['welcome', 'something else']);
     const { videos } = getVideos({ q: 'atlas' });
     expect(videos).toHaveLength(1);
     expect(videos[0].passage).toBeNull();
@@ -119,7 +119,7 @@ describe('getVideos search', () => {
 
   it('keeps the channel filter when searching', () => {
     seedTalk('t1', 'Pruning one', 'Gamma Channel', '2026-02-01T00:00:00Z', ['pruning']);
-    seedTalk('t2', 'Pruning two', 'YourChain Network', '2026-02-02T00:00:00Z', ['pruning']);
+    seedTalk('t2', 'Pruning two', 'NEAR Network', '2026-02-02T00:00:00Z', ['pruning']);
     const { videos } = getVideos({ q: 'pruning', channel: 'Gamma Channel' });
     expect(videos.map(v => v.id)).toEqual(['t1']);
   });
@@ -137,10 +137,10 @@ describe('getChannelCounts', () => {
 
   it('counts every channel and narrows to a search', () => {
     seedTalk('t1', 'Pruning one', 'Gamma Channel', '2026-02-01T00:00:00Z', ['pruning']);
-    seedTalk('t2', 'Pruning two', 'YourChain Network', '2026-02-02T00:00:00Z', ['pruning']);
-    seedTalk('t3', 'Other', 'YourChain Network', '2026-02-03T00:00:00Z', ['nothing']);
-    expect(getChannelCounts()).toEqual([{ name: 'YourChain Network', count: 2 }, { name: 'Gamma Channel', count: 1 }]);
-    expect(getChannelCounts('pruning')).toEqual([{ name: 'Gamma Channel', count: 1 }, { name: 'YourChain Network', count: 1 }]);
+    seedTalk('t2', 'Pruning two', 'NEAR Network', '2026-02-02T00:00:00Z', ['pruning']);
+    seedTalk('t3', 'Other', 'NEAR Network', '2026-02-03T00:00:00Z', ['nothing']);
+    expect(getChannelCounts()).toEqual([{ name: 'NEAR Network', count: 2 }, { name: 'Gamma Channel', count: 1 }]);
+    expect(getChannelCounts('pruning')).toEqual([{ name: 'Gamma Channel', count: 1 }, { name: 'NEAR Network', count: 1 }]);
     expect(getChannelCounts('!!!')).toEqual([]);
   });
 });

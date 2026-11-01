@@ -34,7 +34,7 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# yourpedia data — DB lives on server, not in git
+# nearpedia data — DB lives on server, not in git
 /data/
 
 

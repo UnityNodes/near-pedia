@@ -6,7 +6,7 @@ import { describe, it, expect } from 'vitest';
 // commitments (e.g. 'All' must stay first).
 //
 // This drifted once already: 'mail' and 'proposal' chips (leftovers
-// with no real data source in yourpedia) were removed from page.tsx without
+// with no real data source in nearpedia) were removed from page.tsx without
 // this copy following, so both this file's arrays stayed self-consistent
 // with each other while describing dead chips neither the live page nor
 // lib/search.ts's SearchResultType had produced in months.

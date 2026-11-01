@@ -1,6 +1,6 @@
 # Sync cron — setup and troubleshooting
 
-This box (`/srv/yourpedia`, a Linux VPS) drives all data syncs from the
+This box (`/srv/nearpedia`, a Linux VPS) drives all data syncs from the
 **root crontab**, not any app-level scheduler. There is no Windows Task
 Scheduler anywhere in this stack — if you're looking at a `schtasks.exe` /
 `D:\...` version of this file, it described a different, no-longer-real setup
@@ -14,28 +14,28 @@ sudo -n crontab -l -u root
 
 ```cron
 # health watchdog, every minute
-* * * * * /usr/local/bin/yourpedia-watchdog.sh
+* * * * * /usr/local/bin/nearpedia-watchdog.sh
 
 # plain-fetch sync buckets, bucketed by cost/freshness
-*/5  * * * *   /srv/yourpedia/deploy/sync-tick.sh fast   >> /var/log/yourpedia-sync.log 2>&1
-*/15 * * * *   /srv/yourpedia/deploy/sync-tick.sh medium >> /var/log/yourpedia-sync.log 2>&1
-0 */6 * * *    /srv/yourpedia/deploy/sync-tick.sh slow   >> /var/log/yourpedia-sync.log 2>&1
-15 3 * * *     /srv/yourpedia/deploy/sync-tick.sh daily  >> /var/log/yourpedia-sync.log 2>&1
-30 4 * * 1     /srv/yourpedia/deploy/sync-tick.sh weekly >> /var/log/yourpedia-sync.log 2>&1
+*/5  * * * *   /srv/nearpedia/deploy/sync-tick.sh fast   >> /var/log/nearpedia-sync.log 2>&1
+*/15 * * * *   /srv/nearpedia/deploy/sync-tick.sh medium >> /var/log/nearpedia-sync.log 2>&1
+0 */6 * * *    /srv/nearpedia/deploy/sync-tick.sh slow   >> /var/log/nearpedia-sync.log 2>&1
+15 3 * * *     /srv/nearpedia/deploy/sync-tick.sh daily  >> /var/log/nearpedia-sync.log 2>&1
+30 4 * * 1     /srv/nearpedia/deploy/sync-tick.sh weekly >> /var/log/nearpedia-sync.log 2>&1
 
 # Cloudflare-gated sources (forum, blog) — need a real headful Chrome via xvfb,
 # so they run separately from the plain-fetch buckets above
-*/30 * * * *   /srv/yourpedia/deploy/sync-cf.sh >> /var/log/yourpedia-sync.log 2>&1
+*/30 * * * *   /srv/nearpedia/deploy/sync-cf.sh >> /var/log/nearpedia-sync.log 2>&1
 
 # DB backup
-30 4 * * *     PEDIA_DB=/srv/yourpedia/data/cips.db PEDIA_BACKUP_DIR=/srv/yourpedia/data/backups /srv/yourpedia/scripts/backup-db.sh >> /var/log/yourpedia-sync.log 2>&1
+30 4 * * *     PEDIA_DB=/srv/nearpedia/data/cips.db PEDIA_BACKUP_DIR=/srv/nearpedia/data/backups /srv/nearpedia/scripts/backup-db.sh >> /var/log/nearpedia-sync.log 2>&1
 
 # staleness watchdog — hits the live site, not the DB directly
-17 * * * *     BASE_URL=http://127.0.0.1:3040 FAIL_ON_STALE=0 /srv/yourpedia/scripts/check-sync-staleness.sh >> /var/log/yourpedia-staleness.log 2>&1
+17 * * * *     BASE_URL=http://127.0.0.1:3130 FAIL_ON_STALE=0 /srv/nearpedia/scripts/check-sync-staleness.sh >> /var/log/nearpedia-staleness.log 2>&1
 ```
 
 (`PEDIA_DB` / `PEDIA_BACKUP_DIR` are historical env-var names carried over
-from `backup-db.sh`'s origin; they point at yourpedia's own DB path.)
+from `backup-db.sh`'s origin; they point at nearpedia's own DB path.)
 
 ## What each bucket does
 
@@ -72,12 +72,12 @@ next run, live, with no restart.
 ## Logs
 
 ```bash
-tail -f /var/log/yourpedia-sync.log        # sync-tick.sh + sync-cf.sh output
-tail -f /var/log/yourpedia-staleness.log   # check-sync-staleness.sh output
+tail -f /var/log/nearpedia-sync.log        # sync-tick.sh + sync-cf.sh output
+tail -f /var/log/nearpedia-staleness.log   # check-sync-staleness.sh output
 ```
 
 Both files are plain `>>` appends with no rotation configured in the crontab
-itself — `/var/log/yourpedia-sync.log` grows unbounded (it was already ~19 MB
+itself — `/var/log/nearpedia-sync.log` grows unbounded (it was already ~19 MB
 at last check); rotate it externally (`logrotate` or a manual truncate) if
 that becomes a problem, `sync-tick.sh` does not do this for you.
 
@@ -96,7 +96,7 @@ table it writes to instead:
 
 ```bash
 export PATH=/root/.nvm/versions/node/v22.18.0/bin:$PATH
-cd /srv/yourpedia
+cd /srv/nearpedia
 sqlite3 data/cips.db \
   "SELECT source, status, items_synced, ran_at FROM sync_log ORDER BY id DESC LIMIT 15;"
 ```
@@ -118,25 +118,25 @@ Each `sync-tick.sh` bucket holds `flock` on its own file for the duration of
 the run:
 
 ```bash
-ls -la /run/yourpedia-sync-*.lock
+ls -la /run/nearpedia-sync-*.lock
 ```
 
 A run that "should have happened" but didn't touch `sync_log` or the log file
 usually means the *previous* run of that same bucket was still holding the
 lock (a slow upstream fetch, a hung network call) — `sync-tick.sh` logs
 `previous run still going, skip` in that case rather than queuing. `sync-cf.sh`
-has its own separate lock, `/run/yourpedia-sync-cf.lock`. These are `/run`
+has its own separate lock, `/run/nearpedia-sync-cf.lock`. These are `/run`
 (tmpfs), so they don't survive a reboot — that's intentional, a fresh boot
 should never start up already "locked".
 
 ## Watchdog
 
-`/usr/local/bin/yourpedia-watchdog.sh` runs every minute, independent of the
+`/usr/local/bin/nearpedia-watchdog.sh` runs every minute, independent of the
 sync buckets:
 
 ```bash
-curl -fs --max-time 10 http://127.0.0.1:3040/api/health >/dev/null 2>&1 || systemctl restart yourpedia
-curl -fs --max-time 10 http://127.0.0.1:3041/health      >/dev/null 2>&1 || systemctl restart yourpedia-mcp
+curl -fs --max-time 10 http://127.0.0.1:3130/api/health >/dev/null 2>&1 || systemctl restart nearpedia
+curl -fs --max-time 10 http://127.0.0.1:3131/health      >/dev/null 2>&1 || systemctl restart nearpedia-mcp
 ```
 
 This restarts the **web app or MCP server process**, not a sync — it has
@@ -147,14 +147,14 @@ site rather than querying the DB directly.
 
 ## Troubleshooting checklist
 
-1. **Is cron even installed for this?** `sudo -n crontab -l -u root | grep yourpedia`
-2. **Did the last run of a bucket complete?** `grep '\[daily ' /var/log/yourpedia-sync.log | tail -40`
+1. **Is cron even installed for this?** `sudo -n crontab -l -u root | grep nearpedia`
+2. **Did the last run of a bucket complete?** `grep '\[daily ' /var/log/nearpedia-sync.log | tail -40`
 3. **Did it write real rows, not just exit 0?** the `sync_log` query above —
    compare `ran_at` against "now"; a source stuck hours behind its bucket's
    cadence is the actual signal, not the log tail.
-4. **Is a bucket stuck on its lock?** `ls -la /run/yourpedia-sync-*.lock` plus
+4. **Is a bucket stuck on its lock?** `ls -la /run/nearpedia-sync-*.lock` plus
    `ps aux | grep tsx` to see if something is still running under it.
-5. **Root's git ownership.** `/srv/yourpedia/.git` is owned by `claude:claude`
+5. **Root's git ownership.** `/srv/nearpedia/.git` is owned by `claude:claude`
    while cron runs sync scripts as root, which is exactly the setup where git
    normally refuses with `detected dubious ownership`. The one place this repo
    shells out to git (`mcp-server.ts`, resolving the running commit for
@@ -162,7 +162,7 @@ site rather than querying the DB directly.
    call rather than relying on a pre-existing global git config — so there is
    nothing to configure once for cron's sake. If you add a sync script that
    shells out to `git` directly, give it the same inline flag rather than
-   assuming a global `safe.directory` entry exists; `/srv/yourpedia` is not
+   assuming a global `safe.directory` entry exists; `/srv/nearpedia` is not
    in root's `git config --global safe.directory` list.
 6. **Wrong Node.** `sync-tick.sh` hardcodes
    `PATH=/root/.nvm/versions/node/v22.18.0/bin:...` at the top specifically so

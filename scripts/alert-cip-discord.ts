@@ -28,7 +28,7 @@ function numLabel(c: CipRow): string {
 
 function payloadFor(c: CipRow, event: 'created' | 'approved') {
   const label = numLabel(c);
-  // YourChain has no "Approved" status - the terminal states are Final/Living.
+  // NEAR has no "Approved" status - the terminal states are Final/Living.
   // A CIP that is not yet terminal is a proposal, so say so instead of
   // announcing a Draft as if it were settled.
   const isSettled = ['final', 'living'].includes((c.status || '').toLowerCase());
@@ -101,8 +101,8 @@ async function main() {
     ORDER BY CAST(cip_number AS INTEGER) ASC
   `).all() as CipRow[];
 
-  // Newly-finalised CIPs not yet announced. YourChain's terminal statuses are
-  // Final/Living; 'approved' (the YourChain vocabulary) never occurs, so the old
+  // Newly-finalised CIPs not yet announced. NEAR's terminal statuses are
+  // Final/Living; 'approved' (the NEAR vocabulary) never occurs, so the old
   // filter matched zero rows and this half of the alerter was dead code.
   const approvedCips = db.prepare(`
     SELECT id, cip_number, title, status, author FROM cips

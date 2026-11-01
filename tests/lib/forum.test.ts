@@ -42,7 +42,7 @@ describe('getTopics', () => {
     insertCategory(db, { id: 57, name: 'App Development' });
     insertCategory(db, { id: 56, name: 'Announcements' });
     insertTopic(db, { id: 1, title: 'Validator setup guide', category_id: 57, posts_count: 10, views: 500, created_at: '2026-03-01T00:00:00.000Z', last_post_at: '2026-05-01T00:00:00.000Z' });
-    insertTopic(db, { id: 2, title: 'YourChain governance proposal', category_id: 56, posts_count: 3, views: 200, created_at: '2026-02-01T00:00:00.000Z', last_post_at: '2026-04-01T00:00:00.000Z' });
+    insertTopic(db, { id: 2, title: 'NEAR governance proposal', category_id: 56, posts_count: 3, views: 200, created_at: '2026-02-01T00:00:00.000Z', last_post_at: '2026-04-01T00:00:00.000Z' });
     insertTopic(db, { id: 3, title: 'Network upgrade announcement', category_id: 56, posts_count: 1, views: 800, created_at: '2026-04-01T00:00:00.000Z', last_post_at: '2026-03-01T00:00:00.000Z' });
     rebuildForumFts(db);
   });

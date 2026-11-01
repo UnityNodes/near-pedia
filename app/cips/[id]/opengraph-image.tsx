@@ -10,6 +10,7 @@ export const contentType = 'image/png';
 
 import { STATUS_COLORS as STATUS_COLOR } from '@/lib/status';
 import { formatAuthor } from '@/lib/utils';
+import { SITE } from '@/lib/site.config';
 
 interface CipRow {
   id: string;
@@ -53,7 +54,7 @@ export default async function Image({ params }: { params: Promise<{ id: string }
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
           <img src={logoSrc} width={64} height={64} style={{ objectFit: 'contain' }} />
-          <div style={{ fontSize: 32, fontWeight: 700, letterSpacing: -0.5 }}>YOURPEDIA</div>
+          <div style={{ fontSize: 32, fontWeight: 700, letterSpacing: -0.5 }}>{SITE.name}</div>
           <div style={{ fontSize: 22, opacity: 0.55, marginLeft: 8 }}>· yourchain improvement proposal</div>
         </div>
 

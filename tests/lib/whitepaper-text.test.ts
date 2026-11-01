@@ -1,12 +1,12 @@
 import { describe, it, expect } from 'vitest';
 import { contentsOf, isHeadingLine, readerText, wordsOf } from '@/lib/whitepaper-text';
 
-const HEADER = 'YourChain Coin: A YourChain-native payment application';
+const HEADER = 'NEAR Coin: A NEAR-native payment application';
 const page = (n: number, body: string) => `${HEADER}\n\n${body}\n\n​ ${n}\n`;
 const TEXT = [
   page(1, 'Abstract\nAccessibility and connectivity across subnets\nis the subject.\n\nDisclaimer\nThis document is not advice.'),
-  page(2, 'Transfer Fees\n\nparameter value\n\nthe first $100 1.0 %\n\nabove $100 up to $1000 0.1 %\n\nA.1 Name YourChain Foundation\n\nFigure 2: Cumulative Minting Over Time'),
-  page(3, 'YourChain\n22 is a next generation layer 1.\n\n1. user\n2. weight'),
+  page(2, 'Transfer Fees\n\nparameter value\n\nthe first $100 1.0 %\n\nabove $100 up to $1000 0.1 %\n\nA.1 Name NEAR Foundation\n\nFigure 2: Cumulative Minting Over Time'),
+  page(3, 'NEAR\n22 is a next generation layer 1.\n\n1. user\n2. weight'),
   page(4, 'Conclusion\nThat is all.'),
 ].join('\f');
 
@@ -15,7 +15,7 @@ describe('readerText', () => {
   const texts = blocks.flatMap(b => (b.kind === 'page' ? [] : [b.text]));
 
   it('keeps every short block the old reader dropped, such as table rows and form fields', () => {
-    expect(texts).toEqual(expect.arrayContaining(['parameter value', 'the first $100 1.0 %', 'above $100 up to $1000 0.1 %', 'A.1 Name YourChain Foundation']));
+    expect(texts).toEqual(expect.arrayContaining(['parameter value', 'the first $100 1.0 %', 'above $100 up to $1000 0.1 %', 'A.1 Name NEAR Foundation']));
   });
 
   it('loses no word except the running header and page numbers it removes', () => {
@@ -38,7 +38,7 @@ describe('readerText', () => {
   });
 
   it('keeps a line broken by a footnote number as one paragraph', () => {
-    expect(texts).toContain('YourChain 22 is a next generation layer 1.');
+    expect(texts).toContain('NEAR 22 is a next generation layer 1.');
   });
 
   it('answers an empty text with nothing', () => {
@@ -51,7 +51,7 @@ describe('readerText headings', () => {
   const headings = (text: string) => readerText(text).blocks.filter(b => b.kind === 'heading').map(b => (b as { text: string }).text);
 
   it('finds a numbered section that starts in the middle of a paragraph, after a sentence ends', () => {
-    expect(headings('benefit from full sub-transaction privacy.\n2 YourChain\nYourChain is a distributed ledger.\n2.1 Architecture\nNodes are called participants.')).toEqual(['2 YourChain', '2.1 Architecture']);
+    expect(headings('benefit from full sub-transaction privacy.\n2 NEAR\nNEAR is a distributed ledger.\n2.1 Architecture\nNodes are called participants.')).toEqual(['2 NEAR', '2.1 Architecture']);
   });
 
   it('does not split a paragraph at a number that does not follow a sentence end', () => {
@@ -73,19 +73,19 @@ describe('readerText headings', () => {
 
   it('joins a lettered or Part heading that wraps onto the next lines', () => {
     const text = [
-      'D. The Economic Model for YourChain Coin is Designed to Disincentivize Price Speculation and\nInstead Encourage the Development of Useful Applications\n\nFourth and finally, the model holds.',
+      'D. The Economic Model for NEAR Coin is Designed to Disincentivize Price Speculation and\nInstead Encourage the Development of Useful Applications\n\nFourth and finally, the model holds.',
       'Part C- Information about the operator of the trading platform in cases where it draws up the white\npaper and information about other persons drawing the white paper pursuant to Article 6(1),\nsecond subparagraph\n\nThe operator is named below in this part.',
     ].join('\n\n');
     expect(headings(text)).toEqual([
-      'D. The Economic Model for YourChain Coin is Designed to Disincentivize Price Speculation and Instead Encourage the Development of Useful Applications',
+      'D. The Economic Model for NEAR Coin is Designed to Disincentivize Price Speculation and Instead Encourage the Development of Useful Applications',
       'Part C- Information about the operator of the trading platform in cases where it draws up the white paper and information about other persons drawing the white paper pursuant to Article 6(1), second subparagraph',
     ]);
   });
 
   it('makes a numbered subsection a level-3 heading and leaves the paper title out of the contents', () => {
-    const { blocks } = readerText('Polyglot YourChain\nThe paper opens with its title, then the sections.\n\n2 YourChain\nYourChain is a ledger.\n2.1 Architecture\nNodes are participants.');
-    expect(contentsOf(blocks, 'Polyglot YourChain')).toEqual([
-      { id: '2-yourchain', text: '2 YourChain', level: 2 },
+    const { blocks } = readerText('Polyglot NEAR\nThe paper opens with its title, then the sections.\n\n2 NEAR\nNEAR is a ledger.\n2.1 Architecture\nNodes are participants.');
+    expect(contentsOf(blocks, 'Polyglot NEAR')).toEqual([
+      { id: '2-near', text: '2 NEAR', level: 2 },
       { id: '2-1-architecture', text: '2.1 Architecture', level: 3 },
     ]);
   });
@@ -117,7 +117,7 @@ describe('readerText headings', () => {
 
   it('loses no word on any of the new paths: split sections, wrapped and numeral headings, lists, figures and contents', () => {
     const text = [
-      'ends a sentence.\n2 YourChain\nYourChain is a ledger.',
+      'ends a sentence.\n2 NEAR\nNEAR is a ledger.',
       'D. The Model is Designed to Disincentivize Speculation and\nInstead Encourage Applications\n\nFourth, it holds.',
       'IV.\nLedger and Token\n\nTo address this, a token.',
       '1. Bank issues cash\n2. CSD issues an asset',
@@ -144,11 +144,11 @@ describe('readerText headings', () => {
 });
 
 describe('isHeadingLine', () => {
-  it.each(['Abstract', '1 Introduction', '2.5 Smart Contracts in YourChain', 'Part I – Information on risks', 'B. Example Labs’s Technology is Mature and Tested with Proven Use Cases'])('takes %s as a heading', l => {
+  it.each(['Abstract', '1 Introduction', '2.5 Smart Contracts in NEAR', 'Part I – Information on risks', 'B. Example Labs’s Technology is Mature and Tested with Proven Use Cases'])('takes %s as a heading', l => {
     expect(isHeadingLine(l)).toBe(true);
   });
 
-  it.each(['the first $100 1.0 %', 'A.1 Name YourChain Foundation', 'Figure 2: Cumulative Minting', '1. user', 'Business Activity 14', 'February 2025', 'Party2', 'S’ = S + T', 'CREATE POLICY asset_issuers ON Asset', 'This ends with a period.', 'Source: VeChain documentation', '1. Base transfer fee - A fee applied to every new coin contract record (UTXO) created in a'])('does not take %s as a heading', l => {
+  it.each(['the first $100 1.0 %', 'A.1 Name NEAR Foundation', 'Figure 2: Cumulative Minting', '1. user', 'Business Activity 14', 'February 2025', 'Party2', 'S’ = S + T', 'CREATE POLICY asset_issuers ON Asset', 'This ends with a period.', 'Source: VeChain documentation', '1. Base transfer fee - A fee applied to every new coin contract record (UTXO) created in a'])('does not take %s as a heading', l => {
     expect(isHeadingLine(l)).toBe(false);
   });
 });

@@ -52,7 +52,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     .replace(/\s+/g, ' ')
     .trim()
     .slice(0, 160);
-  const description = body || `YourChain GitHub ${item.type === 'pr' ? 'pull request' : 'issue'} #${item.number} in ${item.repo}.`;
+  const description = body || `NEAR GitHub ${item.type === 'pr' ? 'pull request' : 'issue'} #${item.number} in ${item.repo}.`;
   const path = `/proposals/${id.replace('#', '/')}`;
 
   return {

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getDb } from '@/lib/db';
 import { getIdentifiers } from '@/lib/rate-limit';
 import { sendMail, isMailerConfigured } from '@/lib/mailer';
+import { SITE } from '@/lib/site.config';
 
 export const dynamic = 'force-dynamic';
 
@@ -165,10 +166,10 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   const result = await sendMail({
     to,
-    subject: `[YOURPEDIA Contact] ${subject}`,
+    subject: `[${SITE.name} Contact] ${subject}`,
     text: bodyText,
     replyTo: `"${name}" <${email}>`,
-    fromName: 'YOURPEDIA Contact Form',
+    fromName: `${SITE.name} Contact Form`,
   });
 
   if (!result.ok) {

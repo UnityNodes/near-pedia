@@ -29,7 +29,7 @@ function safeMax(db: ReturnType<typeof getDb>, table: string, col: string): stri
 }
 
 async function mcpToolCount(): Promise<number> {
-  const url = process.env.MCP_HEALTH_URL ?? 'http://127.0.0.1:3041/health';
+  const url = process.env.MCP_HEALTH_URL ?? 'http://127.0.0.1:3131/health';
   try {
     const ctrl = new AbortController();
     const t = setTimeout(() => ctrl.abort(), 2000);

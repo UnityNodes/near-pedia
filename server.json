@@ -1,17 +1,17 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
-  "name": "io.github.your-org/yourpedia",
-  "description": "YourChain knowledge base: CIPs, docs, forum, videos, GitHub, plus live on-chain state",
+  "name": "io.github.UnityNodes/nearpedia",
+  "description": "Live NEAR knowledge for AI agents: deprecations, breaking changes, protocol upgrades and docs, with a source and a date on every answer",
   "version": "1.0.0",
-  "websiteUrl": "https://yourpedia.example/for-ai",
+  "websiteUrl": "https://nearpedia.example/for-ai",
   "repository": {
-    "url": "https://github.com/your-org/yourpedia",
+    "url": "https://github.com/UnityNodes/nearpedia",
     "source": "github"
   },
   "remotes": [
     {
       "type": "streamable-http",
-      "url": "https://yourpedia.example/mcp"
+      "url": "https://nearpedia.example/mcp"
     }
   ]
 }

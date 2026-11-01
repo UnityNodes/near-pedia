@@ -14,7 +14,7 @@ import { fileURLToPath } from 'node:url';
  * the root. Falls back to cwd only where import.meta is unavailable, which is
  * the bundled server, and there the process manager sets WorkingDirectory.
  */
-const PACKAGE_NAME = 'yourpedia';
+const PACKAGE_NAME = 'nearpedia';
 
 let cached: string | null = null;
 

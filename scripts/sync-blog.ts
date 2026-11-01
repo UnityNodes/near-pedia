@@ -1,5 +1,5 @@
 /**
- * Sync the FULL YourChain blog (blog.yourchain.example, Ghost) via the CF bypass.
+ * Sync the FULL NEAR blog (blog.yourchain.example, Ghost) via the CF bypass.
  * sitemap-posts.xml lists every post; fetch each and extract title + content.
  * Run under xvfb:  xvfb-run -a npx tsx scripts/sync-blog.ts
  */
@@ -12,6 +12,7 @@ import { getDb } from '../lib/db';
 import { openCf } from '../lib/cf-fetch';
 import { isoNowSql } from '../lib/formats';
 import { htmlToTextWithCode } from '../lib/html-extract';
+import { SITE } from '../lib/site.config';
 
 const ORIGIN = 'https://blog.yourchain.example';
 
@@ -66,7 +67,7 @@ async function main() {
     const title = attr(root, 'meta[property="og:title"]', 'content') || root.querySelector('h1')?.text?.trim() || slug;
     const excerpt = attr(root, 'meta[property="og:description"]', 'content') || attr(root, 'meta[name="description"]', 'content') || '';
     const published = attr(root, 'meta[property="article:published_time"]', 'content');
-    const author = attr(root, 'meta[property="article:author"]', 'content') || attr(root, 'meta[name="author"]', 'content') || 'YourChain Labs';
+    const author = attr(root, 'meta[property="article:author"]', 'content') || attr(root, 'meta[name="author"]', 'content') || 'NEAR Labs';
     const body = root.querySelector('.gh-content') || root.querySelector('.post-content') || root.querySelector('.post-full-content') || root.querySelector('article');
     const contentHtml = body ? body.innerHTML : '';
     // node-html-parser's bare .text joins every text node with nothing in
@@ -99,7 +100,7 @@ async function main() {
       liveKeys: postUrls,
     },
     (spec) => prune(spec, db),
-    { userAgent: 'Mozilla/5.0 (compatible; YOURPEDIA/1.0)', delayMs: 400 },
+    { userAgent: `Mozilla/5.0 (compatible; ${SITE.name}/1.0)`, delayMs: 400 },
   );
   if (report.confirmed) console.log(`  confirmed ${report.confirmed} of ${report.candidates} candidate(s) gone upstream (404/410)`);
   if (pruned.refused) {

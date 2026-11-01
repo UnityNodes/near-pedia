@@ -8,7 +8,7 @@
  *
  * A staleness watchdog carried ~40 per-source freshness
  * thresholds keyed by SCRIPT name against a gauge labelled by sync_log
- * SOURCE name. Not one key ever matched. yourpedia hit this exact class
+ * SOURCE name. Not one key ever matched. nearpedia hit this exact class
  * live in scripts/check-sync-staleness.sh (fixed separately - see
  * lib/schedule.ts) before this check existed to catch it generically.
  *
@@ -23,7 +23,7 @@
  * map, the vocabulary from the code that produces the values being looked
  * up.
  *
- * PAIRS is empty today: yourpedia's lib/rank.ts is a slim idf-weighted
+ * PAIRS is empty today: nearpedia's lib/rank.ts is a slim idf-weighted
  * reordering pass with no PRIOR map, so no lookup/domain pair applies yet.
  * This is the mechanism, ready the moment a real lookup/domain pair is worth
  * declaring.

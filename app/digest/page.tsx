@@ -4,13 +4,14 @@ import { breadcrumbList, collectionPage } from '@/lib/jsonld';
 import { JsonLd } from '@/components/json-ld';
 import { PageShell, PgFoot, PgList, PgRow } from '@/components/page-shell';
 import { formatDateLong } from '@/lib/utils';
+import { SITE } from '@/lib/site.config';
 
 export const revalidate = 3600;
 
 export const metadata: Metadata = {
   title: 'Weekly Digest',
-  description: 'Weekly roundup of YourChain CIP activity, forum discussions, and news.',
-  alternates: { canonical: 'https://yourpedia.example/digest' },
+  description: 'Weekly roundup of NEAR CIP activity, forum discussions, and news.',
+  alternates: { canonical: `${SITE.url}/digest` },
 };
 
 interface DigestRow { week: string; payload: string; generated_at: string; }
@@ -36,8 +37,8 @@ export default function DigestIndexPage() {
   const total = countDigests();
   const schemas = [
     collectionPage({
-      name: 'YourChain Weekly Digest',
-      description: 'Weekly roundup of CIP activity, forum discussions, releases, and YourChain ecosystem news.',
+      name: 'NEAR Weekly Digest',
+      description: 'Weekly roundup of CIP activity, forum discussions, releases, and NEAR ecosystem news.',
       path: '/digest',
       itemCount: digests.length,
     }),

@@ -66,7 +66,7 @@ export function parseCipFrontmatter(content: string): Record<string, string> {
 }
 
 /**
- * YourChain CIPs carry their metadata as a leading markdown TABLE, not YAML or
+ * NEAR CIPs carry their metadata as a leading markdown TABLE, not YAML or
  * <pre>. Shared by sync-cips and backfill-cip-history so both read a status the
  * same way - a mismatch between them would invent phantom transitions.
  */

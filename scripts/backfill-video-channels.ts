@@ -2,7 +2,7 @@
  * backfill-video-channels.ts
  *
  * Fills youtube_videos.channel_name for rows that are missing it (the videos
- * imported by migrate-from-yourpedia.ts carried published_at but not the
+ * imported by migrate-from-nearpedia.ts carried published_at but not the
  * channel). Source of truth: YouTube oEmbed (`author_name`), public, no API key.
  * Idempotent + safe to re-run; only touches rows whose channel is empty.
  *

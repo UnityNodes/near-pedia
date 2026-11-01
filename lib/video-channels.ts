@@ -4,7 +4,7 @@ export interface VideoChannel {
 }
 
 export const VIDEO_CHANNELS: readonly VideoChannel[] = [
-  { id: 'UCLlvAEzXBFZ-P3zS6BF2Bjg', name: 'YourChain' },
+  { id: 'UCLlvAEzXBFZ-P3zS6BF2Bjg', name: 'NEAR' },
 ];
 
 export const VIDEO_CHANNEL_NAMES: readonly string[] = VIDEO_CHANNELS.map(c => c.name);

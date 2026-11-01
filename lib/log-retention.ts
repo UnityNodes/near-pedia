@@ -18,8 +18,8 @@
  * data itself.
  *
  * WHY DELETING IS NOT ENOUGH. /api/metrics publishes several of these as
- * Prometheus counters with no time bound - yourpedia_mcp_calls_total,
- * yourpedia_search_total, yourpedia_csp_violations_total. Deleting old rows would walk every one of
+ * Prometheus counters with no time bound - nearpedia_mcp_calls_total,
+ * nearpedia_search_total, nearpedia_csp_violations_total. Deleting old rows would walk every one of
  * them backwards, and Prometheus reads a `_total` that decreases as a process
  * restart: every rate() computed across the drop gets discarded, which looks
  * like lost traffic that never actually happened. So the aggregate is written

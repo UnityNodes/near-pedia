@@ -39,7 +39,7 @@ export function semverKey(v: string): number[] {
  * `modifier` is a SQLite date modifier, either a literal like `'-30 days'` or a
  * placeholder for a bound one. Omit it for "right now".
  *
- * Pre-existing on yourpedia (used by check-agent-errors.ts and
+ * Pre-existing on nearpedia (used by check-agent-errors.ts and
  * check-upstream-echo.ts); kept here rather than moved so this port does not
  * touch either caller's import.
  */

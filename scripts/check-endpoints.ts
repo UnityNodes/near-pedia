@@ -18,7 +18,7 @@
  * the run from reporting clean.
  *
  *   npx tsx scripts/check-endpoints.ts
- *   BASE_URL=http://127.0.0.1:3041 npx tsx scripts/check-endpoints.ts
+ *   BASE_URL=http://127.0.0.1:3131 npx tsx scripts/check-endpoints.ts
  */
 
 import fs from 'fs';
@@ -29,9 +29,9 @@ import { getDb } from '../lib/db';
 import { logRun, guardSync } from '../lib/sync-log';
 import { isEntrypoint } from '../lib/is-entrypoint';
 
-// The REST API is served by the MCP process on :3041, not the Next.js app
-// on :3040 - curl localhost:3040/api/v1/... 404s, that's not a bug.
-const BASE = process.env.BASE_URL ?? 'http://127.0.0.1:3041';
+// The REST API is served by the MCP process on :3131, not the Next.js app
+// on :3130 - curl localhost:3130/api/v1/... 404s, that's not a bug.
+const BASE = process.env.BASE_URL ?? 'http://127.0.0.1:3131';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 /**

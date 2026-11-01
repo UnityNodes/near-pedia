@@ -14,8 +14,8 @@ import { LEVEL_LABEL, LEVEL_TONE, RadarRow, SectionHead, type RadarLevel } from 
 export const revalidate = 300;
 
 export const metadata = pageMetadata({
-  title: 'YourChain Radar',
-  description: 'Critical deadlines, breaking changes, and ecosystem updates for YourChain node operators, application developers, and validators.',
+  title: 'NEAR Radar',
+  description: 'Critical deadlines, breaking changes, and ecosystem updates for NEAR node operators, application developers, and validators.',
   path: '/radar',
 });
 

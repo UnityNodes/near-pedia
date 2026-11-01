@@ -20,7 +20,7 @@
  * failure mode is not a wrong answer, it is silence.
  *
  *   npx tsx scripts/check-sources.ts
- *   BASE_URL=http://127.0.0.1:3041 npx tsx scripts/check-sources.ts
+ *   BASE_URL=http://127.0.0.1:3131 npx tsx scripts/check-sources.ts
  */
 
 import fs from 'node:fs';
@@ -31,7 +31,7 @@ import { logRun, guardSync } from '../lib/sync-log';
 import { isEntrypoint } from '../lib/is-entrypoint';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const BASE = process.env.BASE_URL ?? 'http://127.0.0.1:3041';
+const BASE = process.env.BASE_URL ?? 'http://127.0.0.1:3131';
 
 /** Below this a table is too small to change any published total materially. */
 const MIN_ROWS = 25;

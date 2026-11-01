@@ -1,5 +1,6 @@
 import { getDb } from '../lib/db';
 import { guardSync } from '../lib/sync-log';
+import { SITE } from '../lib/site.config';
 
 type Level = 'critical' | 'important' | 'ecosystem';
 
@@ -17,7 +18,7 @@ interface RadarCandidate {
 
 // ── Keyword sets ────────────────────────────────────────────────────────────
 
-// Forum category ids on forum.yourchain.example. The YourChain originals (56, 58) do
+// Forum category ids on forum.yourchain.example. The NEAR originals (56, 58) do
 // not exist here - both branches matched zero rows, so radar was running on
 // releases and CIP transitions alone with no forum signal at all.
 //   operational: where an upgrade, parameter change or deadline is announced
@@ -34,7 +35,7 @@ function extractDeadline(text: string): string | null {
   return m ? m[1].trim() : null;
 }
 
-// Audience tags for YourChain.
+// Audience tags for NEAR.
 function detectAffects(text: string): string[] {
   const t = text.toLowerCase();
   const out = new Set<string>();
@@ -129,7 +130,7 @@ function processCipChanges(db: ReturnType<typeof getDb>, since: string): RadarCa
       sourceId: `${r.cip_id}:${r.to_status}`,
       title,
       body: '',
-      url: `https://yourpedia.example/cips/${r.cip_id}`,
+      url: `${SITE.url}/cips/${r.cip_id}`,
       publishedAt: r.changed_at,
       level,
       affects: detectAffects(r.title ?? ''),

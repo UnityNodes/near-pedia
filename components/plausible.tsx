@@ -1,4 +1,5 @@
 import { headers } from 'next/headers';
+import { SITE } from '@/lib/site.config';
 
 /**
  * Privacy-friendly analytics tracker. Reads the per-request CSP nonce
@@ -15,7 +16,7 @@ export async function Plausible() {
     <>
       <script
         defer
-        data-domain="yourpedia.example"
+        data-domain={SITE.host}
         src="https://stats.example.com/js/script.file-downloads.hash.outbound-links.pageview-props.revenue.tagged-events.js"
         nonce={nonce}
       />

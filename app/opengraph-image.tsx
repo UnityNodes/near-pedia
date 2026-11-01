@@ -1,9 +1,10 @@
 import { ImageResponse } from 'next/og';
 import { readFile } from 'fs/promises';
 import path from 'path';
+import { SITE, SITE_TITLE } from '@/lib/site.config';
 
 export const runtime = 'nodejs';
-export const alt = 'YOURPEDIA | YourChain Knowledge Hub';
+export const alt = SITE_TITLE;
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
 
@@ -41,7 +42,7 @@ export default async function Image() {
                 letterSpacing: -2,
               }}
             >
-              YOURPEDIA
+              {SITE.name}
             </div>
             <div
               style={{
@@ -51,7 +52,7 @@ export default async function Image() {
                 marginTop: 16,
               }}
             >
-              YourChain Knowledge Hub
+              NEAR Knowledge Hub
             </div>
           </div>
         </div>
@@ -67,7 +68,7 @@ export default async function Image() {
             opacity: 0.85,
           }}
         >
-          Powered by Your Organization
+          Powered by {SITE.publisher.name}
         </div>
       </div>
     ),

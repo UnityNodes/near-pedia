@@ -5,8 +5,9 @@ import { getDb } from '../lib/db';
 import { guardSync } from '../lib/sync-log';
 import { marked } from 'marked';
 import { isEntrypoint } from '../lib/is-entrypoint';
+import { SITE } from '../lib/site.config';
 
-// YourChain ships its ENTIRE docs site as one cleaned-markdown file for LLM
+// NEAR ships its ENTIRE docs site as one cleaned-markdown file for LLM
 // ingestion. Each page is a block:
 //
 //   ---
@@ -131,10 +132,10 @@ function parsePages(text: string): DocPage[] {
 }
 
 async function syncDocs(): Promise<void> {
-  console.log('Syncing YourChain docs from', LLMS_URL);
+  console.log('Syncing NEAR docs from', LLMS_URL);
 
   const res = await fetch(LLMS_URL, {
-    headers: { 'User-Agent': 'YourPedia-Bot/1.0' },
+    headers: { 'User-Agent': `${SITE.name}-Bot/1.0` },
   });
   if (!res.ok) {
     throw new Error(`Failed to fetch ${LLMS_URL}: ${res.status} ${res.statusText}`);

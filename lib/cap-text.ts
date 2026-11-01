@@ -13,7 +13,9 @@
  * The sentence appended when a cap bites. Searched for by
  * scripts/check-corpus-text.ts, so it must stay one literal string.
  */
-export const TRUNCATION_MARKER = '[YOURPEDIA: text truncated at storage limit; the source document continues]';
+import { SITE } from './site.config';
+
+export const TRUNCATION_MARKER = `[${SITE.name}: text truncated at storage limit; the source document continues]`;
 
 /**
  * Cut `text` to at most `max` characters, marking the cut when it happens.

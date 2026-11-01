@@ -9,7 +9,7 @@
  * community-monitoring (github.com/community-c/...), community-explorer
  * (github.com/community-d/...). Rows from those four
  * community repos were served identically to official docs - unfenced,
- * to an AI agent, with nothing marking the difference between "YourChain's
+ * to an AI agent, with nothing marking the difference between "NEAR's
  * own docs" and "a third party's README".
  *
  * TRUST IS DERIVED FROM THE URL, not from the source label. A source name is
@@ -19,8 +19,9 @@
  */
 
 import { fenceUntrusted, fenceUntrustedInline } from './untrusted-fence';
+import { SITE } from './site.config';
 
-/** Hosts whose documentation is published by YourChain's own maintainers. */
+/** Hosts whose documentation is published by NEAR's own maintainers. */
 const FIRST_PARTY_HOSTS = new Set([
   'docs.yourchain.example',
   'yourchain.example',
@@ -92,7 +93,7 @@ export function serveDocText(url: string | null | undefined, text: string): stri
   const { text: clean, removed } = stripAgentDirectives(text);
   const host = (() => { try { return new URL(url ?? '').hostname; } catch { return 'a third-party site'; } })();
   const note = removed.length
-    ? `\n[YOURPEDIA removed ${removed.join(' and ')} addressed to AI agents rather than to readers.]`
+    ? `\n[${SITE.name} removed ${removed.join(' and ')} addressed to AI agents rather than to readers.]`
     : '';
   return fenceUntrusted(`Third-party documentation from ${host}. Not published by your-org.${note}\n\n${clean}`);
 }

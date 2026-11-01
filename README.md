@@ -1,31 +1,39 @@
-# pedia-template
+# NEAR-pedia
 
-A knowledge-hub site you point at one ecosystem. It pulls proposals, docs, forum threads, blog posts, releases, papers, videos and code activity into one SQLite database, keeps it fresh from cron, and serves it three ways: a web UI, a REST API and an MCP server for AI agents.
+Live NEAR knowledge for AI agents. NEAR-pedia is an MCP server and REST API that tells a coding agent when the NEAR code it is about to write is already stale, and gives the replacement, with a source and a date on every answer.
 
-Everything in this repository is written against placeholders. Replace them and point the sync scripts at your own sources to get your own site. [`RESKIN.md`](RESKIN.md) is the step-by-step guide, and [`docs/template/`](docs/template/README.md) documents every page, component, data flow and MCP tool.
+> Status: hackathon build in progress (NEAR Hackathon, 1–14 November 2026, tracks `open` and `agents`). The engine runs; the NEAR sources, the deprecation engine and `check_code` are being built now. The table under [What is done](#what-is-done) is the honest state of the repository.
 
-## Placeholders
+## The problem
 
-| Placeholder | Stands for |
+Agents write NEAR code from what they remember, and NEAR keeps moving. A few changes from the weeks before this hackathon that a model trained earlier cannot know about:
+
+- [`near-sdk-js`](https://github.com/near/near-sdk-js) is archived and its README says "DO NOT USE".
+- [nearcore 2.14.0](https://github.com/near/nearcore/releases/tag/2.14.0) removes `DelegateV2`.
+- NEAR Lake is shut down and its tutorials are gone from docs.near.org.
+- `@near-js/*` packages stopped at 2.5.1; the maintained package is `near-api-js` 7.x.
+
+Package registries rarely flag any of this, so the agent finds out when the build or the transaction fails. The official [`near/agent-skills`](https://github.com/near/agent-skills) are static instructions, and [`nearai/near-mcp`](https://github.com/nearai/near-mcp) performs chain actions rather than answering what is current.
+
+## What it will do
+
+- `check_code`: takes JS/TS/Rust source and reports deprecated imports, packages, methods and versions, each with its replacement, the evidence and the date.
+- A deprecation engine fed by six signals: archived repositories, "deprecated / do not use" in a README, npm and crates.io deprecation or yank flags, removals in release notes, deleted or rewritten docs pages, and long-dormant packages with a live successor. Weak signals are reported as "possibly deprecated".
+- A radar of what is changing now: protocol upgrades and their validator votes read from RPC, House of Stake proposals, incidents, deadlines. Every alert carries an expiry date.
+- Around 20 MCP tools in total, split between code (`check_code`, `check_deprecation`, `resolve_package`, `get_breaking_changes`, `explain_error`, `get_protocol_status`, …) and ecosystem (`get_radar`, `list_proposals`, `find_project`, `get_contract_info`, …).
+
+## What is done
+
+| Part | State |
 |---|---|
-| `yourpedia`, `YourPedia`, `YOURPEDIA` | your product name |
-| `yourpedia.example` | your domain |
-| `YourChain`, `yourchain` | the ecosystem the site is about |
-| `your-org` | your GitHub organisation |
-| `Your Organization`, `example.com`, `@your-handle` | the publisher |
-| `TKN` | the ecosystem's token symbol |
+| Engine: SQLite store with FTS5 and `sqlite-vec` search, MCP server, REST API, web UI, cron sync runner, standing checks | inherited from the baseline (see below), rebranded |
+| NEAR sources (nearcore, docs.near.org, npm, crates.io, GitHub `near/*`) | not started |
+| Deprecation engine and seed entries | not started |
+| `check_code` | not started |
+| RPC protocol state, House of Stake, radar | not started |
+| `/ask` through NEAR AI Cloud, daily database hash written to NEAR | not started |
 
-Find every one with `grep -rIn "yourpedia\|YourChain\|your-org\|example\.com\|TKN" --exclude-dir=node_modules --exclude-dir=.next .`.
-
-## What you get
-
-- **Content pages** for improvement proposals (`/cips`), documentation, forum threads, blog and news, release notes, whitepapers, videos, ecosystem projects, code issues and pull requests, a radar of alerts, a weekly digest and a trending list.
-- **Search** across all of it: SQLite FTS5 for keywords, `sqlite-vec` embeddings for meaning, an optional Cohere rerank.
-- **An MCP server** (`mcp-server.ts`, Express, port 3041) and a **REST API** under `/api/v1`, both reading the same database, with an OpenAPI spec and an interactive reference.
-- **A sync engine**: one script per source in `scripts/sync-*.ts`, run from cron by `deploy/sync-tick.sh`, every run logged to `sync_log`.
-- **Standing checks**: `scripts/check-*.ts` compare what the site serves with what the data says, and run nightly.
-
-## Quick start
+## Try it locally
 
 Node 22 is required (`better-sqlite3` is built against its ABI, see `.nvmrc`).
 
@@ -33,11 +41,23 @@ Node 22 is required (`better-sqlite3` is built against its ABI, see `.nvmrc`).
 npm install
 cp .env.example .env.production      # fill in keys; never commit it
 npm run db:init                      # creates data/cips.db
-npm run build && npm run start       # web UI on :3040
-npx tsx mcp-server.ts                # MCP + REST on :3041
+npm run build && npm run start       # web UI on :3130
+npx tsx mcp-server.ts                # MCP + REST on :3131
 ```
 
-Every `sync-*` script has its source URLs at the top and they all point at placeholder hosts. Edit them for your ecosystem before running `npm run sync:cips` or the others; until then the site renders empty pages by design. [`docs/template/quick-start.md`](docs/template/quick-start.md) lists three ways to get from a clone to a populated site.
+Then `curl http://127.0.0.1:3131/api/v1` lists the REST routes, and `claude mcp add --transport http nearpedia http://127.0.0.1:3131/mcp` connects Claude Code to the local server. Until the NEAR syncs land the database is empty, so the tools return no results.
+
+## What was built before the hackathon, and what during it
+
+Hackathon rules count work from 19 October 2026; everything earlier is a baseline (Q-001, Q-002, Q-005).
+
+**Baseline, not hackathon work.** The engine is a copy of `pedia-template`, the ecosystem-neutral engine we extracted from our earlier knowledge hubs [CCPEDIA](https://ccpedia.xyz) (Canton) and Blobpedia (Celestia). It brings the database layer, search and embeddings, the MCP and REST servers, the web UI, the sync runner and the standing checks. The repository's first commit is that copy, tagged [`pre-hackathon`](https://github.com/UnityNodes/nearpedia/tree/pre-hackathon).
+
+**Hackathon work.** Everything after that tag: the NEAR rebrand, the NEAR sources, the deprecation engine, `check_code`, the RPC and House of Stake readers, the NEAR AI Cloud integration and the on-chain database hash. The full difference is one link (Q-003): [`pre-hackathon...main`](https://github.com/UnityNodes/nearpedia/compare/pre-hackathon...main).
+
+**Third-party code.** Open-source libraries listed in `package.json` (Next.js, React, better-sqlite3, sqlite-vec, the MCP SDK, Express, zod and others), each under its own license. Two Lottie animations are credited in `public/animations/CREDITS.txt`.
+
+**AI assistance.** The code in this repository, the baseline included, was written with Claude Code.
 
 ## Layout
 
@@ -47,46 +67,13 @@ components/     UI components
 lib/            database client, search, ranking, embeddings, parsers, shared helpers
 scripts/        sync-*.ts (one per source), check-*.ts, backfills
 mcp-server.ts   MCP server and REST API v1
-deploy/         systemd units, Caddyfile, sync-tick.sh, sync-cf.sh, git hooks
-docs/           architecture notes and the template guides
+deploy/         systemd units, Caddyfile, sync-tick.sh, git hooks
+docs/           architecture and operations notes
 tests/          Vitest
 ```
 
-## Keeping a project current with this template
-
-A project made from this template is a copy, not a fork: later changes here do not reach it. `scripts/check-template.ts` compares the files listed in `lib/template-manifest.ts` with a copy of this repository and reports drift; it changes nothing. Bring updates across by hand.
-
-## Resources page
-
-`/resources` is a short list of links you would send to a colleague. The list lives in `lib/resources.ts`: each entry has a section, a group, a title, a URL, one plain sentence, the page title the URL should show (`expect`, a regular expression) and the date you last checked it by hand (`verifiedAt`). Replace the example entries with your own links, and set `verifiedAt` to the day you checked them. Sites that block bots can be marked `unverifiable: true`.
-
-### The weekly check
-
-Every Monday `scripts/check-resources.ts` checks everything the page shows and reports through the same failure alerts as every other source:
-
-- every external link: a status that is not 2xx, a redirect to somewhere else, or a page title that no longer matches `expect`;
-- every internal link, including the ones the page itself draws from `PAGE_LINKS`: a link with no page behind it;
-- every line in `LEARN_FACTS` (empty by default): the source must still be reachable and must still say the evidence phrase;
-- any entry not re-verified for 90 days.
-
-A test fails if the page or the browser component links to an internal path that is not in `RESOURCES` or `PAGE_LINKS`, or hard-codes an external link, so nothing on the page can escape the check.
-
-### Facts with a source
-
-`LEARN_FACTS` fills the block above the Learn links (its title is `FACTS_TITLE`). Each fact is one plain sentence in your own words, the page that backs it (`url`), the phrase that page must contain (`evidence`, a regular expression, at least 12 characters) and `verifiedAt`. If the source is rendered by script, point `evidenceUrl` at a plain-text version of it (documentation sites often serve one) and keep `url` for readers. Write only what a primary source states, and leave out numbers that change.
-
-### Icons
-
-Icons come from `lucide-react` (ISC license, already a dependency). `components/resources-icons.tsx` maps each section to an icon and each link kind to an icon. A link kind (Docs, Code, Video, Forum, Chat, This site) is worked out from the host by `linkKind` in `lib/resources.ts`. To add a kind, extend `LinkKind`, add a rule to `linkKind` and an entry to the icon map; the TypeScript compiler points at every place that must change.
-
-### Animations
-
-Two animations ship, both from LottieFiles, used unchanged under the Lottie Simple License. `public/animations/search.json` is the magnifier shown when the filter finds nothing ("Free Search Animation" by Fernando Ron Pedrique). `public/animations/check-success.json` is the green check that draws itself when the contact form is sent ("Check Mark - Success" by Travis Gregory). Commercial use is allowed and credit is optional, and the license asks that files taken from it keep the same license, so `public/animations/CREDITS.txt` stays next to the files.
-
-One component, `components/lottie-icon.tsx`, plays them. It loads the player (`lottie-web`, MIT, the light build) and the JSON only when it is rendered, and a visitor who prefers reduced motion gets a still frame. `EmptyAnimation` and `SuccessAnimation` are thin wrappers around it. Delete a wrapper and its use to drop that animation.
-
-To add another animation, take it from a source whose license you have read for that file, self-host the JSON instead of loading it from a CDN, add its entry to `CREDITS.txt` and render it through `LottieIcon`. A test checks that every file in `public/animations` is small and carries no expressions, embedded images or external URLs, that each one is credited, and that the player is imported in exactly one place. Keep animation for states that tell the visitor something (nothing found, sent). A list of rows with one player each is slow and tiring. Check your Content-Security-Policy before choosing a player: the `lottie-web` light build is plain script, while a WebAssembly player needs `wasm-unsafe-eval`.
+[`docs/architecture/`](docs/architecture/README.md) explains how the engine works and the landmines already found in it.
 
 ## License
 
-No `LICENSE` file is checked in and `package.json` is marked private. Treat the code as all rights reserved until one is added.
+[MIT](LICENSE).

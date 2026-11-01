@@ -25,7 +25,7 @@
  * broken and would have served an empty timeline for a real one; fixed in
  * lib/cips.ts alongside this check).
  *
- * yourpedia's citation surface (getCipForumMentions/getCipBlogMentions/
+ * nearpedia's citation surface (getCipForumMentions/getCipBlogMentions/
  * getCipProposalMentions/getCipOtherMentions) returns a capped sample of rows,
  * not an exhaustive count, so there is no served total to hold a count
  * oracle to.

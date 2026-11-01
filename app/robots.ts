@@ -1,4 +1,5 @@
 import type { MetadataRoute } from 'next';
+import { SITE } from '@/lib/site.config';
 
 // Paths to keep out of any crawler: operational endpoints that answer to
 // machines, not readers. The admin surface used to head this list and no
@@ -46,7 +47,7 @@ export default function robots(): MetadataRoute.Robots {
         disallow: [...PRIVATE_DISALLOW, ...AI_BOT_EXTRA_DISALLOW],
       })),
     ],
-    sitemap: 'https://yourpedia.example/sitemap.xml',
-    host: 'https://yourpedia.example',
+    sitemap: `${SITE.url}/sitemap.xml`,
+    host: SITE.url,
   };
 }

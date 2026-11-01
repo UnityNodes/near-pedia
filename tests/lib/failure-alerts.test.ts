@@ -10,7 +10,7 @@ import {
 import { isCallerMistake, isProviderFault, recentFailures, recordFailure } from '@/lib/failure-events';
 
 const NOW = Date.parse('2026-10-20T06:00:00.000Z');
-const URL = 'https://yourpedia.example/status';
+const URL = `${SITE.url}/status`;
 type Db = Database.Database;
 
 function migratedDb(): Db {

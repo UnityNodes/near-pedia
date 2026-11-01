@@ -26,7 +26,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   if (!wp) return {};
   const title = `${wp.title}`;
   const brandedTitle = `${title} | ${SITE.name}`;
-  const description = paperFacts(wp).description ?? `YourChain whitepaper: ${wp.title}.`;
+  const description = paperFacts(wp).description ?? `NEAR whitepaper: ${wp.title}.`;
   const url = `${SITE.url}/whitepapers/${slug}`;
   return {
     title,

@@ -1,5 +1,5 @@
 /**
- * Sync GitHub Discussions (developer Q&A) for the core YourChain repos into the
+ * Sync GitHub Discussions (developer Q&A) for the core NEAR repos into the
  * github_discussions table via the GraphQL API. Needs GITHUB_TOKEN.
  */
 import { config } from 'dotenv';
@@ -47,7 +47,7 @@ interface DiscussionPage { pageInfo?: { hasNextPage: boolean; endCursor: string 
 async function gql(owner: string, name: string, cursor: string | null): Promise<DiscussionPage | undefined> {
   const res = await fetch('https://api.github.com/graphql', {
     method: 'POST',
-    headers: { Authorization: `Bearer ${TOKEN}`, 'Content-Type': 'application/json', 'User-Agent': 'yourpedia-sync' },
+    headers: { Authorization: `Bearer ${TOKEN}`, 'Content-Type': 'application/json', 'User-Agent': 'nearpedia-sync' },
     body: JSON.stringify({ query: QUERY, variables: { owner, name, cursor } }),
   });
   const j = await res.json();

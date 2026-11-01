@@ -72,7 +72,7 @@ export function unifiedSearch(q: string, _limit = 50, dbOverride?: DbLike): Unif
   // Two separate bugs this guards against:
   //   ':'  -> FTS5 read "foo:bar" as a column filter on a non-existent column.
   //   '-'  -> FTS5 read "CIP-0001" as the NOT operator, so every hyphenated
-  //           YourChain term (CIP-0001, yourchain-node) threw and the catch
+  //           NEAR term (CIP-0001, yourchain-node) threw and the catch
   //           blocks below swallowed it: the whole FTS layer returned nothing.
   // Deleting would fuse the halves ("CIP0001"); a space keeps both tokens.
   const ftsQ = q.trim()
@@ -244,7 +244,7 @@ export function unifiedSearch(q: string, _limit = 50, dbOverride?: DbLike): Unif
         id: b.id,
         title: b.title,
         excerpt: snippet(b.content_text || b.excerpt, q),
-        // third-party news (e.g. an external YourChain news outlet) links to its external source, not
+        // third-party news (e.g. an external NEAR news outlet) links to its external source, not
         // an internal /blog page - we index it for search/RAG, we don't re-host.
         url: b.tags?.includes('third-party') ? b.url : getBlogInternalUrl(b.id, b.tags),
         meta: [b.author, b.published_at?.slice(0, 10)].filter(Boolean).join(' · '),

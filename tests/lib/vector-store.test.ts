@@ -89,7 +89,7 @@ describe('upsertChunk', () => {
 
   it('inserts a chunk without error', () => {
     expect(() =>
-      upsertChunk({ sourceType: 'cip', sourceId: '0001', chunkIndex: 0, chunkText: 'YourChain privacy CIP' })
+      upsertChunk({ sourceType: 'cip', sourceId: '0001', chunkIndex: 0, chunkText: 'NEAR privacy CIP' })
     ).not.toThrow();
   });
 

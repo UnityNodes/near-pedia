@@ -18,9 +18,9 @@ interface PreviewItem {
   url: string;
 }
 
-const SUGGESTIONS = ['getting started', 'governance', 'node setup', 'TKN', 'upgrade', 'ecosystem'];
+const SUGGESTIONS = ['getting started', 'governance', 'node setup', 'NEAR', 'upgrade', 'ecosystem'];
 
-const RECENT_KEY = 'yourpedia-recent-search';
+const RECENT_KEY = 'nearpedia-recent-search';
 const RECENT_MAX = 5;
 
 function loadRecent(): string[] {

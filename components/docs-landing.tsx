@@ -6,8 +6,8 @@ import { SITE_URL } from '@/lib/seo';
 
 const HERO_CARDS: { title: string; desc: string; doc?: string; href?: string; icon: LucideIcon; go: string }[] = [
   {
-    title: 'New to YourChain?',
-    desc: 'Overview of the YourChain network and its architecture.',
+    title: 'New to NEAR?',
+    desc: 'Overview of the NEAR network and its architecture.',
     doc: 'https://docs.example.com/overview',
     icon: Compass,
     go: 'Read the overview',
@@ -21,14 +21,14 @@ const HERO_CARDS: { title: string; desc: string; doc?: string; href?: string; ic
   },
   {
     title: 'Build an Application',
-    desc: 'Deploy your own contract or application on YourChain.',
+    desc: 'Deploy your own contract or application on NEAR.',
     doc: 'https://docs.example.com/build',
     icon: Code2,
     go: 'Start building',
   },
   {
     title: 'Read the Whitepaper',
-    desc: 'The foundational whitepaper describing YourChain architecture and vision.',
+    desc: 'The foundational whitepaper describing NEAR architecture and vision.',
     href: '/whitepapers/yourchain-whitepaper',
     icon: FileText,
     go: 'Read the whitepaper',

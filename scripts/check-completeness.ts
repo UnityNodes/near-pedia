@@ -63,8 +63,9 @@ import { LLMS_URL, HEADER_RE } from './sync-docs';
 import { REPOS as RELEASE_REPOS } from './sync-github-releases';
 import { SOURCES as ITEM_SOURCES } from './sync-github-items';
 import { REPOS as DISCUSSION_REPOS } from './sync-github-discussions';
+import { SITE } from '../lib/site.config';
 
-const UA = 'YourPedia-Bot/1.0 (+https://yourpedia.example)';
+const UA = `${SITE.name}-Bot/1.0 (+${SITE.url})`;
 const POLITE_MS = 800;
 
 interface Outcome {

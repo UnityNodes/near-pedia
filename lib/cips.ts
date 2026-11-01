@@ -414,7 +414,7 @@ export interface CipProposalMention {
 
 /**
  * GitHub PRs/issues that reference this CIP in their title or body -
- * yourpedia's "proposals" are your-org issues and PRs, not grant
+ * nearpedia's "proposals" are your-org issues and PRs, not grant
  * applications. Anchored - see getCipForumMentions above.
  */
 export function getCipProposalMentions(cipId: string): CipProposalMention[] {

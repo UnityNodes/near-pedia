@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# yourpedia - SQLite WAL-safe backup with retention, plus an off-box leg.
+# nearpedia - SQLite WAL-safe backup with retention, plus an off-box leg.
 #
 # Run from root cron once a day (docs/setup/CRON_SETUP.md); sync-tick does not call it. Uses sqlite3
 # `VACUUM INTO` so it copies a live DB in WAL mode from one snapshot without
@@ -17,10 +17,10 @@
 # the local backup: it logs its own error row and the script still exits 0.
 #
 # Env vars (optional):
-#   PEDIA_DB             — source DB       (default: /srv/yourpedia/data/cips.db)
-#   PEDIA_BACKUP_DIR     — local dir       (default: /var/backups/yourpedia)
+#   PEDIA_DB             — source DB       (default: /srv/nearpedia/data/cips.db)
+#   PEDIA_BACKUP_DIR     — local dir       (default: /var/backups/nearpedia)
 #   RETENTION_DAYS         — local keep days (default: 30)
-#   PEDIA_OFFBOX_REMOTE  — rclone target   (default: remote:yourpedia-backups)
+#   PEDIA_OFFBOX_REMOTE  — rclone target   (default: remote:nearpedia-backups)
 #   OFFBOX_RETENTION_DAYS  — remote keep days for the daily copies (default: 7)
 #   OFFBOX_WEEKLY_DAYS     — remote keep days for the Sunday copies in weekly/
 #                            (default: 29, i.e. four of them)
@@ -29,10 +29,10 @@
 
 set -uo pipefail
 
-DB="${PEDIA_DB:-/srv/yourpedia/data/cips.db}"
-DIR="${PEDIA_BACKUP_DIR:-/var/backups/yourpedia}"
+DB="${PEDIA_DB:-/srv/nearpedia/data/cips.db}"
+DIR="${PEDIA_BACKUP_DIR:-/var/backups/nearpedia}"
 RETAIN="${RETENTION_DAYS:-30}"
-REMOTE="${PEDIA_OFFBOX_REMOTE:-remote:yourpedia-backups}"
+REMOTE="${PEDIA_OFFBOX_REMOTE:-remote:nearpedia-backups}"
 OFFBOX_RETAIN="${OFFBOX_RETENTION_DAYS:-7}"
 OFFBOX_WEEKLY_RETAIN="${OFFBOX_WEEKLY_DAYS:-29}"
 export RCLONE_CONFIG="${RCLONE_CONFIG:-$HOME/.config/rclone/rclone.conf}"
@@ -87,7 +87,7 @@ fi
 # captures the post-ANALYZE sqlite_stat tables too.
 sqlite3 "$DB" "ANALYZE;" || echo "[$(date -Iseconds)] ANALYZE warning (continuing)"
 
-# Gzip to save space (a fresh yourpedia DB is ~200MB, compresses ~5x).
+# Gzip to save space (a fresh nearpedia DB is ~200MB, compresses ~5x).
 if ! gzip -f "$DEST"; then
   log_run backup-db error 0 "gzip failed for $DEST"
   exit 1
@@ -113,29 +113,29 @@ fi
 
 echo "[$(date -Iseconds)] off-box: $DEST.gz -> $REMOTE/"
 if rclone copyto "$DEST.gz" "$REMOTE/cips-$STAMP.db.gz" \
-     --timeout 10m --retries 3 --low-level-retries 10 2>/tmp/yourpedia-offbox-err.$$ \
+     --timeout 10m --retries 3 --low-level-retries 10 2>/tmp/nearpedia-offbox-err.$$ \
    && rclone check "$DIR" "$REMOTE" --include "cips-$STAMP.db.gz" --one-way --max-depth 1 \
-     --timeout 5m 2>>/tmp/yourpedia-offbox-err.$$; then
+     --timeout 5m 2>>/tmp/nearpedia-offbox-err.$$; then
   # Checksum verified against the remote (Drive holds md5; no download).
   # Sundays also keep a weekly copy (server-side copy, no re-upload).
   if [[ $(date +%u) == 7 ]]; then
     rclone copyto "$REMOTE/cips-$STAMP.db.gz" "$REMOTE/weekly/cips-$STAMP.db.gz" \
-      --timeout 10m 2>>/tmp/yourpedia-offbox-err.$$ \
+      --timeout 10m 2>>/tmp/nearpedia-offbox-err.$$ \
       || echo "[$(date -Iseconds)] off-box weekly copy FAILED (daily copy is fine)" >&2
   fi
   # --max-depth 1: include patterns match at any depth, so without it the
   # daily rule would also delete the weekly copies.
   rclone delete "$REMOTE" --min-age "${OFFBOX_RETAIN}d" --include 'cips-*.db.gz' --max-depth 1 \
-    --timeout 5m 2>>/tmp/yourpedia-offbox-err.$$ || true
+    --timeout 5m 2>>/tmp/nearpedia-offbox-err.$$ || true
   rclone delete "$REMOTE/weekly" --min-age "${OFFBOX_WEEKLY_RETAIN}d" --include 'cips-*.db.gz' \
-    --timeout 5m 2>>/tmp/yourpedia-offbox-err.$$ || true
+    --timeout 5m 2>>/tmp/nearpedia-offbox-err.$$ || true
   RCOUNT=$(rclone lsf "$REMOTE" --files-only --include 'cips-*.db.gz' 2>/dev/null | wc -l)
   WCOUNT=$(rclone lsf "$REMOTE/weekly" --files-only --include 'cips-*.db.gz' 2>/dev/null | wc -l)
   echo "[$(date -Iseconds)] off-box ok — checksum verified, $RCOUNT daily + $WCOUNT weekly remote copies"
   log_run backup-offbox success 1 ""
 else
-  ERR=$(tail -c 300 "/tmp/yourpedia-offbox-err.$$" 2>/dev/null | tr '\n' ' ')
+  ERR=$(tail -c 300 "/tmp/nearpedia-offbox-err.$$" 2>/dev/null | tr '\n' ' ')
   echo "[$(date -Iseconds)] off-box FAILED: $ERR" >&2
   log_run backup-offbox error 0 "rclone: ${ERR:-unknown error}"
 fi
-rm -f "/tmp/yourpedia-offbox-err.$$"
+rm -f "/tmp/nearpedia-offbox-err.$$"

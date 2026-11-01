@@ -13,7 +13,7 @@
  *      segment, a doubled scheme, whitespace, or the literal
  *      "undefined"/"null"/"NaN". An empty segment IS the class - it is what
  *      an absent id looks like after interpolation.
- *   2. reachable: every distinct yourpedia.example url is fetched and must not
+ *   2. reachable: every distinct nearpedia.example url is fetched and must not
  *      404. Bounded and de-duplicated; redirects are not followed, because
  *      a redirect to an index is exactly this failure mode and following it
  *      would hide it.
@@ -28,11 +28,12 @@ import { getDb } from '../lib/db';
 import { logRun } from '../lib/sync-log';
 import { buildSourceLink } from '../lib/source-urls';
 import { startScratchMcp } from '../lib/mcp-probe';
+import { SITE } from '../lib/site.config';
 
-const SITE_HOST = 'yourpedia.example';
+const SITE_HOST = SITE.host;
 /** Cap on network probes. De-duplicated first, so this is 40 distinct pages. */
 const MAX_FETCH = 40;
-const ORIGIN = process.env.YOURPEDIA_ORIGIN ?? 'http://127.0.0.1:3040';
+const ORIGIN = process.env.NEARPEDIA_ORIGIN ?? 'http://127.0.0.1:3130';
 
 interface Probe {
   tool: string;
@@ -49,7 +50,7 @@ const PROBES: Probe[] = [
   { tool: 'list_cips', args: { limit: 5 }, why: 'site-hosted detail pages' },
   { tool: 'list_ecosystem_projects', args: { limit: 5 }, why: 'third-party project urls' },
   { tool: 'list_github_discussions', args: { limit: 5 }, why: 'github_discussion urls' },
-  { tool: 'find_similar_projects', args: { description: 'an application built on YourChain' }, why: 'ecosystem urls via a different query path than list_ecosystem_projects' },
+  { tool: 'find_similar_projects', args: { description: 'an application built on NEAR' }, why: 'ecosystem urls via a different query path than list_ecosystem_projects' },
 ];
 
 const URL_RE = /https?:\/\/[^\s)\]<>"'`⟫]+/g;

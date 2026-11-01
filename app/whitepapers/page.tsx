@@ -11,7 +11,7 @@ export const revalidate = 300;
 
 export const metadata = pageMetadata({
   title: 'Whitepapers',
-  description: 'YourChain whitepapers and research papers, each as full text with a link to the original.',
+  description: 'NEAR whitepapers and research papers, each as full text with a link to the original.',
   path: '/whitepapers',
 });
 
@@ -25,7 +25,7 @@ export default function WhitepapersPage() {
     <PageShell
       href="/whitepapers"
       title="Whitepapers"
-      description="The whitepapers and research written about YourChain. Each opens here as full text and links to the original."
+      description="The whitepapers and research written about NEAR. Each opens here as full text and links to the original."
       stat={{ value: papers.length, unit: papers.length === 1 ? 'paper' : 'papers' }}
       synced={getLastSync('whitepapers')}
       source="whitepapers"

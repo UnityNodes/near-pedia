@@ -1,5 +1,7 @@
-export const MCP_URL = 'https://yourpedia.example/mcp';
-export const API_BASE_URL = 'https://yourpedia.example/api/v1';
+import { SITE } from '@/lib/site.config';
+
+export const MCP_URL = `${SITE.url}/mcp`;
+export const API_BASE_URL = `${SITE.url}/api/v1`;
 
 export interface ToolItem {
   name: string;
@@ -26,31 +28,31 @@ export interface RateLimit {
 }
 
 export const MCP_TOOLS_FALLBACK: ToolItem[] = [
-  { name: 'search', desc: 'Keyword/full-text search across the YourChain knowledge base' },
-  { name: 'semantic_search', desc: 'Meaning-based (vector + rerank) search across all YourChain sources, incl. YouTube transcripts' },
+  { name: 'search', desc: 'Keyword/full-text search across the NEAR knowledge base' },
+  { name: 'semantic_search', desc: 'Meaning-based (vector + rerank) search across all NEAR sources, incl. YouTube transcripts' },
   { name: 'get_cip', desc: 'Get the full text of a Chain Improvement Proposal by id' },
   { name: 'list_cips', desc: 'List CIPs with status/type filters' },
   { name: 'get_cip_history', desc: 'CIP status-change timeline' },
   { name: 'get_cip_attachments', desc: 'List file/PDF attachments for a CIP' },
   { name: 'get_cip_mentions', desc: 'Where a CIP is referenced: forum, blog, proposals, sibling CIPs' },
-  { name: 'get_discussion', desc: 'Get a YourChain forum thread with posts' },
-  { name: 'get_doc', desc: 'Get the full text of a YourChain documentation page by id' },
-  { name: 'get_whitepaper', desc: 'Get a YourChain whitepaper by slug' },
-  { name: 'list_whitepapers', desc: 'List indexed YourChain whitepapers' },
-  { name: 'get_trending', desc: 'Trending YourChain content this week' },
+  { name: 'get_discussion', desc: 'Get a NEAR forum thread with posts' },
+  { name: 'get_doc', desc: 'Get the full text of a NEAR documentation page by id' },
+  { name: 'get_whitepaper', desc: 'Get a NEAR whitepaper by slug' },
+  { name: 'list_whitepapers', desc: 'List indexed NEAR whitepapers' },
+  { name: 'get_trending', desc: 'Trending NEAR content this week' },
   { name: 'get_recent_changes', desc: 'Unified activity stream: CIP transitions, forum, blog, releases' },
-  { name: 'get_network_stats', desc: 'Counts of indexed YourChain content (catalog coverage)' },
-  { name: 'get_network_state', desc: 'LIVE YourChain on-chain state + TKN market (Explorer + CoinGecko): height, TKN supply, validators, data size, price' },
-  { name: 'list_ecosystem_projects', desc: 'YourChain ecosystem project catalog' },
-  { name: 'list_repos', desc: 'List GitHub repositories indexed for YourChain' },
-  { name: 'list_github_discussions', desc: 'List GitHub Discussions from YourChain repos (your-org/docs Q&A, Ideas)' },
+  { name: 'get_network_stats', desc: 'Counts of indexed NEAR content (catalog coverage)' },
+  { name: 'get_network_state', desc: 'LIVE NEAR on-chain state + NEAR market (Explorer + CoinGecko): height, NEAR supply, validators, data size, price' },
+  { name: 'list_ecosystem_projects', desc: 'NEAR ecosystem project catalog' },
+  { name: 'list_repos', desc: 'List GitHub repositories indexed for NEAR' },
+  { name: 'list_github_discussions', desc: 'List GitHub Discussions from NEAR repos (your-org/docs Q&A, Ideas)' },
   { name: 'get_github_discussion', desc: 'Get a GitHub Discussion with body and comments' },
-  { name: 'get_video', desc: 'Get a cached YourChain YouTube video (metadata + transcript)' },
-  { name: 'list_videos', desc: 'Browse cached YourChain YouTube videos by channel / date / transcript' },
+  { name: 'get_video', desc: 'Get a cached NEAR YouTube video (metadata + transcript)' },
+  { name: 'list_videos', desc: 'Browse cached NEAR YouTube videos by channel / date / transcript' },
   { name: 'list_blog_posts', desc: 'List blog posts, news and press releases, or search them, one tab at a time' },
   { name: 'get_blog_post', desc: 'Read one blog post; reprints and partner press come as an excerpt with a link' },
-  { name: 'get_foundation_info', desc: 'YourChain Foundation + Labs leadership and team: names, roles, background' },
-  { name: 'get_started_guide', desc: 'Personalized onboarding to build on YourChain (rollup_dev, node_operator, app_dev, researcher, new_to_yourchain)' },
+  { name: 'get_foundation_info', desc: 'NEAR Foundation + Labs leadership and team: names, roles, background' },
+  { name: 'get_started_guide', desc: 'Personalized onboarding to build on NEAR (rollup_dev, node_operator, app_dev, researcher, new_to_yourchain)' },
 ];
 
 export const IDE_CONFIGS: ClientConfig[] = [
@@ -61,7 +63,7 @@ export const IDE_CONFIGS: ClientConfig[] = [
     lang: 'json',
     code: `{
   "mcpServers": {
-    "yourpedia": {
+    "nearpedia": {
       "command": "npx",
       "args": ["-y", "mcp-remote", "${MCP_URL}"]
     }
@@ -83,7 +85,7 @@ Available on Free, Pro, Max, Team and Enterprise plans. Free is limited to one c
     name: 'Claude Code CLI',
     path: 'one-liner',
     lang: 'shell',
-    code: `claude mcp add --transport http --scope user yourpedia ${MCP_URL}`,
+    code: `claude mcp add --transport http --scope user nearpedia ${MCP_URL}`,
     note: 'Drop --scope user for the default (local, current project only), or use --scope project to share via .mcp.json.',
   },
   {
@@ -93,7 +95,7 @@ Available on Free, Pro, Max, Team and Enterprise plans. Free is limited to one c
     lang: 'json',
     code: `{
   "mcpServers": {
-    "yourpedia": {
+    "nearpedia": {
       "url": "${MCP_URL}"
     }
   }
@@ -106,7 +108,7 @@ Available on Free, Pro, Max, Team and Enterprise plans. Free is limited to one c
     lang: 'json',
     code: `{
   "mcpServers": {
-    "yourpedia": {
+    "nearpedia": {
       "serverUrl": "${MCP_URL}"
     }
   }
@@ -120,7 +122,7 @@ Available on Free, Pro, Max, Team and Enterprise plans. Free is limited to one c
     lang: 'json',
     code: `{
   "servers": {
-    "yourpedia": {
+    "nearpedia": {
       "type": "http",
       "url": "${MCP_URL}"
     }
@@ -134,7 +136,7 @@ Available on Free, Pro, Max, Team and Enterprise plans. Free is limited to one c
     lang: 'json',
     code: `{
   "mcpServers": {
-    "yourpedia": {
+    "nearpedia": {
       "type": "streamableHttp",
       "url": "${MCP_URL}",
       "disabled": false,
@@ -147,13 +149,13 @@ Available on Free, Pro, Max, Team and Enterprise plans. Free is limited to one c
   {
     tab: 'Continue',
     name: 'Continue.dev',
-    path: '.continue/mcpServers/yourpedia.yaml (agent mode)',
+    path: '.continue/mcpServers/nearpedia.yaml (agent mode)',
     lang: 'yaml',
-    code: `name: YOURPEDIA
+    code: `name: ${SITE.name}
 version: 0.0.1
 schema: v1
 mcpServers:
-  - name: YOURPEDIA
+  - name: ${SITE.name}
     type: streamable-http
     url: ${MCP_URL}`,
   },
@@ -164,7 +166,7 @@ mcpServers:
     lang: 'json',
     code: `{
   "context_servers": {
-    "yourpedia": {
+    "nearpedia": {
       "url": "${MCP_URL}"
     }
   }

@@ -36,7 +36,7 @@ import { logRun } from '../lib/sync-log';
 import { isEntrypoint } from '../lib/is-entrypoint';
 import { latestStableByLine, type ReleaseRow } from '../lib/yourchain-versions';
 
-const BASE = process.env.MCP_URL ?? 'http://127.0.0.1:3041/mcp';
+const BASE = process.env.MCP_URL ?? 'http://127.0.0.1:3131/mcp';
 
 async function callTool(name: string, args: Record<string, unknown>): Promise<string | null> {
   try {

@@ -19,7 +19,7 @@
  *
  * NOT COVERED: the ADVERTISED half (a tool printing a stored counter above
  * rows it renders, rather than deriving the count from what it actually
- * shows). yourpedia's get_discussion already prints its reply count
+ * shows). nearpedia's get_discussion already prints its reply count
  * DERIVED from held rows (see mcp-server.ts's own comment on heldReplies),
  * and the one remaining raw-counter print (Posts: ${topic.posts_count}) is
  * genuinely different in shape: it is informational metadata alongside a

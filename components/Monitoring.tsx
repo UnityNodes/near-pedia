@@ -5,13 +5,14 @@
  * NEXT_PUBLIC_PLAUSIBLE_DOMAIN and falls back to the site domain.
  */
 import { headers } from 'next/headers';
+import { SITE } from '@/lib/site.config';
 
 interface Props {
   domain?: string;
 }
 
 export async function Monitoring({ domain }: Props) {
-  const d = domain ?? process.env.NEXT_PUBLIC_PLAUSIBLE_DOMAIN ?? 'yourpedia.example';
+  const d = domain ?? process.env.NEXT_PUBLIC_PLAUSIBLE_DOMAIN ?? SITE.host;
   if (process.env.NODE_ENV !== 'production') return null;
 
   const nonce = (await headers()).get('x-csp-nonce') ?? undefined;

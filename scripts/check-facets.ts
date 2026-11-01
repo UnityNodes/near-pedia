@@ -31,7 +31,7 @@
  *
  * Not covered: a case-sensitive filter next to a case-insensitive "no match"
  * explanation, so a held value in another case returns an empty answer with
- * no reason. No yourpedia tool was found with that shape: list_ecosystem_projects' category filter has no separate
+ * no reason. No nearpedia tool was found with that shape: list_ecosystem_projects' category filter has no separate
  * case-insensitive explanation to disagree with its case-sensitive `=`.
  *
  *   npx tsx scripts/check-facets.ts
@@ -97,7 +97,7 @@ const FACETS: Facet[] = [
     held: col('SELECT DISTINCT status FROM cips ORDER BY 1'),
     // The enum is derived from lib/status.ts's STATUS_COLORS keys, which
     // names every status the CIP process defines (including Ethereum/Bitcoin-
-    // style terminal states no YourChain CIP has reached yet) so the palette
+    // style terminal states no NEAR CIP has reached yet) so the palette
     // has a color ready the day one does. An offered value with 0 current
     // rows is that palette working as intended, not a stale enum entry.
     offeredWithoutRows: {

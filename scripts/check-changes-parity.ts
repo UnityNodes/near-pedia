@@ -2,7 +2,7 @@
  * The recent-activity feed is served two ways and must be the SAME feed: the
  * same kinds of event, each event once, in the same time order.
  *
- * Investigation found this bug in yourpedia: three
+ * Investigation found this bug in nearpedia: three
  * real CIPs (0050, 0051, 0052) were double-counted in /api/v1/changes' merged
  * stream within a 90-day window (once as cip_status_change "(new) -> Draft",
  * once as new_cip), and get_recent_changes (the MCP tool) was worse - no

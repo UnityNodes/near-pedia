@@ -18,6 +18,7 @@ import { AsideCard, KeyValues, LinkCards, MetaLine, ReaderHead, ReaderPage, RelC
 import { CipTldr } from './cip-tldr';
 import { CipStatusTimeline } from './cip-status-timeline';
 import { CipAttachmentsList } from './cip-attachments-list';
+import { SITE } from '@/lib/site.config';
 
 export async function CipDetail({
   cip,
@@ -54,7 +55,7 @@ export async function CipDetail({
   // against the directory the file actually lives in - cips/, not repo root.
   // Missing that segment 404'd every relative image/link on those 25 pages.
   const githubBase = `https://github.com/your-org/CIPs/blob/main/cips`;
-  const feedUrl = `https://yourpedia.example/api/feed/cip/${cip.id}`;
+  const feedUrl = `${SITE.url}/api/feed/cip/${cip.id}`;
 
   const padded = String(cip.cip_number ?? cip.id).padStart(4, '0');
   const mentionCount = blogMentions.length + proposalMentions.length + otherCipMentions.length;

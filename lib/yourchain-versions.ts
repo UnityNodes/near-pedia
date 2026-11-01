@@ -1,5 +1,5 @@
 /**
- * Picking "the latest stable release" of a YourChain SDK repo, in one place.
+ * Picking "the latest stable release" of a NEAR SDK repo, in one place.
  *
  * This app has one family of repos (yourchain-app/-node/-core/-openrpc,
  * your-org/yoursdk), all served through one tool (get_latest_release).

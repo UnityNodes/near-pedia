@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
-cd /srv/yourpedia
+cd /srv/nearpedia
 # Load env, but only KEY=VALUE pairs (skip blank lines + comments)
 while IFS='=' read -r key val; do
   [[ -z "$key" || "$key" =~ ^# ]] && continue

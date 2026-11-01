@@ -31,7 +31,7 @@ CIP_TITLES.forEach((title, i) => {
   const n = i + 1;
   const id = String(n).padStart(4, '0');
   const status = STATUSES[i];
-  const body = `# ${title}\n\n## Abstract\n\nThis demo proposal describes ${title.toLowerCase()} for YourChain. It exists only to fill a fresh copy of the site.\n\n## Motivation\n\nOperators and application developers need one agreed way to handle this.\n\n## Specification\n\n1. The first rule.\n2. The second rule.\n\n\`\`\`json\n{ "version": ${n}, "name": "${title}" }\n\`\`\`\n`;
+  const body = `# ${title}\n\n## Abstract\n\nThis demo proposal describes ${title.toLowerCase()} for NEAR. It exists only to fill a fresh copy of the site.\n\n## Motivation\n\nOperators and application developers need one agreed way to handle this.\n\n## Specification\n\n1. The first rule.\n2. The second rule.\n\n\`\`\`json\n{ "version": ${n}, "name": "${title}" }\n\`\`\`\n`;
   insertCip.run(id, n, title, 'Demo Author', status, i % 3 === 0 ? 'Standards Track' : 'Informational', iso(200 - i * 14), status === 'Final' ? iso(100 - i * 5) : null, 'CC0-1.0', null, body, iso(0.2));
   insertHistory.run(id, null, 'Draft', iso(200 - i * 14));
   if (status !== 'Draft') insertHistory.run(id, 'Draft', status, iso(120 - i * 6));
@@ -72,7 +72,7 @@ for (let i = 0; i < 12; i++) {
 
 const insertRel = db.prepare('INSERT OR REPLACE INTO github_releases (id, repo, tag, name, body, published_at, url, synced_at, prerelease) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)');
 ['v1.4.0', 'v1.3.2', 'v1.3.1', 'v1.3.0', 'v1.2.0', 'v1.2.0-rc1'].forEach((tag, i) => {
-  insertRel.run(`rel${i}`, 'your-org/yourchain-node', tag, `YourChain Node ${tag}`, '## Changes\n\n- Demo change one\n- Demo change two\n', iso(4 + i * 12), `https://github.com/your-org/yourchain-node/releases/tag/${tag}`, iso(0.1), tag.includes('rc') ? 1 : 0);
+  insertRel.run(`rel${i}`, 'your-org/yourchain-node', tag, `NEAR Node ${tag}`, '## Changes\n\n- Demo change one\n- Demo change two\n', iso(4 + i * 12), `https://github.com/your-org/yourchain-node/releases/tag/${tag}`, iso(0.1), tag.includes('rc') ? 1 : 0);
 });
 
 const insertDisc = db.prepare(`INSERT OR REPLACE INTO github_discussions (id, repo, db_id, number, title, body, category, author, created_at, updated_at, url, upvotes, comments_count, comments_json, answered, synced_at)

@@ -26,7 +26,7 @@
 import { getDb } from '../lib/db';
 import { logRun } from '../lib/sync-log';
 
-const BASE = process.env.MCP_URL ?? 'http://127.0.0.1:3041/mcp';
+const BASE = process.env.MCP_URL ?? 'http://127.0.0.1:3131/mcp';
 
 interface Probe {
   tool: string;
