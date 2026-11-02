@@ -32,6 +32,7 @@ const TONE: Record<string, Tone> = {
 function standing(p: ProposalRow): string {
   if (p.voters_total === 0) return 'No votes cast';
   const decided = (BigInt(p.votes_for) + BigInt(p.votes_against)).toString();
+  if (decided === '0') return `Abstain only · ${veNear(p.votes_total)} veNEAR from ${p.voters_total} voters`;
   const quorum = p.quorum_met === null ? '' : p.quorum_met ? ', quorum met' : ', quorum not met';
   return `${percent(p.votes_for, decided)} For · ${veNear(p.votes_total)} veNEAR from ${p.voters_total} voters${quorum}`;
 }

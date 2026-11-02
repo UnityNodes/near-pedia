@@ -159,6 +159,8 @@ describe('governance and protocol in the /ask context', () => {
   it('brings in the latest proposals for a governance question without a number, and none for an unrelated one', () => {
     expect(proposalSources(db(), 'What is House of Stake voting on?').map((p) => p.id)).toEqual([29, 27]);
     expect(proposalSources(db(), 'How do I deploy a contract?')).toEqual([]);
+    expect(proposalSources(db(), 'How does the validators\' upgrade vote work?')).toEqual([]);
+    expect(proposalSources(db(), 'How do I write a NEP proposal?')).toEqual([]);
   });
 
   it('adds passages from the meaning index as fenced, numbered sources', () => {

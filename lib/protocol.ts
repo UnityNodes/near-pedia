@@ -18,6 +18,7 @@
 
 import type Database from 'better-sqlite3';
 import { compareVersions } from './release-version';
+import { fenceUntrustedInline } from './untrusted-fence';
 
 export interface VotingStep {
   version: number;
@@ -326,14 +327,14 @@ export function protocolReport(db: Database.Database, networks: readonly string[
   return { networks: out, schedule };
 }
 
-/** The report as text for an agent. Everything in it is our own reading of RPC and release notes. */
+/** The report as text for an agent: our own reading of RPC and release notes, with the two strings taken verbatim from them (the node's version and the release notes' voting sentence) fenced as upstream text. */
 export function renderProtocol(r: ProtocolReport, now: Date): string {
   if (r.networks.length === 0) return 'No protocol snapshot on this server yet: the protocol sync has not run.';
   const blocks = r.networks.map((n) => {
     const s = n.snapshot;
     const lines = [
       `## ${s.network} — protocol ${s.protocol_version}${s.latest_protocol_version > s.protocol_version ? ` (its nodes support up to ${s.latest_protocol_version})` : ''}`,
-      `nearcore ${s.node_version ?? '?'} at ${s.endpoint}, block ${s.block_height} (${s.block_time.slice(0, 19)} UTC), observed ${s.observed_at.slice(0, 16)} UTC${n.age_s > STALE_SNAPSHOT_S ? ` — STALE: ${duration(n.age_s * 1000)} old, the sync has not refreshed it` : ''}.`,
+      `nearcore ${s.node_version ? fenceUntrustedInline(s.node_version) : '?'} at ${s.endpoint}, block ${s.block_height} (${s.block_time.slice(0, 19)} UTC), observed ${s.observed_at.slice(0, 16)} UTC${n.age_s > STALE_SNAPSHOT_S ? ` — STALE: ${duration(n.age_s * 1000)} old, the sync has not refreshed it` : ''}.`,
     ];
     if (n.epoch_progress !== null && n.seconds_left !== null) {
       lines.push(`Epoch ${s.epoch_height ?? '?'}: about ${pct(n.epoch_progress)} through now, roughly ${duration(n.seconds_left * 1000)} left at ${n.block_rate.toFixed(2)} blocks a second.`);
@@ -360,6 +361,6 @@ export function renderProtocol(r: ProtocolReport, now: Date): string {
     if (n.waiting.length) lines.push(`Waiting on these upgrades: ${n.waiting.map((w) => `${w.title} (protocol ${w.effective_protocol}; check_deprecation("${w.id}"))`).join('; ')}.`);
     return lines.join('\n');
   });
-  const src = r.schedule ? `Mainnet schedule from nearcore ${r.schedule.release} release notes (${r.schedule.release_url})${r.schedule.after_vote ? `: "${r.schedule.after_vote}"` : '.'}` : 'No upgrade schedule found in the synced nearcore release notes.';
+  const src = r.schedule ? `Mainnet schedule from nearcore ${r.schedule.release} release notes (${r.schedule.release_url})${r.schedule.after_vote ? `: ${fenceUntrustedInline(r.schedule.after_vote)}` : '.'}` : 'No upgrade schedule found in the synced nearcore release notes.';
   return [...blocks, src].join('\n\n');
 }
