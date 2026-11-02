@@ -12,41 +12,24 @@
  * copy of the same URL measures the difference between two guesses at what
  * upstream is, not between us and upstream.
  *
- * SCOPE, deliberately smaller than it could be. Four sources have a clean,
- * cheap, unambiguous public total this script can fetch in one or two
- * requests: cips (a git tree), ecosystem_projects (a single data file, same
- * one sync-ecosystem.ts evaluates), doc_pages/docs (the same llms-full.txt
- * sync-docs.ts parses) and github_releases (the GitHub API, same repo list
- * sync-github-releases.ts uses). Left out, and why:
+ * SCOPE. Covered: ecosystem_projects (the same data file sync-ecosystem.ts
+ * evaluates), doc_pages/docs (the same llms-full.txt sync-docs.ts parses),
+ * github_releases (the same repo list sync-github-releases.ts uses),
+ * github_items (SOURCES from sync-github-items.ts, the Search API's
+ * total_count for open issues plus open pull requests, the scope the sync
+ * stores) and github_discussions (REPOS from sync-github-discussions.ts,
+ * GraphQL's discussions.totalCount per repo). Left out, and why:
  *
- *   forum_topics / blog_posts   forum.yourchain.example and blog.yourchain.example sit
- *                               behind Cloudflare (see deploy/sync-cf.sh) -
- *                               a plain fetch here would need the same xvfb
- *                               browser session sync-forum.ts/sync-blog.ts
- *                               use, which is a lot of machinery for a daily
- *                               count check. Left for a follow-up.
- *   whitepapers / foundation_kb curated from a fixed author/topic query and
- *                               a hand-shaped about-page JSON respectively -
- *                               neither upstream publishes a "total" that
- *                               means the same thing as our row count.
+ *   forum_topics                Discourse publishes no total for a
+ *                               category listing that counts what the
+ *                               spam filter and the subcategory choice in
+ *                               lib/gov-forum.ts leave.
+ *   blog_posts / site docs      the sitemap the sync reads is itself the
+ *                               total, so counting it again here would only
+ *                               prove the sync agrees with itself.
  *   youtube_videos              would mean re-scraping YouTube's innertube
  *                               endpoint, the same fragile surface already
- *                               flagged as a scheduling risk elsewhere;
- *                               doubling up on it here trades one fragile
- *                               path for two.
- *
- * github_items and github_discussions ARE covered (added after the pass
- * above first shipped): both have a real public counter GitHub answers in
- * one request, so the "next addition" the first version of this comment
- * flagged. github_items reads SOURCES from sync-github-items.ts (only
- * state='open' repos are synced, so the comparison is scoped the same way -
- * a repo left at state='all' would need the search query to drop `is:open`,
- * handled below rather than assumed) and asks the Search API's `total_count`
- * for `repo:X is:open`, which - like the sync's own raw /issues endpoint -
- * counts issues and PRs together, not GitHub's search UI default of issues
- * only. github_discussions reads REPOS from sync-github-discussions.ts and
- * asks GraphQL's `discussions.totalCount` per repo, one query each, not the
- * paginated walk the sync itself does.
+ *                               flagged as a scheduling risk elsewhere.
  *
  * A check that cannot reach its upstream reports `unknown`, not `ok`. An
  * unreachable counter is the same class of silence this script exists to end.
@@ -57,7 +40,6 @@
 import { getDb } from '../lib/db';
 import { logRun, guardSync } from '../lib/sync-log';
 import { isEntrypoint } from '../lib/is-entrypoint';
-import { TREE_URL, CIP_FILE_RE, CIP_TEMPLATE_RE } from './sync-cips';
 import { SRC as ECOSYSTEM_SRC } from './sync-ecosystem';
 import { LLMS_URL, HEADER_RE } from './sync-docs';
 import { REPOS as RELEASE_REPOS } from './sync-github-releases';
@@ -67,6 +49,8 @@ import { SITE } from '../lib/site.config';
 
 const UA = `${SITE.name}-Bot/1.0 (+${SITE.url})`;
 const POLITE_MS = 800;
+/** The Search API allows 30 authenticated requests a minute. */
+const SEARCH_PACE_MS = 2_100;
 
 interface Outcome {
   name: string;
@@ -104,21 +88,6 @@ function judge(name: string, ours: number, upstream: number | null): Outcome {
   if (ours < 0) return { name, ours, upstream, verdict: 'unknown', note: 'local query failed, column or table missing' };
   if (upstream === null) return { name, ours, upstream, verdict: 'unknown', note: 'upstream counter unreachable' };
   return { name, ours, upstream, verdict: upstream === ours ? 'ok' : upstream > ours ? 'missing' : 'surplus' };
-}
-
-async function checkCips(): Promise<Outcome> {
-  const ours = count("SELECT COUNT(*) n FROM cips WHERE id NOT LIKE 'PR-%'");
-  const token = process.env.GITHUB_TOKEN;
-  const raw = await get(TREE_URL, token ? { Authorization: `Bearer ${token}` } : {});
-  if (!raw) return judge('cips', ours, null);
-  try {
-    const j = JSON.parse(raw) as { truncated?: boolean; tree?: { path?: string }[] };
-    if (j.truncated) return judge('cips', ours, null); // a truncated tree is not a count
-    const files = (j.tree ?? []).filter(e => e.path && CIP_FILE_RE.test(e.path) && !CIP_TEMPLATE_RE.test(e.path));
-    return judge('cips', ours, files.length);
-  } catch {
-    return judge('cips', ours, null);
-  }
 }
 
 async function checkEcosystem(): Promise<Outcome> {
@@ -197,16 +166,21 @@ async function checkGithubItems(): Promise<Outcome[]> {
           : `SELECT COUNT(*) n FROM github_items WHERE repo='${full}'`,
       );
       const q = source.state === 'open' ? `repo:${full} is:open` : `repo:${full}`;
-      // Search API's total_count, one request - not the sync's own paginated
-      // walk repeated here, which would only prove the walk agrees with
-      // itself.
-      const raw = await get(`https://api.github.com/search/issues?q=${encodeURIComponent(q)}&per_page=1`, headers);
-      let upstream: number | null = null;
-      if (raw) {
-        try { upstream = (JSON.parse(raw) as { total_count?: number }).total_count ?? null; } catch { /* leave null */ }
+      // Search API's total_count - not the sync's own paginated walk repeated
+      // here, which would only prove the walk agrees with itself. Since 2025
+      // the endpoint answers 422 unless the query names is:issue or
+      // is:pull-request, so the two are asked apart and summed.
+      let upstream: number | null = 0;
+      for (const kind of ['is:issue', 'is:pull-request']) {
+        const raw = await get(`https://api.github.com/search/issues?q=${encodeURIComponent(`${q} ${kind}`)}&per_page=1`, headers);
+        let n: number | null = null;
+        if (raw) {
+          try { n = (JSON.parse(raw) as { total_count?: number }).total_count ?? null; } catch { /* leave null */ }
+        }
+        upstream = n === null || upstream === null ? null : upstream + n;
+        await sleep(SEARCH_PACE_MS);
       }
       out.push(judge(`github_items/${full}`, ours, upstream));
-      await sleep(POLITE_MS);
     }
   }
   return out;
@@ -246,8 +220,6 @@ async function checkGithubDiscussions(): Promise<Outcome[]> {
 
 async function main(): Promise<void> {
   const results: Outcome[] = [];
-  results.push(await checkCips());
-  await sleep(POLITE_MS);
   results.push(await checkEcosystem());
   await sleep(POLITE_MS);
   results.push(await checkDocs());

@@ -46,12 +46,35 @@ export function escLike(s: string): string {
 const STOPWORDS = new Set([
   'the', 'a', 'an', 'and', 'or', 'of', 'to', 'in', 'on', 'for', 'is', 'are', 'be',
   'do', 'does', 'how', 'what', 'why', 'when', 'where', 'i', 'we', 'you', 'it',
-  'my', 'me', 'can', 'with', 'from', 'by', 'at', 'as', 'that', 'this',
+  'my', 'me', 'can', 'with', 'from', 'by', 'at', 'as', 'that', 'this', 'not',
 ]);
 
 /** Tokens worth putting in a LIKE conjunct: discriminative enough to narrow. */
 export function likeTokens(tokens: string[]): string[] {
   return tokens.filter(t => t.length >= 3 && !STOPWORDS.has(t));
+}
+
+const words = (text: string | null | undefined): string[] => [...new Set((text ?? '').toLowerCase().match(/[a-z0-9]+/g) ?? [])];
+
+/** A needle of 4+ letters also matches the words it begins ("wallet" in "wallets"); a shorter one only itself. */
+const PREFIX_MIN = 4;
+const holds = (held: string[], needle: string): boolean =>
+  held.some(w => w === needle || (needle.length >= PREFIX_MIN && w.startsWith(needle)));
+
+/** Whether a row's text holds, as words, at least half of a query's discriminative tokens. */
+export function coversHalf(tokens: string[], text: string): boolean {
+  const needles = likeTokens(tokens.map(t => t.toLowerCase()));
+  if (!needles.length) return true;
+  const held = words(text);
+  return needles.filter(t => holds(held, t)).length >= Math.ceil(needles.length / 2);
+}
+
+/** Whether a title holds a discriminative query token other than the network's own name, which nearly every title carries. */
+export function titleNamesTopic(tokens: string[], title: string | null, subject: string): boolean {
+  const needles = likeTokens(tokens.map(t => t.toLowerCase())).filter(t => t !== subject.toLowerCase());
+  if (!needles.length) return true;
+  const held = words(title);
+  return needles.some(t => holds(held, t));
 }
 
 export function tokenize(s: string | null | undefined): string[] {

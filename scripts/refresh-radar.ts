@@ -33,14 +33,14 @@ export function refreshRadar(db: Database.Database, now: Date = new Date()): { l
       level = excluded.level, title = excluded.title, body = excluded.body, source_url = excluded.source_url,
       affects = excluded.affects, deadline = excluded.deadline, published_at = excluded.published_at, expires_at = excluded.expires_at
   `);
-  const live = db.prepare(`SELECT id, source_type, source_id FROM radar_items WHERE ${radarLiveSql()}`);
+  const live = db.prepare(`SELECT id, source_type, source_id FROM radar_items WHERE ${radarLiveSql('', 'param')}`);
   const retire = db.prepare('UPDATE radar_items SET expires_at = ? WHERE id = ?');
 
   let retired = 0;
   db.transaction(() => {
     for (const c of items) upsert.run({ ...c, affects: JSON.stringify(c.affects), now: nowIso });
     const current = new Set(items.map((c) => `${c.sourceType}\u0000${c.sourceId}`));
-    for (const r of live.all() as Array<{ id: number; source_type: string; source_id: string }>) {
+    for (const r of live.all(nowIso) as Array<{ id: number; source_type: string; source_id: string }>) {
       if (current.has(`${r.source_type}\u0000${r.source_id}`)) continue;
       if (PRODUCED.has(r.source_type) && !read.has(r.source_type as (typeof RADAR_SOURCE_TYPES)[number])) continue;
       retire.run(nowIso, r.id);

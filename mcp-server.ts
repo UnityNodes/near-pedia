@@ -43,7 +43,7 @@ import { parseCipRequires } from './lib/cips.js';
 import { resolveCipId } from './lib/cip-id.js';
 import { cutForAnswer } from './lib/truncate.js';
 import { cookedToSnippet } from './lib/forum.js';
-import { rankRows, likeTokens, escLike } from './lib/rank.js';
+import { rankRows, likeTokens, escLike, coversHalf, titleNamesTopic } from './lib/rank.js';
 import { radarLiveSql } from './lib/constants.js';
 import { deadlinePassed } from './lib/radar.js';
 import { allDeprecations, evidenceOf, findDeprecations, getDeprecation, renderDeprecation } from './lib/deprecations.js';
@@ -1953,20 +1953,23 @@ server.tool('find_known_issues',
       const tokens = tokenizeQuery(description);
       const forumM = anyTokenLike(['ft.title', 'fp.cooked'], tokens);
       const issuesM = anyTokenLike(['title', 'body'], tokens);
-      const forumRows = db.prepare(
-        `SELECT ft.title, ft.id, ft.views FROM forum_topics ft LEFT JOIN forum_posts fp ON fp.topic_id = ft.id AND fp.post_number = 1 WHERE ft.posts_count <= 1 AND (${forumM.sql}) ORDER BY ft.views DESC LIMIT ?`
-      ).all(...forumM.params, limit ?? 5) as Pick<ForumTopicsRow, 'title' | 'id' | 'views'>[];
-      const issueRows = db.prepare(
-        `SELECT repo, number, title, url FROM github_items WHERE type='issue' AND state='open' AND (${issuesM.sql}) ORDER BY created_at DESC LIMIT ?`
-      ).all(...issuesM.params, limit ?? 5) as Pick<GithubItemsRow, 'repo' | 'number' | 'title' | 'url'>[];
-      // Same fix check-qualifiers' G1 sweep found elsewhere: both headings
-      // printed the LIMIT-capped page size as though it were the total.
-      const forumTotal = (db.prepare(
-        `SELECT COUNT(*) c FROM forum_topics ft LEFT JOIN forum_posts fp ON fp.topic_id = ft.id AND fp.post_number = 1 WHERE ft.posts_count <= 1 AND (${forumM.sql})`
-      ).get(...forumM.params) as { c: number }).c;
-      const issueTotal = (db.prepare(
-        `SELECT COUNT(*) c FROM github_items WHERE type='issue' AND state='open' AND (${issuesM.sql})`
-      ).get(...issuesM.params) as { c: number }).c;
+      const forumCandidates = db.prepare(
+        `SELECT ft.title, ft.id, ft.views, fp.cooked FROM forum_topics ft LEFT JOIN forum_posts fp ON fp.topic_id = ft.id AND fp.post_number = 1 WHERE ft.posts_count <= 1 AND (${forumM.sql}) ORDER BY ft.views DESC LIMIT ?`
+      ).all(...forumM.params, RANK_CAND_CAP) as Array<Pick<ForumTopicsRow, 'title' | 'id' | 'views'> & { cooked: string | null }>;
+      const issueCandidates = db.prepare(
+        `SELECT repo, number, title, url, body FROM github_items WHERE type='issue' AND state='open' AND (${issuesM.sql}) ORDER BY created_at DESC LIMIT ?`
+      ).all(...issuesM.params, RANK_CAND_CAP) as Array<Pick<GithubItemsRow, 'repo' | 'number' | 'title' | 'url' | 'body'>>;
+      // A report that shares one word with the description ("build", "after")
+      // is not the same problem: a row must carry at least half of its
+      // discriminative words before it is ranked. A forum thread must also
+      // name one of them in its title: long governance posts hold most
+      // words somewhere in their body.
+      const forumMatches = forumCandidates.filter(r => titleNamesTopic(tokens, r.title, SITE.subject) && coversHalf(tokens, `${r.title} ${r.cooked ?? ''}`));
+      const issueMatches = issueCandidates.filter(r => coversHalf(tokens, `${r.repo} ${r.title} ${r.body ?? ''}`));
+      const forumRows = rankRows(db, description, forumMatches, limit ?? 5, r => ({ title: r.title, body: r.cooked }));
+      const issueRows = rankRows(db, description, issueMatches, limit ?? 5, r => ({ title: r.title, body: r.body, identity: r.repo }));
+      const forumTotal = forumMatches.length;
+      const issueTotal = issueMatches.length;
       if (!forumRows.length && !issueRows.length) return { content: [{ type: 'text', text: `No unanswered forum threads or open issues match "${description}".` }] };
       const parts: string[] = [`Known unresolved reports matching "${description}" (titles are public content, marked untrusted):`, ''];
       if (forumRows.length) parts.push(`## Unanswered forum threads (${showingOf(forumRows.length, forumTotal)})`, ...forumRows.map(r => `${fenceUntrustedInline(r.title!)} — ${r.views} views, 0 replies\n  ${SITE.url}/discussions/${r.id}`), '');

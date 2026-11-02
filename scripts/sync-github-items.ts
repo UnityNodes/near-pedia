@@ -54,7 +54,7 @@ export const SOURCES: SourceConfig[] = [
       'agent-skills',
     ],
   },
-  { org: 'nearai', state: 'open', maxPages: 3, repos: ['ironclaw', 'near-mcp'] },
+  { org: 'nearai', state: 'open', maxPages: 25, repos: ['ironclaw', 'near-mcp'] },
   { org: 'defuse-protocol', state: 'open', maxPages: 3, repos: ['sdk-monorepo'] },
   { org: 'Near-One', state: 'open', maxPages: 3, repos: ['omni-bridge'] },
 ];
