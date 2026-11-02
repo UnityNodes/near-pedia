@@ -1,5 +1,5 @@
 # NEAR-pedia
-# https://nearpedia.example
+# https://near-pedia.xyz
 
 > A live NEAR knowledge layer for AI agents. It tells an agent when its NEAR code uses something that has been removed, deprecated or changed, before the code breaks, with a source and a date on every answer.
 
@@ -9,7 +9,7 @@ Agents write NEAR code from training data that predates recent changes: near-sdk
 
 ## MCP server
 
-https://nearpedia.example/mcp (Streamable HTTP, no auth, read-only). 21 tools:
+https://near-pedia.xyz/mcp (Streamable HTTP, no auth, read-only). 21 tools:
 
 For code:
 - check_code: one source file or manifest (JS/TS, Rust, Cargo.toml, package.json) checked for removed, deprecated, changed or superseded APIs and outdated dependencies
@@ -28,11 +28,11 @@ For the ecosystem:
 - get_contract_info: what is deployed on an account, read live from RPC
 - get_recent_changes: what changed in the last N days
 
-Add it: claude mcp add --transport http nearpedia https://nearpedia.example/mcp
+Add it: claude mcp add --transport http nearpedia https://near-pedia.xyz/mcp
 
 ## REST API
 
-https://nearpedia.example/api/v1 (no auth). The OpenAPI document is at /api/v1/openapi.json. Highlights:
+https://near-pedia.xyz/api/v1 (no auth). The OpenAPI document is at /api/v1/openapi.json. Highlights:
 - POST /api/v1/check-code, GET /api/v1/deprecations, /api/v1/packages/{name}, POST /api/v1/explain-error
 - GET /api/v1/protocol, /api/v1/radar, /api/v1/proposals, /api/v1/incidents, /api/v1/projects, /api/v1/partners, /api/v1/contracts/{account}, /api/v1/standards
 - POST /api/v1/ask: an answer through NEAR AI Cloud (TEE model, encrypted request, verified signature) from this index's sources

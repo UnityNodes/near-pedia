@@ -3,7 +3,7 @@
   "name": "io.github.UnityNodes/nearpedia",
   "description": "Live NEAR knowledge for agents: deprecations, breaking changes, protocol and contracts, dated",
   "version": "1.0.0",
-  "websiteUrl": "https://nearpedia.example/for-ai",
+  "websiteUrl": "https://near-pedia.xyz/for-ai",
   "repository": {
     "url": "https://github.com/UnityNodes/nearpedia",
     "source": "github"
@@ -11,7 +11,7 @@
   "remotes": [
     {
       "type": "streamable-http",
-      "url": "https://nearpedia.example/mcp"
+      "url": "https://near-pedia.xyz/mcp"
     }
   ],
   "title": "NEAR-pedia"

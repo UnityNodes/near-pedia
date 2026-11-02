@@ -13,7 +13,7 @@
  *      segment, a doubled scheme, whitespace, or the literal
  *      "undefined"/"null"/"NaN". An empty segment IS the class - it is what
  *      an absent id looks like after interpolation.
- *   2. reachable: every distinct nearpedia.example url is fetched and must not
+ *   2. reachable: every distinct near-pedia.xyz url is fetched and must not
  *      404. Bounded and de-duplicated; redirects are not followed, because
  *      a redirect to an index is exactly this failure mode and following it
  *      would hide it.

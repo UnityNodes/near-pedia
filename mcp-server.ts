@@ -1,7 +1,7 @@
 /**
  * NEAR-pedia MCP Server
  * Exposes NEAR knowledge base via Model Context Protocol
- * Transport: Streamable HTTP on port 3131 → proxied at https://nearpedia.example/mcp
+ * Transport: Streamable HTTP on port 3131 → proxied at https://near-pedia.xyz/mcp
  */
 
 import express from 'express';
@@ -2070,7 +2070,7 @@ function classifyMcpStatus(payload: string): 'ok' | 'error' | 'tool_error' {
 /**
  * Only our own paths get the site origin. A result whose url is already
  * absolute belongs to GitHub, the forum, YouTube or a project's own site;
- * prefixing it produced "https://nearpedia.example/https://github.com/..." - a
+ * prefixing it produced "https://near-pedia.xyz/https://github.com/..." - a
  * broken link that also claimed we host someone else's content. Eight of the
  * search branches emit absolute urls (youtube, github items, releases, radar,
  * ecosystem, github discussions, third-party blog).

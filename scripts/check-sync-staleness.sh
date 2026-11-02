@@ -19,7 +19,7 @@
 # for installs that don't run Prometheus yet.
 #
 # Env:
-#   BASE_URL          — defaults to https://nearpedia.example
+#   BASE_URL          — defaults to https://near-pedia.xyz
 #   METRICS_TOKEN     — if /api/metrics is auth-gated
 #   FAIL_ON_STALE     — '1' to exit non-zero (default), '0' to log only
 #   SLACK_WEBHOOK_URL — POST stale list to Slack incoming webhook
@@ -30,7 +30,7 @@
 
 set -uo pipefail
 
-BASE="${BASE_URL:-https://nearpedia.example}"
+BASE="${BASE_URL:-https://near-pedia.xyz}"
 TOKEN="${METRICS_TOKEN:-}"
 FAIL_ON_STALE="${FAIL_ON_STALE:-1}"
 QUIET_FILE="${ALERT_QUIET_FILE:-/var/run/nearpedia-quiet}"

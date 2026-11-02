@@ -2,7 +2,7 @@
 
 Live NEAR knowledge for AI agents. NEAR-pedia is an MCP server and REST API that tells a coding agent when the NEAR code it is about to write is already stale, and gives the replacement, with a source and a date on every answer. The same index serves people researching NEAR: a site and an `/ask` chat that answer what is happening with protocol upgrades, House of Stake votes, projects and incidents.
 
-> Status: built for the NEAR Hackathon (1–14 November 2026, tracks `open` and `agents`). Everything in [What is done](#what-is-done) runs locally and is tested; what has not been run against a live service yet says so in its row. Not yet deployed: the domain and the NEAR accounts are pending.
+> Status: built for the NEAR Hackathon (1–14 November 2026, tracks `open` and `agents`). Everything in [What is done](#what-is-done) runs locally and is tested; what has not been run against a live service yet says so in its row. Not yet deployed: the domain is near-pedia.xyz, the deployment and the NEAR accounts are pending.
 
 ## The problem
 
