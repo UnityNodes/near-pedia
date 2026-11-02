@@ -136,6 +136,7 @@ describe('protocolReport and renderProtocol', () => {
     expect(text.split('## testnet')[1]).not.toContain('Voting for');
     expect(text.split('## testnet')[1]).toContain('No newer protocol version is supported by its nodes. (Release notes schedule mainnet only.)');
     expect(text).toContain('Mainnet schedule from nearcore 2.14.0 release notes');
+    expect(text).toMatch(/⟪[^⟫]*expected to happen 7-14 hours[^⟫]*⟫/);
   });
 
   it('dates a version only from an upgrade seen between snapshots', () => {

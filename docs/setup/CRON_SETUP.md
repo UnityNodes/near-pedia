@@ -39,17 +39,18 @@ Buckets are defined in **`deploy/sync-tick.sh`**, invoked as
 `sync-tick.sh {fast|medium|slow|daily|weekly|all}`. Re-read the script itself
 for the current, authoritative list — this is a summary, not a mirror:
 
-- **`fast`** (every 5 min) — `refresh-trending` only (cheap, in-DB, no network).
-- **`medium`** (every 15 min) — `sync-github-releases`, `refresh-radar`.
-- **`slow`** (every 6 h) — `sync-cips`, `sync-cip-assets`, `sync-docs`,
-  `sync-github-discussions`, `sync-github-items`, `sync-papers`,
-  `sync-network-stats`, then `build-embeddings`.
-- **`daily`** (03:15) — `sync-youtube` + transcripts, `sync-ecosystem`,
-  `sync-foundation`, TL;DR backfill, doc enrichment, `build-embeddings`,
-  vocab migration, then the full `check-*.ts` suite (dozens of scripts —
-  `check-sql`, `check-completeness`, `check-citations`, `check-fencing`, and
-  many more), finishing with `prune-logs`.
-- **`weekly`** (Mondays 04:30) — `build-weekly-digest`, `backfill-cip-history`.
+- **`fast`** (every 5 min) — `check-failures` only (cheap, in-DB, no network).
+- **`medium`** (every 15 min) — `sync-github-releases`, `sync-protocol`,
+  `sync-forum`, `sync-hos`, then `refresh-radar` and its expiry check.
+- **`slow`** (every 6 h) — `sync-docs`, `sync-packages`, `build-deprecations`,
+  `sync-github-discussions`, `sync-github-items`, `sync-network-stats`, then
+  `build-embeddings`.
+- **`daily`** (03:15) — `sync-repos`, the full releases read, the YouTube,
+  ecosystem, incident, partner-docs, Nomicon, NEP and blog syncs,
+  `build-embeddings`, `anchor-db`, then the full `check-*.ts` suite (dozens of
+  scripts — `check-sql`, `check-completeness`, `check-citations`,
+  `check-fencing`, and many more), finishing with `prune-logs`.
+- **`weekly`** (Mondays 04:30) — `sync-forum --full`, `sync-blog --full`.
 - **`all`** — every plain-fetch sync in one pass + embed; not on cron, run by
   hand for a first data load or a full backfill (`deploy/sync-tick.sh all`).
 
@@ -76,8 +77,8 @@ Each line is prefixed `[<bucket> <ISO-8601 timestamp>] <script> [ok|FAILED]`,
 e.g.:
 
 ```
-[slow 2026-09-02T18:00:03+00:00] sync-cips
-[slow 2026-09-02T18:00:11+00:00] sync-cips ok
+[slow 2026-09-02T18:00:03+00:00] sync-docs
+[slow 2026-09-02T18:00:11+00:00] sync-docs ok
 ```
 
 ## Verifying a sync actually ran (and actually did something)

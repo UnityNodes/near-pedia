@@ -36,7 +36,7 @@ const ENTITY_LIMIT = 3;
 const PROPOSAL_LIMIT = 3;
 const PROPOSAL_DESCRIPTION = 2500;
 const PROTOCOL_WORDS = /\b(protocol|upgrade|nearcore|validators?|epoch|hard ?fork|version \d+)\b/i;
-const GOVERNANCE_WORDS = /\b(house of stake|hos|governance|proposals?|vote|voting|venear|delegates?)\b/i;
+const GOVERNANCE_WORDS = /\b(house of stake|hos|governance|venear)\b/i;
 const HSP_REF = /\bhsp[-\s#]?0*(\d{1,3})\b/gi;
 /**
  * Words too common to name a project on their own: "NEAR protocol finance"
@@ -270,7 +270,7 @@ export function buildAskContext(
   try {
     for (const p of proposalSources(db, question)) {
       add({ kind: 'proposal', title: `House of Stake proposal ${p.id}: ${p.title}`, url: HOS_PROPOSAL_URL(p.id), as_of: p.synced_at },
-        renderProposal(p, now, fenceUntrustedInline, { full: true, fenceBlock: (t) => fenceUntrusted(t.slice(0, PROPOSAL_DESCRIPTION)) }));
+        renderProposal(p, now, fenceUntrustedInline, { full: true, fenceBlock: (t) => fenceUntrusted(t.slice(0, PROPOSAL_DESCRIPTION)) + (t.length > PROPOSAL_DESCRIPTION ? ` … [cut here; the full description is on vote.dao]` : '') }));
     }
   } catch (e) {
     if (!/no such table/.test((e as Error).message)) throw e;
