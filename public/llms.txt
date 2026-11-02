@@ -9,7 +9,7 @@ Agents write NEAR code from training data that predates recent changes: near-sdk
 
 ## MCP server
 
-https://near-pedia.xyz/mcp (Streamable HTTP, no auth, read-only). 21 tools:
+https://near-pedia.xyz/mcp (Streamable HTTP, no auth, read-only). 27 tools:
 
 For code:
 - check_code: one source file or manifest (JS/TS, Rust, Cargo.toml, package.json) checked for removed, deprecated, changed or superseded APIs and outdated dependencies
@@ -19,7 +19,7 @@ For code:
 - explain_error: a NEAR error's cause and fix, from docs.near.org
 - find_known_issues, get_protocol_status, get_doc, search, semantic_search, find_code_examples (each example checked by check_code), get_standard (NEPs)
 
-For the ecosystem:
+For builders:
 - get_radar: what is changing now and needs action; every alert expires when its subject resolves
 - list_proposals, get_proposal: House of Stake, read from vote.dao
 - list_incidents, get_incident: security incidents of NEAR protocols
@@ -27,6 +27,13 @@ For the ecosystem:
 - get_partner: NEAR Intents, OutLayer, Trezu, HOT, Rhea: contracts, docs, GitHub
 - get_contract_info: what is deployed on an account, read live from RPC
 - get_recent_changes: what changed in the last N days
+- get_discussion: a gov.near.org thread in full, by number or URL
+
+For everyone:
+- get_network_state: NEAR price, market cap, supply, block height and stake, live
+- get_validators: the validator set live from RPC: stake, share, work done, kickouts; one pool's fee and vote
+- list_blog_posts, get_blog_post: the near.org and near.ai blogs, newest first, in full
+- list_videos: the newest NEAR Protocol, NEAR DevHub and NEAR AI videos
 
 Add it: claude mcp add --transport http nearpedia https://near-pedia.xyz/mcp
 

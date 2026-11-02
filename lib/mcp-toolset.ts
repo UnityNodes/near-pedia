@@ -1,9 +1,10 @@
 /**
- * The tools the public MCP endpoint offers: twelve for code, nine for the
- * ecosystem. The engine this server came from registered 88, and agents
- * picked badly among them; every other handler stays in the code, reachable
- * over REST and by the standing checks, which start their scratch server
- * with MCP_TOOLSET=full.
+ * The tools the public MCP endpoint offers: twelve for code, ten for the
+ * ecosystem and five for anyone researching NEAR. The engine this server
+ * came from registered 88, and agents picked badly among them. The other
+ * handlers stay in the code, reachable over REST and by the standing checks
+ * (MCP_TOOLSET=full); each was audited on 2026-11-02 and left out for
+ * duplicating a public tool, returning template data or matching loosely.
  */
 
 export const CODE_TOOLS = [
@@ -13,9 +14,14 @@ export const CODE_TOOLS = [
 
 export const ECOSYSTEM_TOOLS = [
   'get_radar', 'list_proposals', 'get_proposal', 'list_incidents', 'get_incident', 'find_project', 'get_partner', 'get_contract_info', 'get_recent_changes',
+  'get_discussion',
 ] as const;
 
-export const PUBLIC_TOOLS: ReadonlySet<string> = new Set([...CODE_TOOLS, ...ECOSYSTEM_TOOLS]);
+export const EVERYONE_TOOLS = [
+  'get_network_state', 'get_validators', 'list_blog_posts', 'get_blog_post', 'list_videos',
+] as const;
+
+export const PUBLIC_TOOLS: ReadonlySet<string> = new Set([...CODE_TOOLS, ...ECOSYSTEM_TOOLS, ...EVERYONE_TOOLS]);
 
 /** Which tool names this process registers: the public set, or every one with MCP_TOOLSET=full. */
 export function toolFilter(env: Readonly<Record<string, string | undefined>> = process.env): (name: string) => boolean {

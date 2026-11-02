@@ -7,7 +7,7 @@
  */
 
 import type Database from 'better-sqlite3';
-import { escLike } from './rank';
+import { escLike, likeTokens, tokenize } from './rank';
 import { usd } from './incidents';
 import { CATALOG_PAGE_URL, safeUrl } from './near-catalog';
 import { PARTNERS, getPartner, type Partner } from './partners';
@@ -72,11 +72,29 @@ export function getProject(db: Database.Database, slug: string): ProjectRow | nu
   return (stmt.get(s.toLowerCase()) as ProjectRow | undefined) ?? (stmt.get(encodeURIComponent(s).toLowerCase()) as ProjectRow | undefined) ?? null;
 }
 
+/** Catalog categories with their project counts, largest first. */
+export function catalogCategories(db: Database.Database): Array<{ category: string; n: number }> {
+  return db.prepare("SELECT category, COUNT(*) n FROM ecosystem_projects WHERE category IS NOT NULL AND category != '' GROUP BY category ORDER BY n DESC, category").all() as Array<{ category: string; n: number }>;
+}
+
+/** The catalog's own spelling of a category a person typed: any case, plural or singular ("wallets" is Wallet). */
+export function resolveCategory(db: Database.Database, input: string): string | null {
+  const want = input.trim().toLowerCase();
+  if (!want) return null;
+  const all = catalogCategories(db).map((c) => c.category);
+  const singular = (x: string) => x.replace(/ies$/, 'y').replace(/(?<!s)s$/, '');
+  return all.find((c) => c.toLowerCase() === want)
+    ?? all.find((c) => singular(c.toLowerCase()) === singular(want))
+    ?? null;
+}
+
 /**
  * Projects by name first, then by any text: an exact title or slug, a title
- * prefix, then a match anywhere in tagline, tags or description. Ties go to
- * the larger TVL, so "rhea" finds Rhea Finance before a project that
- * mentions it.
+ * prefix, then the whole query anywhere in tagline, tags or description.
+ * When the whole query matches too few ("intents swap" is in no listing as
+ * one phrase), projects that carry most of its words follow, title words
+ * counting double. Ties go to the larger TVL, so "rhea" finds Rhea Finance
+ * before a project that mentions it.
  */
 export function findProjects(db: Database.Database, q: string, opts: { category?: string; limit: number }): ProjectRow[] {
   const t = q.trim().toLowerCase();
@@ -85,13 +103,36 @@ export function findProjects(db: Database.Database, q: string, opts: { category?
   const params: unknown[] = [t, t, prefix, like, like, like, like, like, like, like];
   const cat = opts.category ? 'AND category = ? COLLATE NOCASE' : '';
   if (opts.category) params.push(opts.category);
-  return db.prepare(`
+  const phrase = db.prepare(`
     SELECT ${PROJECT_COLS},
       CASE WHEN lower(title) = ? OR slug = ? THEN 0 WHEN lower(title) LIKE ? ESCAPE '\\' THEN 1 WHEN lower(title) LIKE ? ESCAPE '\\' OR slug LIKE ? ESCAPE '\\' THEN 2 ELSE 3 END AS rank_
     FROM ecosystem_projects
     WHERE (lower(title) LIKE ? ESCAPE '\\' OR slug LIKE ? ESCAPE '\\' OR lower(tagline) LIKE ? ESCAPE '\\' OR lower(tags) LIKE ? ESCAPE '\\' OR lower(description) LIKE ? ESCAPE '\\') ${cat}
     ORDER BY rank_, COALESCE(tvl_usd, 0) DESC, title COLLATE NOCASE
     LIMIT ?`).all(...params, opts.limit) as ProjectRow[];
+  const words = [...new Set(likeTokens(tokenize(t)))].slice(0, 6);
+  if (phrase.length >= opts.limit || words.length < 2) return phrase;
+  const need = Math.ceil(words.length / 2);
+  const held = new Set(phrase.map((r) => r.slug));
+  const pool = db.prepare(`SELECT ${PROJECT_COLS} FROM ecosystem_projects ${opts.category ? 'WHERE category = ? COLLATE NOCASE' : ''}`).all(...(opts.category ? [opts.category] : [])) as ProjectRow[];
+  const scored = pool
+    .filter((r) => !held.has(r.slug))
+    .map((r) => {
+      const title = ` ${r.title.toLowerCase()} `;
+      const body = ` ${[r.tagline, r.tags, r.description].filter(Boolean).join(' ').toLowerCase()} `;
+      const hits = words.filter((w) => title.includes(w) || body.includes(w));
+      return { r, n: hits.length, score: hits.reduce((s, w) => s + (title.includes(w) ? 2 : 1), 0) };
+    })
+    .filter((x) => x.n >= need)
+    .sort((a, b) => (b.n - a.n) || (b.score - a.score) || ((b.r.tvl_usd ?? 0) - (a.r.tvl_usd ?? 0)) || a.r.title.localeCompare(b.r.title));
+  return [...phrase, ...scored.map((x) => x.r)].slice(0, opts.limit);
+}
+
+/** One line a project, for a list too long for full entries. */
+export function projectLine(p: ProjectRow, fence: Fence): string {
+  const tvl = p.tvl_usd ? ` · TVL ${usd(p.tvl_usd)}` : '';
+  const about = p.tagline ?? p.description;
+  return `- ${fence(p.title)} (${p.slug})${p.category ? ` · ${fence(p.category)}` : ''}${tvl}${about ? `: ${fence(about.slice(0, 140))}` : ''}${p.website ? ` · ${p.website}` : ''}`;
 }
 
 /** Projects by TVL on NEAR; within a category, the ones without TVL follow by name. */
