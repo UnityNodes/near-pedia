@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { Search } from 'lucide-react';
+import { Code2, Compass, Search } from 'lucide-react';
 
 const PHRASES = [
   'Is near-sdk-js still maintained?',
@@ -12,7 +12,7 @@ const PHRASES = [
   'storage_deposit',
 ];
 
-const CHIPS = ['near-sdk-js', 'DelegateV2', 'wallet selector', 'protocol upgrade'];
+const CHIPS = ['near-sdk-js', 'DelegateV2', 'House of Stake', 'protocol upgrade'];
 
 const STATIC_PLACEHOLDER = 'Search docs, releases, deprecations, forum…';
 
@@ -100,9 +100,24 @@ export function HomeHero({
             What <span className="dp-shine">{headline}</span> looks like today.
           </h1>
           <p className="dp-lede dp-rise" style={{ animationDelay: '.2s' }}>
-            AI agents write NEAR code from stale memory. NEAR-pedia tells them what NEAR removed, deprecated and
-            changed, before their code breaks, with a source and a date on every answer.
+            NEAR moves faster than anyone&apos;s memory. NEAR-pedia tracks what it removed, deprecated, changed and
+            voted on, for the agents writing NEAR code and the people researching NEAR, with a source and a date on
+            every answer.
           </p>
+          <nav className="dp-doors dp-rise" style={{ animationDelay: '.24s' }} aria-label="Choose how you use NEAR-pedia">
+            <Link href="/for-ai" className="dp-door">
+              <span className="dp-door-k"><Code2 size={14} aria-hidden="true" />I write NEAR code</span>
+              <b>Check code before it breaks</b>
+              <span className="dp-door-d">Connect your agent over MCP: it learns what NEAR removed and what replaced it.</span>
+              <span className="dp-door-go">Connect an agent →</span>
+            </Link>
+            <Link href="/ask" className="dp-door">
+              <span className="dp-door-k"><Compass size={14} aria-hidden="true" />I&apos;m researching NEAR</span>
+              <b>Ask what is going on</b>
+              <span className="dp-door-d">Upgrades, House of Stake votes, incidents and projects, answered from the sources.</span>
+              <span className="dp-door-go">Ask a question →</span>
+            </Link>
+          </nav>
           <form
             className="dp-search dp-rise"
             style={{ animationDelay: '.28s' }}
@@ -122,10 +137,6 @@ export function HomeHero({
             {CHIPS.map((c) => (
               <button key={c} type="button" className="dp-chip" onClick={() => submit(c)}>{c}</button>
             ))}
-          </div>
-          <div className="dp-newhere dp-rise" style={{ animationDelay: '.4s' }}>
-            <span>Building with an agent? Connect it in one command.</span>
-            <Link href="/for-ai">/for-ai →</Link>
           </div>
           <ul className="dp-promises dp-rise" style={{ animationDelay: '.46s' }}>
             <li><span aria-hidden="true">↳</span>Every answer cites its source</li>

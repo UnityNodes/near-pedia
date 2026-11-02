@@ -169,7 +169,7 @@ describe('getDocsGlance', () => {
 
 describe('docSourceLabel', () => {
   it('names a known source, falls back to the host the pages live on, and only then to the slug', () => {
-    expect(docSourceLabel('yourchain-node')).toBe('Node docs');
+    expect(docSourceLabel('docs')).toBe('docs.near.org');
     expect(docSourceLabel('www-partner-example-org', 'https://www.partner.example.org/docs/x')).toBe('partner.example.org');
     expect(docSourceLabel('docs-tools-example-net', 'https://docs.tools.example.net/')).toBe('docs.tools.example.net');
     expect(docSourceLabel('new-source')).toBe('New Source');

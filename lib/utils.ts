@@ -80,7 +80,7 @@ export function formatRelativeDate(dateStr: string | null | undefined): string {
 }
 
 /**
- * CIP author fields arrive as GitHub-frontmatter markdown, e.g.
+ * Author fields can arrive as GitHub-frontmatter markdown, e.g.
  *   "[@example-user](https://github.com/example-user)"
  *   "Jane Doe ([@jane-doe](https://github.com/jane-doe))"
  * Strip markdown links to their label so the UI shows a clean name

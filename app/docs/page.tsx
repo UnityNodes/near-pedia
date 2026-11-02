@@ -145,7 +145,7 @@ export default async function DocsPage({ searchParams }: PageProps) {
           </div>
           {q ? (
             <Link href={`/search?q=${encodeURIComponent(q)}`} className="dx-everywhere">
-              Search CIPs, forum and docs for “{q}”<ArrowRight size={13} strokeWidth={1.75} aria-hidden="true" />
+              Search docs, forum, releases and issues for “{q}”<ArrowRight size={13} strokeWidth={1.75} aria-hidden="true" />
             </Link>
           ) : null}
         </div>

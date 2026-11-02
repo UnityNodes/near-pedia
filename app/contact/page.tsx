@@ -22,7 +22,7 @@ export default function ContactPage() {
         <p className="legal-kicker">CONTACT</p>
         <h1>Get in touch</h1>
         <p className="legal-meta">
-          Questions, feedback, broken links, or a CIP we missed - we read everything.
+          Questions, feedback, a wrong deprecation, or a NEAR source we missed: we read everything.
         </p>
       </header>
 
@@ -43,7 +43,7 @@ export default function ContactPage() {
         <p>
           <strong>Security vulnerabilities?</strong> Please report privately via{' '}
           <a
-            href="https://github.com/your-org/nearpedia/security/advisories/new"
+            href={`${SITE.repo}/security/advisories/new`}
             target="_blank"
             rel="noopener noreferrer"
           >
@@ -61,7 +61,7 @@ export default function ContactPage() {
           <li>
             Bug reports and feature requests:{' '}
             <a
-              href="https://github.com/your-org/nearpedia/issues"
+              href={`${SITE.repo}/issues`}
               target="_blank"
               rel="noopener noreferrer"
             >
@@ -71,11 +71,11 @@ export default function ContactPage() {
           <li>
             Source code:{' '}
             <a
-              href="https://github.com/your-org/nearpedia"
+              href={SITE.repo}
               target="_blank"
               rel="noopener noreferrer"
             >
-              github.com/your-org/nearpedia
+              {SITE.repo.replace(/^https:\/\//, '')}
             </a>
           </li>
         </ul>

@@ -73,7 +73,7 @@ const STATEMENT_LANDMARK = /\b(?:FROM|INTO|SET|TABLE|INDEX|VALUES|PRAGMA)\b/i;
 /** Files whose SQL is served to somebody. Sync scripts are a separate concern. */
 const TARGETS = ['mcp-server.ts', 'middleware.ts'];
 // components/ is here because leaving it out is how this check missed a live
-// bug on its first run. components/yourchain-dashboard.tsx queried
+// bug on its first run. A dashboard component queried
 // forum_posts.created_at_ms, a column that has never existed, and the homepage
 // printed "Forum today 0 new posts" every day as a result. The check reported
 // clean, and so did I, because I had grepped app/ and lib/ and concluded the
@@ -181,7 +181,7 @@ function checkHelperColumns(db: ReturnType<typeof getDb>, files: string[]): { fi
   //
   // The first version of this asked "does this name exist on any table at all",
   // which sounds close enough and is worthless here: `content` is a real column
-  // on foundation_kb, so the doc_pages bug would have passed. A negative control
+  // on another table, so the doc_pages bug would have passed. A negative control
   // caught that — the check reported clean on a deliberately reintroduced bug.
   // Verify a checker against the failure it was written for, or it only produces
   // confidence.
@@ -360,8 +360,8 @@ function main(): void {
         // with a typo in it fail with the same "near" message.
         //
         // The rule that splits them is whether anything was SUBSTITUTED. A
-        // template hole becomes ` 1=1 `, so `FROM cips ${where}` compiles to
-        // `FROM cips 1=1` and fails for a reason the source does not have: with
+        // template hole becomes ` 1=1 `, so `FROM docs ${where}` compiles to
+        // `FROM docs 1=1` and fails for a reason the source does not have: with
         // a substitution in it, a parse error is unattributable. With none, the
         // string is exactly what reaches SQLite at runtime, and a whole
         // statement that will not parse is a defect.

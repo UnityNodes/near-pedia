@@ -4,6 +4,7 @@ import { formatDate } from '@/lib/utils';
 import { pageMetadata } from '@/lib/seo';
 import { ago } from '@/lib/home-feed';
 import { getLastSync } from '@/lib/section-counts';
+import { KIND_SQL } from '@/lib/blog';
 import type { Tone } from '@/lib/status';
 import { PageShell, PgList } from '@/components/page-shell';
 
@@ -11,7 +12,7 @@ export const dynamic = 'force-dynamic';
 
 export const metadata = pageMetadata({
   title: 'Feed',
-  description: 'Live activity feed across all NEAR sources: CIPs, forum, GitHub, blog and docs.',
+  description: 'What changed in NEAR, newest first: deprecations and doc changes, releases, forum threads, blog posts and videos.',
   path: '/feed',
 });
 
@@ -34,14 +35,14 @@ const RANGES: { value: Range; label: string; window: string }[] = [
 ];
 
 const SOURCES: Record<string, { label: string; tone: Tone }> = {
-  cip:    { label: 'CIP',    tone: 'lime' },
+  change: { label: 'CHANGE', tone: 'lime' },
   forum:  { label: 'FORUM',  tone: 'info' },
-  mail:   { label: 'MAIL',   tone: 'ok' },
-  github: { label: 'GITHUB', tone: 'mute' },
+  github: { label: 'RELEASE', tone: 'mute' },
   blog:   { label: 'BLOG',   tone: 'ok' },
+  video:  { label: 'VIDEO',  tone: 'ok' },
 };
 
-const SYNC_TABLES = ['cips', 'forum_topics', 'blog_posts', 'github_releases'] as const;
+const SYNC_TABLES = ['forum_topics', 'blog_posts', 'github_releases', 'youtube_videos'] as const;
 
 interface PulseItem {
   src: string;
@@ -55,14 +56,17 @@ function getPulse(range: Range): PulseItem[] {
   const db = getDb();
   const offset = RANGE_SQL[range];
   return db.prepare(`
-    SELECT 'cip' as src, id, title, COALESCE(created_date, synced_at) as ts, '/cips/' || id as path FROM cips
-      WHERE COALESCE(created_date, synced_at) > datetime('now', ${offset})
+    SELECT 'change' as src, CAST(id as TEXT) as id, title, observed_at as ts, COALESCE(source_url, '/deprecations') as path FROM change_events
+      WHERE observed_at > datetime('now', ${offset})
     UNION ALL
     SELECT 'forum', CAST(id as TEXT), title, last_post_at, '/discussions/' || id FROM forum_topics
       WHERE last_post_at > datetime('now', ${offset})
     UNION ALL
     SELECT 'blog', id, title, published_at, '/blog/' || id FROM blog_posts
-      WHERE published_at > datetime('now', ${offset}) AND (tags IS NULL OR tags NOT LIKE '%release-notes%')
+      WHERE published_at > datetime('now', ${offset}) AND ${KIND_SQL} != 'release'
+    UNION ALL
+    SELECT 'video', id, title, published_at, '/videos/' || id FROM youtube_videos
+      WHERE published_at > datetime('now', ${offset})
     UNION ALL
     SELECT 'github', id, repo || ' ' || tag as title, published_at, url as path FROM github_releases
       WHERE published_at > datetime('now', ${offset})
@@ -112,24 +116,23 @@ interface PageProps {
 
 export default async function PulsePage({ searchParams }: PageProps) {
   const params = await searchParams;
-  const range: Range = (['24h', '7d', '30d'].includes(params.range ?? '') ? params.range : '24h') as Range;
+  const range: Range = (['24h', '7d', '30d'].includes(params.range ?? '') ? params.range : '7d') as Range;
   const items = getPulse(range);
-  const windowLabel = RANGES.find(r => r.value === range)?.window ?? 'the last 24 hours';
+  const windowLabel = RANGES.find(r => r.value === range)?.window ?? 'the last 7 days';
 
   return (
     <PageShell
       href="/feed"
       title="Feed"
-      description="Live activity across all NEAR sources: CIPs, forum threads, blog posts and releases, newest first."
+      description="What changed in NEAR, newest first: deprecations and doc changes, releases, forum threads, blog posts and videos."
       stat={{ value: items.length, unit: items.length === 1 ? 'event' : 'events' }}
       synced={latestSync()}
-      source="cips · forum · blog · releases"
+      source="changes · releases · forum · blog · videos"
     >
       <div className="pg-tools">
         <div className="pg-tools-row">
           <nav className="pg-chips" aria-label="Feed view">
             <span className="pg-chip pg-chip--on" aria-current="page">Latest</span>
-            <Link href="/trending" className="pg-chip">Top</Link>
           </nav>
           <nav className="pg-chips" aria-label="Time range">
             {RANGES.map(r => (
@@ -149,7 +152,7 @@ export default async function PulsePage({ searchParams }: PageProps) {
       <PgList
         empty={items.length === 0 ? (
           <div className="pg-empty">
-            <p>No activity in this period. Try extending the range to 7D or 30D.</p>
+            <p>No activity in this period. Try 30D.</p>
           </div>
         ) : null}
       >

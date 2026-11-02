@@ -7,8 +7,6 @@
  */
 
 export type ActivityKind =
-  | 'cip_status_change'
-  | 'new_cip'
   | 'new_forum_topic'
   | 'new_blog_post'
   | 'new_release'
@@ -38,8 +36,6 @@ export interface ActivityStream {
 }
 
 const EMPTY_COUNTS: Record<ActivityKind, number> = {
-  cip_status_change: 0,
-  new_cip: 0,
   new_forum_topic: 0,
   new_blog_post: 0,
   new_release: 0,

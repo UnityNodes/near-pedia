@@ -24,9 +24,7 @@ export function getRecentFeed(limit = 6): FeedRow[] {
   try {
     const rows = getDb().prepare(`
       SELECT * FROM (
-        SELECT 'CIP' AS kind, title, '/cips/' || id AS href, COALESCE(created_date, synced_at) AS at FROM cips
-        UNION ALL
-        SELECT 'FORUM', title, '/discussions/' || id, last_post_at FROM forum_topics
+        SELECT 'FORUM' AS kind, title, '/discussions/' || id AS href, last_post_at AS at FROM forum_topics
         UNION ALL
         SELECT 'BLOG', title, '/blog/' || id, published_at FROM blog_posts
           WHERE tags IS NULL OR tags NOT LIKE '%release-notes%'

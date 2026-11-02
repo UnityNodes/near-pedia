@@ -89,17 +89,15 @@ function gitAddedSince(pattern: string, sinceIso: string): string[] {
 }
 
 /**
- * The nine text columns check-corpus-text.ts walks. Named once: the `total`
+ * The five text columns check-corpus-text.ts walks. Named once: the `total`
  * below has to be the same surface as the check's own SURFACES or subtracting
  * one from the other means nothing. No mailing_messages entry - this app has
  * no mailing-list feature.
  */
 const CORPUS_TEXT_COLUMNS: [table: string, column: string][] = [
-  ['whitepapers', 'content_text'], ['cip_attachments', 'content_text'],
-  ['cips', 'content_md'], ['doc_pages', 'content_text'],
+  ['doc_pages', 'content_text'],
   ['blog_posts', 'content_text'], ['forum_posts', 'cooked'],
   ['youtube_videos', 'transcript_text'], ['github_items', 'body'],
-  ['foundation_kb', 'content'],
 ];
 
 export const ORACLES: Oracle[] = [
@@ -222,14 +220,10 @@ export const ORACLES: Oracle[] = [
 
   { script: 'check-agent-errors', surface: 'a registered tool called by an external agent inside the window', total: null,
     why: 'the surface is exactly the set of tools external callers invoked in mcp_calls over the window, read directly by the check; the only other count of that would be the same log agreeing with itself' },
-  { script: 'check-anchors', surface: 'an identifier reference checked for a longer-match false positive, or a naming path checked for reaching the same record', total: null,
-    why: 'the reference set is re-derived from the corpus on each run rather than stored' },
   { script: 'check-changes-parity', surface: 'a recent-activity window compared across the MCP and REST roads', total: null,
     why: 'the windows are named in the check; a second count would parse the same two roads the check already calls' },
   { script: 'check-citations', surface: 'a URL a tool hands to an agent', total: null,
     why: 'the surface is re-derived on every run from what the tools actually print, so a new link is covered the day it is emitted' },
-  { script: 'check-citations-parity', surface: 'a CIP id form compared across the MCP and REST mention roads', total: null,
-    why: 'the id-form batch is named in the check; the two SIDES are the two roads themselves' },
   { script: 'check-completeness', source: 'completeness', surface: 'a source with an upstream counter', total: null,
     why: 'the upstream counters are declared per source in the check' },
   { script: 'check-completion', source: 'completion', surface: 'a bounded loop in the serving path, plus the success writes that read one', total: null,
@@ -254,8 +248,6 @@ export const ORACLES: Oracle[] = [
     why: 'the file set comes from the same stat walk the check performs' },
   { script: 'check-doc-chrome', source: 'doc-chrome', surface: 'a stored doc page checked for publisher chrome at its head and tail', total: null,
     why: 'the surface is every doc_pages row with content_text and the check walks all of them in one pass, so items IS the population; a second count of that population would be the same table read twice' },
-  { script: 'check-glossary', surface: 'a term on /glossary, built from the two synced glossary pages and the site terms', total: null,
-    why: 'the check counts the raw term headings of both pages itself and compares them with what was parsed; a second count would read the same HTML' },
   { script: 'check-doc-structure', source: 'doc-structure', surface: 'a doc page whose stored HTML holds a multi-line code block, checked that the served content_text keeps its newlines', total: null,
     why: 'the surface is every doc_pages row with a multi-line <pre> in content_html, re-derived from the table on each run; the two SIDES are independent - the stored HTML versus the served text derived from it' },
   { script: 'check-doc-trust', surface: 'a corpus text row scanned for language addressed to a model', total: null,
@@ -270,8 +262,6 @@ export const ORACLES: Oracle[] = [
     why: 'the facet list is the check\'s own registry; the SECOND source is per-facet and already inside it - the enum comes from the schema the running server publishes, the values from the table' },
   { script: 'check-failures', surface: 'a scheduled source whose newest run was read for a failure', total: null,
     why: 'the check reads sync_log and failure_events itself and pages on what it finds; a second count would read the same rows' },
-  { script: 'check-resources', surface: 'a link, a stated fact or a page link on /resources, checked for status, redirect, expected page title and the wording of its source', total: null,
-    why: 'the link list is the check\'s own registry in lib/resources.ts; a second count would read the same file' },
   { script: 'check-fencing', surface: 'a tool registration in mcp-server.ts', total: null,
     why: 'any second count here would parse the same file the check parses' },
   { script: 'check-handoffs', surface: 'a tool pair where one names the other as the source of an id', total: null,
@@ -292,8 +282,6 @@ export const ORACLES: Oracle[] = [
     why: 'its surface is this registry; counting it here would be the same list twice, so O1 asserts it against sync-tick instead' },
   { script: 'check-order-keys', source: 'order-keys', surface: 'a single-term serving ORDER BY on a base-table column', total: null,
     why: 'the surface is every db.prepare literal in the serving source whose ORDER BY is a lone bare column of its FROM table, enumerated in one pass over that source' },
-  { script: 'check-parsed', surface: 'a CIP field re-derived from content_md and compared to the stored column', total: null,
-    why: 'which fields are expected present or absent per CIP is the check\'s own RULES list; a second count of it would apply the same predicate to the same rows twice' },
   { script: 'check-published-totals', surface: 'a tool whose printed "N of M" is verified against the database', total: null,
     why: 'the tool list and each one\'s ground-truth SQL are declared in the check; a second list would name the same six tools again' },
   { script: 'check-qualifiers', surface: 'a declared claim graded against its query, plus every tool source-swept for two mechanical shapes', total: null,
@@ -316,8 +304,6 @@ export const ORACLES: Oracle[] = [
     why: 'the row threshold is the check\'s own definition of the surface' },
   { script: 'check-sql', surface: 'a SQL statement found in the tree', total: null,
     why: 'statements are extracted by the check; a second extractor would be a second parser, not a second source' },
-  { script: 'check-trending-parity', surface: 'the one trending_snapshot payload compared against the prefix each road serves', total: null,
-    why: 'the payload is read once from the snapshot and both roads slice it; the SIDES are the stored score-sorted payload versus each road\'s rendered prefix' },
   { script: 'check-truncation', source: 'truncation', surface: 'a body cut in the serving layer, provoked on its longest row', total: null,
     why: 'the site list is the check\'s own registry, and it recomputes "how many cuts exist" from the source and compares against it: a .slice() that no site declares fails' },
   { script: 'check-upstream-echo', surface: 'a sync with an upstream count to echo', total: null,

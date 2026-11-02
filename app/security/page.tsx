@@ -40,14 +40,13 @@ export default function SecurityPage() {
             <h2 className="rd-section-h">Reporting</h2>
             <div className="rd-card">
               <p>
-                Email <a href="mailto:security@example.com">security@example.com</a> or
-                open a private advisory at <a href="https://github.com/your-org/nearpedia/security/advisories/new" target="_blank" rel="noopener noreferrer">github.com/your-org/nearpedia/security/advisories/new</a>.
-                GitHub advisories are encrypted end-to-end and give a private audit trail; pick whichever you prefer.
+                Open a private advisory at <a href={`${SITE.repo}/security/advisories/new`} target="_blank" rel="noopener noreferrer">{`${SITE.repo.replace(/^https:\/\//, '')}/security/advisories/new`}</a>.
+                GitHub advisories stay private between you and the maintainers until a fix ships.
                 For non-security questions, use the <a href="/contact">contact form</a>.
               </p>
               <p className="rd-muted">
                 Please include reproduction steps, affected URL or endpoint, browser/agent, and any logs you have.
-                If the issue is sensitive, request a PGP key in your first message and we will respond out-of-band.
+                If the issue is sensitive, say so in the advisory and we will agree on a channel there.
               </p>
             </div>
           </section>

@@ -92,8 +92,8 @@ function main(): number {
 
   // sync_log: a cap per source, enforced here rather than on the write path.
   //
-  // lib/sync-log.ts's recordSync() never trims, and four scripts (check-
-  // scheduled.ts, sync-docs.ts, sync-cips.ts, sync-github-releases.ts) write
+  // lib/sync-log.ts's recordSync() never trims, and three scripts (check-
+  // scheduled.ts, sync-docs.ts, sync-github-releases.ts) write
   // sync_log with raw SQL and would bypass a cap even if one existed there.
   // Enforcing it against the table instead means no writer can opt out by
   // choosing different SQL. Failures are never touched: an error from months

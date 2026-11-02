@@ -87,39 +87,3 @@ describe('sanitizeDiscourseHtml', () => {
   });
 });
 
-describe('sanitize + CIP auto-link integration', () => {
-  it('linkifies CIP-N mentions in doc HTML', () => {
-    const out = sanitizeDocHtml('<p>See CIP-42 for the new token standard.</p>');
-    expect(out).toContain('<a href="/cips/0042"');
-    expect(out).toContain('CIP-0042');
-    expect(out).toContain('new token standard');
-  });
-
-  it('linkifies CIP-N in Discourse HTML', () => {
-    const out = sanitizeDiscourseHtml('<p>Replaced by CIP-100.</p>');
-    expect(out).toContain('<a href="/cips/0100"');
-    expect(out).toContain('CIP-0100');
-  });
-
-  it('does not double-wrap CIPs already inside existing anchors', () => {
-    const out = sanitizeDocHtml('<p>Existing <a href="/cips/0042">CIP-0042</a> link plus CIP-7 plain.</p>');
-    // Count nested anchors — should be 0 (a-inside-a would be malformed).
-    const inner = out.match(/<a[^>]*>\s*<a/);
-    expect(inner).toBeNull();
-    // Plain CIP-7 still gets linkified to 0007.
-    expect(out).toContain('href="/cips/0007"');
-    expect(out).toContain('CIP-0007');
-  });
-
-  it('preserves padding inside HTML — CIP-1 → CIP-0001', () => {
-    const out = sanitizeDocHtml('Hello CIP-1 world');
-    expect(out).toContain('href="/cips/0001"');
-    expect(out).toContain('CIP-0001');
-  });
-
-  it('preserves XSS protection while linkifying', () => {
-    const out = sanitizeDocHtml('<script>alert(1)</script>CIP-9');
-    expect(out).not.toContain('<script');
-    expect(out).toContain('href="/cips/0009"');
-  });
-});

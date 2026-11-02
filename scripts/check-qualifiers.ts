@@ -9,15 +9,15 @@
  * Writing it found the
  * mechanical sweep's own flagship shape (G1: a count rendered from an array
  * a LIMIT filled, without saying so) was exactly what check-published-totals
- * fixed the day before this - list_cips/list_ecosystem_projects/
+ * fixed the day before this - list_ecosystem_projects/
  * list_github_discussions printed the page size as if it were the total.
- * Those three now say "showing N of M", so the sweep sees them clean; this
+ * Those now say "showing N of M", so the sweep sees them clean; this
  * exists to keep it that way and to reach every OTHER tool that could grow
  * the same shape tomorrow.
  *
- * WHAT IS DECLARED. One claim: list_cips's status column sanity check, which
- * grades the data rather than a rendered sentence, so it needs no live UI text
- * to anchor to. list_ecosystem_projects never renders a liveness sentence
+ * WHAT IS DECLARED. No claims today: the type and the walk stay so the next
+ * qualifier a tool prints can be declared in one entry. list_ecosystem_projects
+ * never renders a liveness sentence
  * ("N have not answered the probe"): liveness is written by check-ecosystem-
  * liveness.ts and read by the web UI, never by an MCP tool (grep confirms
  * zero mentions in mcp-server.ts).
@@ -72,15 +72,6 @@ interface SubsetClaim {
 type Claim = SubsetClaim;
 
 const CLAIMS: Claim[] = [
-  {
-    kind: 'subset',
-    tool: 'list_cips',
-    from: { exempt: 'list_cips builds its WHERE at runtime from the status argument, so there is no literal to anchor to. This claim grades the cips.status column itself: if every row carried one status the filter would be decoration wherever it is written.' },
-    claim: 'status filter (status=? argument)',
-    subset: `SELECT COUNT(*) n FROM cips WHERE status = 'Final'`,
-    population: `SELECT COUNT(*) n FROM cips`,
-    why: 'a status filter that matches every CIP would mean the column is uniform and the filter is decoration',
-  },
 ];
 
 function scalar(db: ReturnType<typeof getDb>, sql: string, params: unknown[] = []): number {

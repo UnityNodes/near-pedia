@@ -24,15 +24,15 @@ export default function TermsPage() {
         <h2>1. What {SITE.name} is</h2>
         <p>
           {SITE.name} is a free, read-only aggregator that pulls publicly available content from
-          several NEAR sources into one place, CIPs (your-org/CIPs), the
-          NEAR forum, the node and developer documentation,
-          official whitepapers, blog and release announcements, and lets you search across all
-          of them.
+          NEAR sources into one place: docs.near.org and the Nomicon, GitHub repositories, releases
+          and issues, npm and crates.io, the gov.near.org forum, House of Stake proposals, the NEAR
+          and NEAR AI blogs and videos, and the NEAR Catalog. It lets people and AI agents search
+          across all of them, and checks code against what NEAR looks like today.
         </p>
         <p>
           {SITE.name} is run by <strong>{SITE.publisher.name}</strong> as a convenience for the community. It
-          is <strong>not affiliated</strong> with the NEAR Foundation, NEAR Labs,
-          or any other organization in the official NEAR ecosystem.
+          is <strong>not affiliated</strong> with the NEAR Foundation or any other organization
+          in the NEAR ecosystem.
         </p>
         <p>By using the site you agree to these terms. If you don&apos;t, please don&apos;t use it.</p>
       </section>
@@ -40,13 +40,13 @@ export default function TermsPage() {
       <section>
         <h2>2. Source content stays with its owners</h2>
         <p>
-          Every CIP, forum post, doc page and announcement displayed on {SITE.name}
+          Every doc page, forum post, issue, release note and announcement displayed on {SITE.name}
           belongs to its original author or publisher. We aggregate and re-display it under
           fair-use / community-knowledge principles and always link back to the source. Nothing
           on {SITE.name} transfers copyright or grants new rights to anyone.
         </p>
         <p>
-          The {SITE.name} layout, design, and original code (the aggregator itself) is © 2026 {SITE.publisher.name}.
+          The {SITE.name} code (the aggregator itself) is © 2026 {SITE.publisher.name}, released under the MIT licence.
         </p>
       </section>
 

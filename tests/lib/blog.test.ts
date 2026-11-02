@@ -29,6 +29,14 @@ describe('getBlogPosts, the default list', () => {
     expect(ids).toEqual(['b1', 'n1', 'p1']);
   });
 
+  it('lists the near.org and near.ai blogs, whose rows carry the blog name as their tag, as blog posts served in full', () => {
+    seedPost('near-org:x', 'NEAR post', 'near.org blog', '2026-01-01T00:00:00Z');
+    seedPost('near-ai:y', 'NEAR AI post', 'near.ai blog', '2026-01-02T00:00:00Z');
+    const posts = getBlogPosts({ source: 'blog' }).posts;
+    expect(posts.map(p => p.id).sort()).toEqual(['near-ai:y', 'near-org:x']);
+    expect(posts.every(p => servesFullText(p.kind))).toBe(true);
+  });
+
   it('reads a tag as a whole word, so myblog is not a blog post and a reprint tagged news is not news', () => {
     seedPost('m1', 'Other', 'myblog', '2026-01-05T00:00:00Z');
     seedPost('t1', 'Reprint', 'third-party,news', '2026-01-07T00:00:00Z');

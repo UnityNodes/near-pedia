@@ -18,7 +18,7 @@
  * which of the caller's terms actually appeared in the answer
  * (search_github_issues, search_talks, find_code_examples). The other 8 -
  * search_release_notes, find_maintainer_guidance, find_expert,
- * ecosystem_dependency_graph, find_known_issues, find_cip_for_feature,
+ * ecosystem_dependency_graph, find_known_issues, a finder since removed,
  * detect_drift, learning_path - answered a nonsense multi-word query
  * confidently, because "real" and "value" and "information" match almost any
  * row and nothing said "information" was the only term that hit, or that none
@@ -151,7 +151,7 @@ async function main() {
       if (!registered.has(n)) problems.push({ where: n, what: 'published by the server but not registered at git HEAD', detail: 'the source scan or the registration has moved' });
     }
 
-    const fill: Record<string, unknown> = { string: 'yourchain', integer: 1, number: 1, boolean: false, array: ['yourchain'], object: {} };
+    const fill: Record<string, unknown> = { string: 'near', integer: 1, number: 1, boolean: false, array: ['near'], object: {} };
     const probe: Record<string, unknown> = { string: PROBE_STRING, integer: PROBE_INT, number: PROBE_INT, boolean: true, array: [PROBE_STRING], object: {} };
 
     let enums = 0;

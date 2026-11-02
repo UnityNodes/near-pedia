@@ -5,7 +5,7 @@
  * WHY THIS IS SHARED. A provenance audit on 2026-07-30 found 18 tables in the
  * NO-PRUNE class, and the cause was not carelessness: pruning was opt-in per
  * script with no helper, so the four writers that got it right each invented
- * their own guard. sync-cip-history does DELETE-then-reinsert,
+ * their own guard. One history sync did DELETE-then-reinsert,
  * lib/kb-drift.ts deletes what the current findings do not contain,
  * the calendar sync deletes what the run did not see but only if the parse was
  * non-empty, and sync-validator-registry refuses outright if more than a
@@ -41,7 +41,7 @@ export interface PruneSpec {
   keyColumn: string;
   /**
    * SQL expression for a composite identity, used instead of keyColumn. Several
-   * tables key on more than one column: foundation_kb is (category, key), and
+   * tables key on more than one column, e.g. (category, key), and
    * quoting a bare identifier cannot express that. The caller must build the
    * matching liveKeys the same way. NUL is the separator convention here because
    * it cannot occur in any upstream value.

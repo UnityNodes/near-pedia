@@ -4,15 +4,15 @@ import { statusTone } from '@/lib/status';
 import { PgRow } from '@/components/page-shell';
 
 const REPO_LABEL: Record<string, string> = {
-  'your-org/yourchain-node':     'NEAR Node',
-  'your-org/yourchain-app':      'NEAR App',
-  'your-org/yourchain-core':     'NEAR Core',
-  'your-org/CIPs':              'CIPs',
-  'your-org/docs':              'Docs',
-  'your-org/yourchain-openrpc':  'OpenRPC',
-  'your-org/yoursdk':               'YourSDK',
-  'your-org/yourchain-app-specs': 'App Specs',
-  'your-org/networks':          'Networks',
+  'near/nearcore':       'nearcore',
+  'near/near-sdk-rs':    'near-sdk-rs',
+  'near/near-api-js':    'near-api-js',
+  'near/mpc':            'Chain Signatures (mpc)',
+  'near/NEPs':           'NEPs',
+  'near/docs':           'docs.near.org',
+  'nearai/ironclaw':     'IronClaw',
+  'Near-One/omni-bridge': 'Omni Bridge',
+  'defuse-protocol/sdk-monorepo': 'Intents SDK',
 };
 
 export { REPO_LABEL };

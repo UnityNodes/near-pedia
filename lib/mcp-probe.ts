@@ -81,7 +81,7 @@ export async function startScratchMcp(opts: StartOptions): Promise<ScratchMcp> {
   // app - lets this run against a worktree checkout, which has no data/ of
   // its own, without a symlink (see worktree-data-symlink-hazard: a
   // symlinked data/ has previously replaced the live DB with a broken link).
-  const src = new Database(opts.sourceDb ?? process.env.DB_PATH ?? repoPath('data', 'cips.db'), { readonly: true });
+  const src = new Database(opts.sourceDb ?? process.env.DB_PATH ?? repoPath('data', 'nearpedia.db'), { readonly: true });
   try {
     src.prepare('VACUUM INTO ?').run(copy);
   } finally {

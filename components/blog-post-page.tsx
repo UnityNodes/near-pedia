@@ -1,4 +1,3 @@
-import Link from 'next/link';
 import { notFound, permanentRedirect } from 'next/navigation';
 import { ArrowLeft, ExternalLink } from 'lucide-react';
 import { authorLabel, getBlogPost, getBlogPosts, isBlogSource, kindLabel, servesFullText, shortLine, sourceHost } from '@/lib/blog';
@@ -6,7 +5,6 @@ import type { BlogKind, BlogPost } from '@/lib/blog';
 import { withHeadingIds } from '@/lib/blog-html';
 import { formatDateLong } from '@/lib/utils';
 import { sanitizeDocHtml } from '@/lib/sanitize';
-import { extractCipReferences } from '@/lib/cip-autolink';
 import { JsonLd } from '@/components/json-ld';
 import { AsideCard, BackLink, KeyValues, LinkCards, MetaLine, ReaderHead, ReaderPage, RelCard } from '@/components/reader-shell';
 import { TocScrollspy } from '@/components/toc-scrollspy';
@@ -47,10 +45,6 @@ export function BlogPostPageContent({ id }: { id: string }) {
   const showContents = headings.filter(h => h.level === 2).length >= MIN_HEADINGS_FOR_CONTENTS;
   const paragraphs = fullText && !body ? paragraphsOf(post.content_text) : [];
   const excerpt = fullText ? '' : shortLine(post.excerpt, post.content_text, EXCERPT_CHARS);
-
-  const cipChips = fullText
-    ? Array.from(new Set([...extractCipReferences(post.title), ...extractCipReferences(post.content_text ?? '')])).sort()
-    : [];
 
   const related = isBlogSource(post.kind)
     ? getBlogPosts({ source: post.kind, perPage: 4 }).posts.filter(p => p.id !== post.id).slice(0, 3)
@@ -154,13 +148,6 @@ export function BlogPostPageContent({ id }: { id: string }) {
               {SITE.name} shows the opening and links to the original, which is where it belongs.
             </p>
           </section>
-        ) : null}
-
-        {cipChips.length > 0 ? (
-          <div className="rd-chips">
-            <span className="rd-chips-label">CIPs mentioned</span>
-            {cipChips.map(num => <Link key={num} href={`/cips/${num}`} className="rd-chip">CIP-{num}</Link>)}
-          </div>
         ) : null}
 
         {contents ? (

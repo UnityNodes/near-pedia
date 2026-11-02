@@ -6,7 +6,7 @@
  * declared. All of that can pass while a tool selects the one field that
  * answers the question and drops it before printing.
  *
- * This has happened: get_cip lost approved_date, get_discussion lost
+ * This has happened: a proposal getter lost approved_date, get_discussion lost
  * reply count/likes/source URL, and a deadlines tool fetched three columns
  * and printed none of them - the question, without the answer already in
  * hand while asking it.
@@ -33,12 +33,6 @@ const NOT_FOR_PRINT: Record<string, Record<string, string>> = {
   list_ecosystem_projects: { slug: 'url key, and the url itself is printed' },
   list_github_discussions: {
     number: 'the tail of the url, which is printed; the GraphQL node id is what get_github_discussion needs and that IS printed',
-  },
-  detect_cip_dependency_chain: {
-    pr_number: 'read by cipLabel(), which prints it only for draft rows whose cip_number is NULL; on a numbered CIP it is correctly silent',
-  },
-  find_cip_for_feature: {
-    pr_number: 'read by cipLabel(), which prints it only for draft rows whose cip_number is NULL; on a numbered CIP it is correctly silent',
   },
   get_latest_release: {
     prerelease: 'read by latestStableByLine(), which only picks a release whose tag looks stable AND that GitHub does not flag as a prerelease, so the printed release is stable by construction; a newer tag with an unstable-looking shape is named in the printed "Note:" line',

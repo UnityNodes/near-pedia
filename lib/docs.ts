@@ -3,8 +3,8 @@ import { ftsPrefixMatch } from './rank';
 import { titleCaseSlug } from './utils';
 
 export const DOC_SOURCE_LABELS: Record<string, string> = {
-  'yourchain-node': 'Node docs',
-  'yourchain-app': 'App docs',
+  docs: 'docs.near.org',
+  nomicon: 'Nomicon',
 };
 
 export function docHost(url: string | null | undefined): string | null {

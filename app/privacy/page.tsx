@@ -24,8 +24,8 @@ export default function PrivacyPage() {
         <h2>1. Who we are</h2>
         <p>
           {SITE.name} is operated by <strong>{SITE.publisher.name}</strong>. It is a read-only aggregator of
-          publicly available NEAR content (CIPs, forum, docs,
-          whitepapers, blog, releases). No accounts, no
+          publicly available NEAR content (docs, GitHub, packages, forum,
+          governance, blogs, videos, releases). No accounts, no
           logins, no profiles.
         </p>
         <p>

@@ -17,7 +17,7 @@
 # the local backup: it logs its own error row and the script still exits 0.
 #
 # Env vars (optional):
-#   PEDIA_DB             — source DB       (default: /srv/nearpedia/data/cips.db)
+#   PEDIA_DB             — source DB       (default: /srv/nearpedia/data/nearpedia.db)
 #   PEDIA_BACKUP_DIR     — local dir       (default: /var/backups/nearpedia)
 #   RETENTION_DAYS         — local keep days (default: 30)
 #   PEDIA_OFFBOX_REMOTE  — rclone target   (default: remote:nearpedia-backups)
@@ -29,7 +29,7 @@
 
 set -uo pipefail
 
-DB="${PEDIA_DB:-/srv/nearpedia/data/cips.db}"
+DB="${PEDIA_DB:-/srv/nearpedia/data/nearpedia.db}"
 DIR="${PEDIA_BACKUP_DIR:-/var/backups/nearpedia}"
 RETAIN="${RETENTION_DAYS:-30}"
 REMOTE="${PEDIA_OFFBOX_REMOTE:-remote:nearpedia-backups}"
@@ -54,7 +54,7 @@ fi
 mkdir -p "$DIR"
 
 STAMP=$(date +%F)
-DEST="$DIR/cips-$STAMP.db"
+DEST="$DIR/nearpedia-$STAMP.db"
 
 echo "[$(date -Iseconds)] backing up $DB -> $DEST"
 
@@ -98,10 +98,10 @@ fi
 chmod 600 "$DEST.gz" || true
 
 # Prune older than RETAIN days.
-find "$DIR" -type f -name 'cips-*.db.gz' -mtime "+$RETAIN" -print -delete
+find "$DIR" -type f -name 'nearpedia-*.db.gz' -mtime "+$RETAIN" -print -delete
 
 SIZE=$(du -h "$DEST.gz" | cut -f1)
-COUNT=$(find "$DIR" -name 'cips-*.db.gz' | wc -l)
+COUNT=$(find "$DIR" -name 'nearpedia-*.db.gz' | wc -l)
 echo "[$(date -Iseconds)] backup ok — $DEST.gz ($SIZE), $COUNT backups retained"
 log_run backup-db success 1 ""
 
@@ -112,25 +112,25 @@ if ! command -v rclone >/dev/null; then
 fi
 
 echo "[$(date -Iseconds)] off-box: $DEST.gz -> $REMOTE/"
-if rclone copyto "$DEST.gz" "$REMOTE/cips-$STAMP.db.gz" \
+if rclone copyto "$DEST.gz" "$REMOTE/nearpedia-$STAMP.db.gz" \
      --timeout 10m --retries 3 --low-level-retries 10 2>/tmp/nearpedia-offbox-err.$$ \
-   && rclone check "$DIR" "$REMOTE" --include "cips-$STAMP.db.gz" --one-way --max-depth 1 \
+   && rclone check "$DIR" "$REMOTE" --include "nearpedia-$STAMP.db.gz" --one-way --max-depth 1 \
      --timeout 5m 2>>/tmp/nearpedia-offbox-err.$$; then
   # Checksum verified against the remote (Drive holds md5; no download).
   # Sundays also keep a weekly copy (server-side copy, no re-upload).
   if [[ $(date +%u) == 7 ]]; then
-    rclone copyto "$REMOTE/cips-$STAMP.db.gz" "$REMOTE/weekly/cips-$STAMP.db.gz" \
+    rclone copyto "$REMOTE/nearpedia-$STAMP.db.gz" "$REMOTE/weekly/nearpedia-$STAMP.db.gz" \
       --timeout 10m 2>>/tmp/nearpedia-offbox-err.$$ \
       || echo "[$(date -Iseconds)] off-box weekly copy FAILED (daily copy is fine)" >&2
   fi
   # --max-depth 1: include patterns match at any depth, so without it the
   # daily rule would also delete the weekly copies.
-  rclone delete "$REMOTE" --min-age "${OFFBOX_RETAIN}d" --include 'cips-*.db.gz' --max-depth 1 \
+  rclone delete "$REMOTE" --min-age "${OFFBOX_RETAIN}d" --include 'nearpedia-*.db.gz' --max-depth 1 \
     --timeout 5m 2>>/tmp/nearpedia-offbox-err.$$ || true
-  rclone delete "$REMOTE/weekly" --min-age "${OFFBOX_WEEKLY_RETAIN}d" --include 'cips-*.db.gz' \
+  rclone delete "$REMOTE/weekly" --min-age "${OFFBOX_WEEKLY_RETAIN}d" --include 'nearpedia-*.db.gz' \
     --timeout 5m 2>>/tmp/nearpedia-offbox-err.$$ || true
-  RCOUNT=$(rclone lsf "$REMOTE" --files-only --include 'cips-*.db.gz' 2>/dev/null | wc -l)
-  WCOUNT=$(rclone lsf "$REMOTE/weekly" --files-only --include 'cips-*.db.gz' 2>/dev/null | wc -l)
+  RCOUNT=$(rclone lsf "$REMOTE" --files-only --include 'nearpedia-*.db.gz' 2>/dev/null | wc -l)
+  WCOUNT=$(rclone lsf "$REMOTE/weekly" --files-only --include 'nearpedia-*.db.gz' 2>/dev/null | wc -l)
   echo "[$(date -Iseconds)] off-box ok — checksum verified, $RCOUNT daily + $WCOUNT weekly remote copies"
   log_run backup-offbox success 1 ""
 else

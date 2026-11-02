@@ -35,7 +35,7 @@ const ALLOW_LIVE_IO = process.env.ALLOW_LIVE_IO === '1';
  *
  * DB_PATH is intentionally NOT here. vitest.config.ts pins it to ':memory:' and
  * that pin is load-bearing; removing the value would hand the tests the real
- * data/cips.db.
+ * data/nearpedia.db.
  */
 const CREDENTIAL_PATTERNS: RegExp[] = [
   /_API_KEY$/,

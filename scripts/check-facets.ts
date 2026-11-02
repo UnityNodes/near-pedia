@@ -92,36 +92,10 @@ const FACETS: Facet[] = [
     offeredWithoutRows: { all: 'the no-filter sentinel, not a type' },
   },
   {
-    tool: 'list_cips', param: 'status',
-    surface: 'a CIP status',
-    held: col('SELECT DISTINCT status FROM cips ORDER BY 1'),
-    // The enum is derived from lib/status.ts's STATUS_COLORS keys, which
-    // names every status the CIP process defines (including Ethereum/Bitcoin-
-    // style terminal states no NEAR CIP has reached yet) so the palette
-    // has a color ready the day one does. An offered value with 0 current
-    // rows is that palette working as intended, not a stale enum entry.
-    offeredWithoutRows: {
-      all: 'the no-filter sentinel',
-      Approved: 'a status this process defines; no CIP has reached it yet',
-      Active: 'a status this process defines; no CIP has reached it yet',
-      Proposed: 'a status this process defines; no CIP has reached it yet',
-      Stagnant: 'a status this process defines; no CIP has reached it yet',
-      Rejected: 'a status this process defines; no CIP has reached it yet',
-      Replaced: 'a status this process defines; no CIP has reached it yet',
-      Obsolete: 'a status this process defines; no CIP has reached it yet',
-      Superseded: 'a status this process defines; no CIP has reached it yet',
-    },
-  },
-  {
     tool: 'search_github_issues', param: 'state',
     surface: 'a GitHub issue/PR state',
     held: col('SELECT DISTINCT state FROM github_items ORDER BY 1'),
     offeredWithoutRows: { all: 'the no-filter sentinel' },
-  },
-  {
-    tool: 'get_started_guide', param: 'background',
-    surface: 'a reader background', held: null,
-    why: 'a persona the answer is written for, not a selector over stored rows',
   },
 ];
 

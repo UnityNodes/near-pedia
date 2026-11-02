@@ -203,8 +203,8 @@ export async function guardSync<T>(
   try {
     const out = await fn();
     // The work is done. A logging problem must not turn a successful run into a
-    // failed one, and must not be silent either: refresh-trending closes the
-    // connection on its way out, which made the success write throw after the
+    // failed one, and must not be silent either: a script that closes the
+    // connection on its way out which made the success write throw after the
     // sync had already succeeded.
     try {
       const live = dbOverride ?? getDb();

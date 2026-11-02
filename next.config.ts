@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { REMOTE_IMAGES } from "./lib/remote-images";
 
 // Content-Security-Policy is set per-request by middleware.ts so
 // each response carries a fresh nonce. Other headers don't depend
@@ -41,15 +42,7 @@ const nextConfig: NextConfig = {
   // to .next, so nothing changes unless the variable is set (see CLAUDE.md).
   distDir: process.env.NEXT_DIST_DIR || '.next',
   images: {
-    remotePatterns: [
-      { protocol: 'https', hostname: 'i.ytimg.com' },
-      // sync-youtube.ts writes thumbnail_url on this host, not i.ytimg.com -
-      // every video thumbnail 500'd /videos until this was allowlisted too.
-      { protocol: 'https', hostname: 'img.youtube.com' },
-      // Ecosystem project logos, proxied through /_next/image (so CSP img-src
-      // stays 'self' - the browser never talks to yourchain.example directly).
-      { protocol: 'https', hostname: 'yourchain.example', pathname: '/images/**' },
-    ],
+    remotePatterns: REMOTE_IMAGES.map((p) => ({ ...p })),
   },
   reactCompiler: true,
   experimental: {
@@ -90,10 +83,6 @@ const nextConfig: NextConfig = {
       // generic /api/* security-only rule below.
       {
         source: '/api/health',
-        headers: [{ key: 'Cache-Control', value: 'no-store' }],
-      },
-      {
-        source: '/api/cips/:id/tldr',
         headers: [{ key: 'Cache-Control', value: 'no-store' }],
       },
       {

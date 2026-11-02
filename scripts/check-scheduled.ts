@@ -40,23 +40,10 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 /** Scripts that are correctly not on a schedule, each with why. */
 const MANUAL: Record<string, string> = {
   'migrate-board-status': 'one-off schema migration',
-  'migrate-stats-nulls': 'one-off data-repair migration',
-  'migrate-from-nearpedia': 'one-time migration from the pre-template nearpedia.db, already run',
-  'backfill-video-channels': 'one-off backfill, re-run by hand if channel data goes stale again',
   'backfill-video-dates': 'one-off backfill for videos migrated without a real published_at',
-  'fix-duplicate-cips': 'one-off data-repair, re-run by hand if the underlying dupe bug recurs',
-  'fix-blog-releases': 'one-off data-repair for github_releases mirrored into blog_posts',
-  'sync-cips': 'template source (CIPs); NEAR has none, its standards come from sync-neps',
-  'sync-cip-assets': 'template source (CIP assets); NEAR has no CIPs',
-  'backfill-cip-history': 'template source (CIP history); NEAR has no CIPs',
-  'sync-foundation': 'template source (a foundation team page); not read for NEAR',
-  'sync-papers': 'template source (arXiv / IACR papers); not configured for NEAR',
-  'backfill-tldrs': 'template CIP TL;DRs through the LLM cascade; NEAR has no CIPs',
-  'enrich-docs': 'template migration folding repo_docs/adrs/rpc tables into doc_pages; this index has none of those tables',
   'fix-flattened-doc-code': 'one-off repair for content_text flattened by a since-fixed cleanup-doc-html.ts bug, re-run by hand if it recurs',
-  'fix-orphaned-embeddings': 'one-off prune of embedding_chunks/embedding_doc_hash rows left behind by a blog_posts/whitepapers id-scheme change, re-run by hand if new orphans appear',
+  'fix-orphaned-embeddings': 'one-off prune of embedding_chunks/embedding_doc_hash rows left behind by a blog_posts id-scheme change, re-run by hand if new orphans appear',
   'backfill-blog-text': 'one-off repair of blog_posts.content_text glued by the old node-html-parser .text, re-derived offline from content_html; re-run by hand if it recurs',
-  'alert-cip-discord': 'not enabled here: posts to a Discord channel and needs DISCORD_CIP_WEBHOOK_URL, which is not set on this box. Wire it into the tick when a channel exists; scheduling it now would only run an inert script',
   'push-radar-tg': 'not enabled here: posts to a Telegram channel and needs TELEGRAM_BOT_TOKEN and TELEGRAM_CHANNEL_ID, neither set on this box. Wire it into the tick when a channel exists',
   'alert-crash': "invoked by sync-tick's own run() wrapper on a non-zero exit, never on a timer; it files the sync_log row a script that died before reaching logRun could not file for itself, and a healthy box never runs it at all",
   'fix-vec': 'diagnostic/repair for the sqlite-vec index, run by hand',
@@ -86,8 +73,8 @@ function main(): void {
   const unscheduled: string[] = [];
 
   for (const name of scripts) {
-    // \b, not (^|\s)...(\s|$): `run backfill-tldrs;` and the `for s in ...
-    // build-weekly-digest; do` shell syntax both butt a name straight up
+    // \b, not (^|\s)...(\s|$): `run check-failures;` and the `for s in ...
+    // sync-youtube; do` shell syntax both butt a name straight up
     // against a semicolon with no trailing whitespace, which a literal
     // whitespace-or-end boundary misses entirely - it reported both of
     // those as unscheduled the first time this ran against the real files.

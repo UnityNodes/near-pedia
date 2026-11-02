@@ -5,7 +5,7 @@ export type DocKind = 'official' | 'ecosystem' | 'code';
 export const DOC_PER_PAGE = 30;
 export const MAIN_SOURCE_MIN_PAGES = 20;
 
-export const OFFICIAL_DOC_SOURCES = ['yourchain-node', 'yourchain-app'] as const;
+export const OFFICIAL_DOC_SOURCES = ['docs', 'nomicon'] as const;
 export const CODE_DOC_SOURCES = ['github-code', 'npm-package'] as const;
 
 export const DOC_KINDS: readonly { key: DocKind; label: string; hint: string }[] = [

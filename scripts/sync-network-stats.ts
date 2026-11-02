@@ -1,8 +1,8 @@
 /**
  * Track NEAR-pedia content growth metrics.
  *
- * A content-count proxy for ecosystem activity (CIPs, forum, docs, videos,
- * radar) - separate from the live NEAR on-chain/NEAR-market stats served
+ * A content-count proxy for ecosystem activity (forum, GitHub, docs, videos,
+ * blog, radar) - separate from the live NEAR on-chain/NEAR-market stats served
  * by get_network_state (Explorer + CoinGecko). Updated every 6 hours via the
  * slow bucket.
  */
@@ -13,9 +13,6 @@ import { isoNowSql } from '../lib/formats';
 
 interface Snapshot {
   snapshot_at: string;
-  cips: number;
-  cips_in_review: number;
-  cips_final: number;
   forum_topics: number;
   forum_posts: number;
   github_items_open: number;
@@ -27,6 +24,11 @@ interface Snapshot {
   radar_important: number;
 }
 
+const CURRENT_COLUMNS = new Set([
+  'id', 'snapshot_at', 'forum_topics', 'forum_posts', 'github_items_open', 'github_items_closed',
+  'docs', 'videos', 'blog_posts', 'radar_critical', 'radar_important',
+]);
+
 async function main() {
   const db = getDb();
 
@@ -35,13 +37,10 @@ async function main() {
     CREATE TABLE IF NOT EXISTS network_stats (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       snapshot_at TEXT NOT NULL,
-      cips INTEGER NOT NULL,
-      cips_in_review INTEGER NOT NULL,
-      cips_final INTEGER NOT NULL,
       forum_topics INTEGER NOT NULL,
       forum_posts INTEGER NOT NULL,
-      github_items_open INTEGER NOT NULL,
-      github_items_closed INTEGER NOT NULL,
+      github_items_open INTEGER,
+      github_items_closed INTEGER,
       docs INTEGER NOT NULL,
       videos INTEGER NOT NULL,
       blog_posts INTEGER NOT NULL,
@@ -51,24 +50,24 @@ async function main() {
     CREATE INDEX IF NOT EXISTS idx_network_stats_at ON network_stats(snapshot_at DESC);
   `);
 
-  // Existing DBs carry four NEAR-era columns (proposals_total/open/approved,
-  // mailing_threads) declared NOT NULL, so simply dropping them from the INSERT
-  // would fail the constraint. Rebuild the table once, preserving history.
+  // Existing DBs carry columns from the template this engine came from,
+  // declared NOT NULL, so simply dropping them from the INSERT would fail the
+  // constraint. Any column outside the current set triggers one rebuild that
+  // keeps the history of the columns still counted.
   const cols = db.prepare('PRAGMA table_info(network_stats)').all() as Array<{ name: string }>;
-  if (cols.some((c) => c.name === 'proposals_total')) {
+  if (cols.some((c) => !CURRENT_COLUMNS.has(c.name))) {
     db.exec(`
       BEGIN;
       CREATE TABLE network_stats_new (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         snapshot_at TEXT NOT NULL,
-        cips INTEGER NOT NULL, cips_in_review INTEGER NOT NULL, cips_final INTEGER NOT NULL,
         forum_topics INTEGER NOT NULL, forum_posts INTEGER NOT NULL,
-        github_items_open INTEGER NOT NULL, github_items_closed INTEGER NOT NULL,
+        github_items_open INTEGER, github_items_closed INTEGER,
         docs INTEGER NOT NULL, videos INTEGER NOT NULL, blog_posts INTEGER NOT NULL,
         radar_critical INTEGER NOT NULL, radar_important INTEGER NOT NULL
       );
       INSERT INTO network_stats_new
-        SELECT id, snapshot_at, cips, cips_in_review, cips_final,
+        SELECT id, snapshot_at,
                forum_topics, forum_posts, github_items_open, github_items_closed,
                docs, videos, blog_posts, radar_critical, radar_important
         FROM network_stats;
@@ -77,7 +76,7 @@ async function main() {
       CREATE INDEX IF NOT EXISTS idx_network_stats_at ON network_stats(snapshot_at DESC);
       COMMIT;
     `);
-    console.log('[sync-network-stats] migrated network_stats: dropped 4 NEAR-era columns');
+    console.log('[sync-network-stats] migrated network_stats: dropped the template columns');
   }
 
   const c = (sql: string, ...params: unknown[]) =>
@@ -85,9 +84,6 @@ async function main() {
 
   const snapshot: Snapshot = {
     snapshot_at: new Date().toISOString(),
-    cips: c('SELECT COUNT(*) c FROM cips'),
-    cips_in_review: c("SELECT COUNT(*) c FROM cips WHERE status = 'In Review'"),
-    cips_final: c("SELECT COUNT(*) c FROM cips WHERE status IN ('Final', 'Active', 'Approved')"),
     forum_topics: c('SELECT COUNT(*) c FROM forum_topics'),
     forum_posts: c('SELECT COUNT(*) c FROM forum_posts'),
     // No repo carve-out: the excluded repo that another deployment carves out does not exist here,
@@ -110,13 +106,13 @@ async function main() {
 
   db.prepare(`
     INSERT INTO network_stats (
-      snapshot_at, cips, cips_in_review, cips_final,
+      snapshot_at,
       forum_topics, forum_posts,
       github_items_open, github_items_closed,
       docs, videos, blog_posts,
       radar_critical, radar_important
     ) VALUES (
-      @snapshot_at, @cips, @cips_in_review, @cips_final,
+      @snapshot_at,
       @forum_topics, @forum_posts,
       @github_items_open, @github_items_closed,
       @docs, @videos, @blog_posts,
@@ -131,7 +127,7 @@ async function main() {
   `).run();
 
   const remaining = c('SELECT COUNT(*) c FROM network_stats');
-  console.log(`Network stats snapshot stored. CIPs: ${snapshot.cips}, Forum: ${snapshot.forum_topics} topics, Docs: ${snapshot.docs}. Total snapshots: ${remaining}`);
+  console.log(`Network stats snapshot stored. Forum: ${snapshot.forum_topics} topics, Docs: ${snapshot.docs}. Total snapshots: ${remaining}`);
 }
 
 guardSync('network-stats', main).catch((err) => {

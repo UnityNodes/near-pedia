@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { FORUM_ORIGIN } from '@/lib/gov-forum';
 import { getTopics, getCategories, getTopicsTotalCount } from '@/lib/forum';
 import type { SortOption } from '@/lib/forum';
 import { TopicRow } from '@/components/topic-row';
@@ -16,7 +17,7 @@ const STAGGER_ROWS = 14;
 
 export const metadata = pageMetadata({
   title: 'Discussions',
-  description: 'Forum topics from forum.yourchain.example with full-text search, categories, and sorting.',
+  description: 'gov.near.org threads on House of Stake, staking, protocol and developer standards, with full-text search, categories and sorting.',
   path: '/discussions',
 });
 
@@ -56,13 +57,13 @@ export default async function DiscussionsPage({ searchParams }: PageProps) {
       description={
         <>
           Forum threads and answers, mirrored from{' '}
-          <ExtLink href="https://forum.yourchain.example">forum.yourchain.example ↗</ExtLink>
+          <ExtLink href={FORUM_ORIGIN}>gov.near.org ↗</ExtLink>
           {' '}with full-text search, categories and sorting.
         </>
       }
       stat={{ value: corpusTotal, unit: corpusTotal === 1 ? 'topic' : 'topics' }}
       synced={getLastSync('forum_topics')}
-      source="forum.yourchain.example"
+      source="gov.near.org"
     >
       <TopicFilters
         categories={categories}

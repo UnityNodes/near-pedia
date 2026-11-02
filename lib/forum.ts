@@ -1,4 +1,5 @@
 import { getDb } from './db';
+import { FORUM_ORIGIN } from './gov-forum';
 import { ftsPrefixMatch } from './rank';
 import { htmlToTextWithCode } from './html-extract';
 import { SITE } from './site.config';
@@ -162,7 +163,7 @@ async function fetchFromDiscourse(topicId: number): Promise<DiscourseTopicJson |
     // it is a request that never finishes. Eight seconds is generous for a
     // Discourse topic and short enough that the page falls back to what the
     // database already holds.
-    const res = await fetch(`https://forum.yourchain.example/t/${topicId}.json`, {
+    const res = await fetch(`${FORUM_ORIGIN}/t/${topicId}.json`, {
       headers: { 'User-Agent': `${SITE.name}/1.0` },
       next: { revalidate: 3600 },
       signal: AbortSignal.timeout(8_000),
@@ -189,7 +190,7 @@ export async function getTopicWithPosts(topicId: number): Promise<TopicWithPosts
     if (!data) return null;
 
     const now = new Date().toISOString();
-    const url = `https://forum.yourchain.example/t/${data.slug}/${data.id}`;
+    const url = `${FORUM_ORIGIN}/t/${data.slug}/${data.id}`;
     const rawPosts = data.post_stream?.posts ?? [];
 
     // posts_synced_at was missing from this column list, so a topic first

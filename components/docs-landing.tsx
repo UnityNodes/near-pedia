@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Code2, Compass, FileText, Server } from 'lucide-react';
+import { Bot, Code2, Compass, Server } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { docHost, getDocIdByUrl } from '@/lib/docs';
 import { SITE_URL } from '@/lib/seo';
@@ -7,31 +7,31 @@ import { SITE_URL } from '@/lib/seo';
 const HERO_CARDS: { title: string; desc: string; doc?: string; href?: string; icon: LucideIcon; go: string }[] = [
   {
     title: 'New to NEAR?',
-    desc: 'Overview of the NEAR network and its architecture.',
-    doc: 'https://docs.example.com/overview',
+    desc: 'What the network is, how accounts and access keys work, and where to start.',
+    doc: 'https://docs.near.org/getting-started/what-is-near',
     icon: Compass,
     go: 'Read the overview',
   },
   {
-    title: 'Run a Node',
-    desc: 'Step-by-step node onboarding, hardware requirements, and deployment.',
-    doc: 'https://docs.example.com/run-a-node',
-    icon: Server,
-    go: 'Open the node guide',
-  },
-  {
-    title: 'Build an Application',
-    desc: 'Deploy your own contract or application on NEAR.',
-    doc: 'https://docs.example.com/build',
+    title: 'Your first contract',
+    desc: 'Write, test and deploy a smart contract in Rust or JavaScript.',
+    doc: 'https://docs.near.org/smart-contracts/quickstart',
     icon: Code2,
     go: 'Start building',
   },
   {
-    title: 'Read the Whitepaper',
-    desc: 'The foundational whitepaper describing NEAR architecture and vision.',
-    href: '/whitepapers/yourchain-whitepaper',
-    icon: FileText,
-    go: 'Read the whitepaper',
+    title: 'Tools for AI agents',
+    desc: 'What NEAR gives an agent: MCP servers, skills and documentation in agent-readable form.',
+    doc: 'https://docs.near.org/getting-started/tools-for-ai',
+    icon: Bot,
+    go: 'See the tools',
+  },
+  {
+    title: 'Validators',
+    desc: 'How block producers are chosen, paid and rotated each epoch.',
+    doc: 'https://docs.near.org/protocol/network/validators',
+    icon: Server,
+    go: 'Read about validators',
   },
 ];
 

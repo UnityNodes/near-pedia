@@ -17,7 +17,7 @@
  * comparison 'integrity-check' declines to make.
  *
  * Read-only with respect to production: the copy is made with VACUUM INTO and
- * deleted afterwards. Nothing here writes to data/cips.db.
+ * deleted afterwards. Nothing here writes to the live database.
  *
  * Cadence: daily. Log: sync_log source='fts-freshness'.
  */
@@ -37,14 +37,10 @@ import { isEntrypoint } from '../lib/is-entrypoint';
  * somebody makes here instead of a silence.
  */
 const INDEXES: Array<{ fts: string; base: string }> = [
-  { fts: 'cips_fts', base: 'cips' },
   { fts: 'forum_fts', base: 'forum_topics' },
   { fts: 'docs_fts', base: 'doc_pages' },
-  { fts: 'whitepapers_fts', base: 'whitepapers' },
-  { fts: 'cip_attachments_fts', base: 'cip_attachments' },
   { fts: 'embedding_chunks_fts', base: 'embedding_chunks' },
   { fts: 'blog_posts_fts', base: 'blog_posts' },
-  { fts: 'foundation_kb_fts', base: 'foundation_kb' },
   { fts: 'youtube_videos_fts', base: 'youtube_videos' },
 ];
 

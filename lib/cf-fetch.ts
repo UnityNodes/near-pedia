@@ -1,6 +1,5 @@
 /**
- * Cloudflare-challenge bypass for forum.yourchain.example (Discourse) and
- * blog.yourchain.example (Ghost). The cf_clearance cookie is bound to the browser's
+ * Cloudflare-challenge bypass for a Discourse forum and a Ghost blog. The cf_clearance cookie is bound to the browser's
  * TLS/JA3 fingerprint, so replaying it via plain fetch/Playwright-request still
  * 403s. The only reliable path: a REAL headful Chrome (under xvfb) solves the
  * challenge once, then ALL requests go through in-page fetch() (page.evaluate)

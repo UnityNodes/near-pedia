@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { getEcosystemProjects } from '@/lib/ecosystem';
+import { isProxiedImage } from '@/lib/remote-images';
 import { Chip, ChipRow, ExtLink, ListPager, ListSearch } from '@/components/list-tools';
 import { PageShell, PgFoot } from '@/components/page-shell';
 import { EmptyAnimation } from '@/components/resources-empty-animation';
@@ -20,7 +21,7 @@ const MAX_DESCRIPTION = 200;
 
 export const metadata = pageMetadata({
   title: 'Ecosystem Projects',
-  description: 'NEAR ecosystem catalog: wallets, infrastructure, tooling and other projects building on NEAR. Sourced from yourchain.example/ecosystem.',
+  description: 'NEAR ecosystem catalog: wallets, infrastructure, tooling and other projects building on NEAR. Sourced from the NEAR Catalog, with TVL from DefiLlama and incidents from its hacks list.',
   path: '/ecosystem',
 });
 
@@ -78,13 +79,13 @@ export default async function EcosystemPage({ searchParams }: PageProps) {
       description={
         <>
           Catalog of projects building on NEAR, sourced from{' '}
-          <ExtLink href="https://yourchain.example/ecosystem">yourchain.example/ecosystem ↗</ExtLink>
+          <ExtLink href="https://nearcatalog.xyz">nearcatalog.xyz ↗</ExtLink>
           . Each card links back to the upstream project listing.
         </>
       }
       stat={{ value: grandTotal, unit: grandTotal === 1 ? 'project' : 'projects' }}
       synced={getLastSync('ecosystem_projects')}
-      source="yourchain.example/ecosystem"
+      source="nearcatalog.xyz"
     >
       <JsonLd payload={schemas} />
 
@@ -141,7 +142,7 @@ export default async function EcosystemPage({ searchParams }: PageProps) {
                   <span className="pg-tag" data-tone="lime">{p.category ?? 'Other'}</span>
                 </div>
                 <div className="eco-name">
-                  {p.logo && (
+                  {isProxiedImage(p.logo) && (
                     <span className="eco-logo">
                       <Image src={p.logo} alt="" fill sizes="36px" />
                     </span>

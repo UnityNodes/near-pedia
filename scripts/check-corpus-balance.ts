@@ -13,8 +13,8 @@
  * THE INSTANCE THAT NAMED IT. The docker registry writes the image SIZE
  * ("815.6 MB") into sdk_versions.description, unique per version, so the
  * (name, description) dedup that collapses npm prose never collapsed docker:
- * 537 of 595 sdk_version chunks (90%) were "your-org/yourchain-sdk\n\n1050.5 MB"
- * - ~30 chars, no prose. 396 of them FTS-matched "yourchain-sdk", diluting every SDK
+ * 537 of 595 sdk_version chunks (90%) were "<org>/<sdk>\n\n1050.5 MB"
+ * - ~30 chars, no prose. 396 of them FTS-matched the SDK's name, diluting every SDK
  * retrieval, and the source_types:['sdk_version'] facet returned a wall of
  * sizes. check-index-coverage was GREEN throughout, keying on the same
  * non-collapsing representative. build-embeddings now excludes docker, but the

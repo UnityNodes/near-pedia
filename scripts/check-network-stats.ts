@@ -43,9 +43,6 @@ async function main(): Promise<void> {
   // Each snapshot column and the live count it must reflect. Mirrors
   // sync-network-stats.ts's own SELECTs exactly - see scripts/sync-network-stats.ts.
   const metrics: Array<{ key: string; live: number }> = [
-    { key: 'cips', live: c('SELECT COUNT(*) c FROM cips') },
-    { key: 'cips_in_review', live: c("SELECT COUNT(*) c FROM cips WHERE status = 'In Review'") },
-    { key: 'cips_final', live: c("SELECT COUNT(*) c FROM cips WHERE status IN ('Final', 'Active', 'Approved')") },
     { key: 'forum_topics', live: c('SELECT COUNT(*) c FROM forum_topics') },
     { key: 'forum_posts', live: c('SELECT COUNT(*) c FROM forum_posts') },
     { key: 'github_items_open', live: c("SELECT COUNT(*) c FROM github_items WHERE state = 'open'") },

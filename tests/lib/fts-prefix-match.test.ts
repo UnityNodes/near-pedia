@@ -1,7 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { resetDb, getDb } from '@/lib/db';
 import { ftsPrefixMatch } from '@/lib/rank';
-import { getCips } from '@/lib/cips';
 import { getTopics } from '@/lib/forum';
 import { getDocs } from '@/lib/docs';
 
@@ -10,8 +9,8 @@ describe('ftsPrefixMatch', () => {
     expect(ftsPrefixMatch('Network coin')).toBe('network* coin*');
   });
 
-  it('splits CIP-0042 the way the index does', () => {
-    expect(ftsPrefixMatch('CIP-0042')).toBe('cip* 0042*');
+  it('splits NEP-0141 the way the index does', () => {
+    expect(ftsPrefixMatch('NEP-0141')).toBe('nep* 0141*');
   });
 
   it.each(['"', 'a AND', 'NEAR(', '(', 'hello OR', 'body:secret', '"a" OR "b"', '"x NEAR( y"', '" AND "'])('leaves no FTS5 syntax in %s', q => {
@@ -34,12 +33,11 @@ describe('ftsPrefixMatch', () => {
 describe('list pages with hostile queries', () => {
   beforeEach(() => {
     resetDb();
-    getDb().prepare('INSERT INTO cips (id, title, content_md, synced_at) VALUES (?, ?, ?, ?)')
-      .run('0042', 'Network coin minting', 'body text', '2026-10-14T00:00:00Z');
+    getDb().prepare('INSERT INTO doc_pages (url, title, content_text, source, synced_at) VALUES (?, ?, ?, ?, ?)')
+      .run('https://docs.example.com/minting', 'Network coin minting', 'body text', 'docs', '2026-10-14T00:00:00Z');
   });
 
   it.each(['"', 'a AND', 'NEAR(', '(', 'hello OR', '""'])('does not throw on %s', q => {
-    expect(() => getCips({ q })).not.toThrow();
     expect(() => getTopics({ q })).not.toThrow();
     expect(() => getDocs({ q })).not.toThrow();
   });

@@ -11,14 +11,6 @@ describe('getDb', () => {
     resetDb();
   });
 
-  it('creates cips table', () => {
-    const db = getDb();
-    const row = db.prepare(
-      "SELECT name FROM sqlite_master WHERE type='table' AND name='cips'"
-    ).get();
-    expect(row).toBeTruthy();
-  });
-
   it('creates forum_topics table', () => {
     const db = getDb();
     const row = db.prepare(
@@ -35,39 +27,6 @@ describe('getDb', () => {
     expect(row).toBeTruthy();
   });
 
-  it('inserts and reads a cip', () => {
-    const db = getDb();
-    db.prepare(
-      `INSERT INTO cips (id, cip_number, title, status) VALUES (?, ?, ?, ?)`
-    ).run('0100', 100, 'Test CIP', 'Draft');
-    const cip = db.prepare('SELECT * FROM cips WHERE id = ?').get('0100') as { title: string; status: string };
-    expect(cip.title).toBe('Test CIP');
-    expect(cip.status).toBe('Draft');
-  });
-
-  it('has index on cips.status', () => {
-    const db = getDb();
-    const row = db.prepare(
-      "SELECT name FROM sqlite_master WHERE type='index' AND name='idx_cips_status'"
-    ).get();
-    expect(row).toBeTruthy();
-  });
-
-  it('has index on cips.type', () => {
-    const db = getDb();
-    const row = db.prepare(
-      "SELECT name FROM sqlite_master WHERE type='index' AND name='idx_cips_type'"
-    ).get();
-    expect(row).toBeTruthy();
-  });
-
-  it('has index on cips.author', () => {
-    const db = getDb();
-    const row = db.prepare(
-      "SELECT name FROM sqlite_master WHERE type='index' AND name='idx_cips_author'"
-    ).get();
-    expect(row).toBeTruthy();
-  });
 });
 
 describe('sqlite-vec tables', () => {
@@ -85,11 +44,11 @@ describe('sqlite-vec tables', () => {
     const db = getDb();
     db.prepare(
       'INSERT INTO embedding_chunks (source_type, source_id, chunk_index, chunk_text) VALUES (?,?,?,?)'
-    ).run('cip', '0001', 0, 'hello');
+    ).run('doc_page', '1', 0, 'hello');
     expect(() =>
       db.prepare(
         'INSERT INTO embedding_chunks (source_type, source_id, chunk_index, chunk_text) VALUES (?,?,?,?)'
-      ).run('cip', '0001', 0, 'hello again')
+      ).run('doc_page', '1', 0, 'hello again')
     ).toThrow();
   });
 });

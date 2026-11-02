@@ -11,8 +11,8 @@
  * parenthesised comment. Lexicographic `<` on strings answers every time and
  * is simply wrong when the column holds two shapes.
  *
- * WHY THIS EXISTS HERE. The case that justified it: `cips.approved_date` is the
- * CIP header verbatim, and one CIP's header read "2025-06-203" - no such day.
+ * WHY THIS EXISTS HERE. The case that justified it: an `approved_date` copied
+ * from a document header verbatim read "2025-06-203" - no such day.
  * formatDate's `/^(\d{4})-(\d{2})-(\d{2})/` matched the first ten characters
  * and printed a confident wrong date; formatDateShort's raw `new Date()`
  * either agreed by accident or refused. Writing this check found the exact

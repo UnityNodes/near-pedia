@@ -6,7 +6,6 @@ import { SiteFooter } from '@/components/site-footer';
 import { ThemeInit } from '@/components/theme-init';
 import { ServiceWorkerRegister } from '@/components/service-worker-register';
 import { JsonLd } from '@/components/json-ld';
-import { Monitoring } from '@/components/Monitoring';
 import { SITE, SITE_TITLE } from '@/lib/site.config';
 import './globals.css';
 import './design.css';
@@ -33,7 +32,7 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? SITE.url),
   // title.template appends " | <SITE.name>" to every page that sets a bare title.
-  // Per-page metadata MUST use bare titles (e.g. "CIPs") — never include the
+  // Per-page metadata MUST use bare titles (e.g. "Docs") — never include the
   // brand suffix manually, or it doubles. Template gotcha: docs/architecture/gotchas.md.
   title: {
     default: SITE_TITLE,
@@ -64,9 +63,7 @@ export const metadata: Metadata = {
   alternates: {
     types: {
       'application/atom+xml': [
-        { url: '/api/feed/cips', title: `${SITE.name} · CIPs` },
         { url: '/api/feed/forum', title: `${SITE.name} · Discussions` },
-        { url: '/api/feed/changes', title: `${SITE.name} · CIP Changes` },
         { url: '/api/feed/pulse', title: `${SITE.name} · Pulse` },
         { url: '/api/feed/blog', title: `${SITE.name} · Blog & News` },
         { url: '/api/feed/releases', title: `${SITE.name} · GitHub Releases` },
@@ -117,7 +114,7 @@ const ORGANIZATION_SCHEMA = {
   logo: `${SITE.url}${SITE.logo.icon}`,
   description: `${SITE.name} is the central knowledge hub for the NEAR ecosystem.`,
   sameAs: [
-    'https://github.com/your-org/nearpedia',
+    SITE.repo,
   ],
   parentOrganization: {
     '@type': 'Organization',
@@ -139,7 +136,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <link rel="preconnect" href="https://www.youtube.com" />
         <link rel="dns-prefetch" href="https://img.youtube.com" />
         <JsonLd payload={[WEBSITE_SCHEMA, ORGANIZATION_SCHEMA]} />
-        <Monitoring />
       </head>
       <body className={`${geist.variable} ${jetbrainsMono.variable}`} style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
         <a href="#main-content" className="skip-to-content">Skip to content</a>

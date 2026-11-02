@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import {
-  Activity, ArrowRight, BookOpen, BookText, Boxes, Code2, Gauge, MessageCircleQuestion, MessagesSquare,
-  Plug, Radar, ShieldAlert, Tag, type LucideIcon,
+  ArrowRight, BookOpen, Boxes, Code2, Gauge, MessageCircleQuestion, MessagesSquare,
+  Landmark, Plug, Radar, ShieldAlert, Tag, type LucideIcon,
 } from 'lucide-react';
 import { HomeHero } from '@/components/home-hero';
 import { SourcesLive } from '@/components/sources-live';
@@ -15,7 +15,7 @@ import { getDeprecation } from '@/lib/deprecations';
 
 export const revalidate = 60;
 
-const DESCRIPTION = 'What NEAR removed, deprecated and changed, for AI agents writing NEAR code: check code and packages, follow protocol upgrades, governance and incidents, every answer with a source and a date.';
+const DESCRIPTION = 'What NEAR removed, deprecated, changed and voted on, for AI agents writing NEAR code and people researching NEAR: check code and packages, follow protocol upgrades, governance and incidents, every answer with a source and a date.';
 
 export const metadata: Metadata = {
   title: SITE_TITLE,
@@ -51,43 +51,28 @@ const HERO_HEADLINE = 'NEAR';
 
 const PATHS: { k: string; t: string; d: string; links: { href: string; label: string; Icon: LucideIcon }[] }[] = [
   {
-    k: '01 · CHECK',
+    k: 'FOR BUILDERS',
     t: 'Is my NEAR code current?',
-    d: 'SDKs, packages, RPC methods and protocol features NEAR removed or replaced, each with its evidence and what to use instead.',
+    d: 'SDKs, packages, RPC methods and protocol features NEAR removed or replaced, each with its evidence and what to use instead, plus the docs, release notes and open issues behind them.',
     links: [
+      { href: '/for-ai', label: 'Connect an agent (MCP)', Icon: Plug },
       { href: '/deprecations', label: 'Deprecations', Icon: ShieldAlert },
-      { href: '/ask', label: 'Ask', Icon: MessageCircleQuestion },
-      { href: '/for-ai', label: 'Connect an agent', Icon: Plug },
-    ],
-  },
-  {
-    k: '02 · NOW',
-    t: 'What is changing',
-    d: 'Protocol upgrades and the validator vote, House of Stake votes, incidents and deadlines, each alert gone once it resolves.',
-    links: [
-      { href: '/radar', label: 'Radar', Icon: Radar },
-      { href: '/protocol', label: 'Protocol', Icon: Gauge },
-      { href: '/feed', label: 'Feed', Icon: Activity },
-    ],
-  },
-  {
-    k: '03 · LEARN',
-    t: 'Docs and releases',
-    d: 'docs.near.org and partner docs, release notes of nearcore, near-sdk, near-api-js and the rest, re-synced on their own cadence.',
-    links: [
       { href: '/docs', label: 'Docs', Icon: BookOpen },
       { href: '/releases', label: 'Releases', Icon: Tag },
-      { href: '/glossary', label: 'Glossary', Icon: BookText },
+      { href: '/code', label: 'Open issues and PRs', Icon: Code2 },
     ],
   },
   {
-    k: '04 · ECOSYSTEM',
-    t: 'Who builds what',
-    d: 'NEAR Catalog with TVL, gov.near.org threads and the repositories of the NEAR organisations.',
+    k: 'FOR RESEARCHERS',
+    t: 'What is happening on NEAR?',
+    d: 'Protocol upgrades and the validator vote, House of Stake proposals, incidents, projects and the forum, each alert gone once it resolves, and a chat that answers from these sources.',
     links: [
-      { href: '/ecosystem', label: 'Ecosystem', Icon: Boxes },
+      { href: '/ask', label: 'Ask', Icon: MessageCircleQuestion },
+      { href: '/radar', label: 'Radar', Icon: Radar },
+      { href: '/protocol', label: 'Protocol upgrade', Icon: Gauge },
+      { href: '/governance', label: 'House of Stake votes', Icon: Landmark },
+      { href: '/ecosystem', label: 'Projects', Icon: Boxes },
       { href: '/discussions', label: 'Forum', Icon: MessagesSquare },
-      { href: '/code', label: 'Code', Icon: Code2 },
     ],
   },
 ];
@@ -122,7 +107,7 @@ export default async function Home() {
         <section className="dp-section dp-reveal" aria-label="Where to start">
           <div className="dp-section-head">
             <div className="dp-kicker">START WHERE YOU ARE</div>
-            <h2 className="dp-h2">Four ways in.</h2>
+            <h2 className="dp-h2">Two ways in.</h2>
           </div>
           <div className="dp-paths">
             {PATHS.map((p) => (

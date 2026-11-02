@@ -1,6 +1,6 @@
 import { marked } from 'marked';
 import type { Token, Tokens } from 'marked';
-import { htmlText } from './glossary-source';
+import { htmlText } from './html-text';
 
 const SUMMARY_MAX = 220;
 const MEANINGFUL_CHARS = 40;

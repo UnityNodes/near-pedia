@@ -3,32 +3,21 @@ import { getDb } from '../lib/db';
 const db = getDb();
 
 const stats = {
-  cips: (db.prepare('SELECT COUNT(*) as c FROM cips').get() as {c:number}).c,
   topics: (db.prepare('SELECT COUNT(*) as c FROM forum_topics').get() as {c:number}).c,
   docs: (db.prepare('SELECT COUNT(*) as c FROM doc_pages').get() as {c:number}).c,
   blog: (db.prepare('SELECT COUNT(*) as c FROM blog_posts').get() as {c:number}).c,
   videos: (db.prepare('SELECT COUNT(*) as c FROM youtube_videos').get() as {c:number}).c,
   github: (db.prepare('SELECT COUNT(*) as c FROM github_items').get() as {c:number}).c,
-  whitepapers: (db.prepare('SELECT COUNT(*) as c FROM whitepapers').get() as {c:number}).c,
 };
 console.log('=== DB STATS ===');
 console.log(JSON.stringify(stats, null, 2));
 
-const noTitle = (db.prepare('SELECT COUNT(*) as c FROM cips WHERE title IS NULL').get() as {c:number}).c;
-console.log('\nCIPs without title:', noTitle);
-
-const cipsFts = (db.prepare('SELECT COUNT(*) as c FROM cips_fts').get() as {c:number}).c;
-console.log('CIPs FTS entries:', cipsFts);
-
 const docsFts = (db.prepare('SELECT COUNT(*) as c FROM docs_fts').get() as {c:number}).c;
-console.log('Docs FTS entries:', docsFts);
+console.log('\nDocs FTS entries:', docsFts);
 
 const blogNoHtml = (db.prepare("SELECT COUNT(*) as c FROM blog_posts WHERE content_html IS NULL OR LENGTH(content_html) < 50").get() as {c:number}).c;
 const blogTotal = stats.blog;
 console.log(`Blog posts without content_html: ${blogNoHtml} / ${blogTotal}`);
-
-const dupCips = db.prepare('SELECT cip_number, COUNT(*) as c FROM cips WHERE cip_number IS NOT NULL GROUP BY cip_number HAVING c > 1').all();
-console.log('Duplicate CIP numbers:', dupCips);
 
 const nullUrl = (db.prepare("SELECT COUNT(*) as c FROM doc_pages WHERE url IS NULL OR url = ''").get() as {c:number}).c;
 console.log('Doc pages without URL:', nullUrl);

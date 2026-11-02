@@ -1,5 +1,4 @@
 import sanitizeHtml from 'sanitize-html';
-import { autolinkCips } from './cip-autolink';
 
 const ALLOWED_TAGS = [
   'p', 'br', 'b', 'i', 'em', 'strong', 'u', 's', 'del',
@@ -21,7 +20,7 @@ const ALLOWED_ATTRS: sanitizeHtml.IOptions['allowedAttributes'] = {
 };
 
 export function sanitizeDocHtml(html: string): string {
-  return autolinkCips(sanitizeHtml(html, {
+  return sanitizeHtml(html, {
     allowedTags: [...ALLOWED_TAGS, 'figure', 'figcaption', 'section', 'article', 'nav', 'aside', 'caption', 'colgroup', 'col'],
     allowedAttributes: {
       ...ALLOWED_ATTRS,
@@ -43,11 +42,11 @@ export function sanitizeDocHtml(html: string): string {
         attribs: { ...attribs, loading: 'lazy' },
       }),
     },
-  }), { skipInsideTags: true });
+  });
 }
 
 export function sanitizeDiscourseHtml(html: string): string {
-  return autolinkCips(sanitizeHtml(html, {
+  return sanitizeHtml(html, {
     allowedTags: ALLOWED_TAGS,
     allowedAttributes: ALLOWED_ATTRS,
     transformTags: {
@@ -60,5 +59,5 @@ export function sanitizeDiscourseHtml(html: string): string {
         },
       }),
     },
-  }), { skipInsideTags: true });
+  });
 }

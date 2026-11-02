@@ -1,8 +1,8 @@
 /**
  * Picking "the latest stable release" of a NEAR SDK repo, in one place.
  *
- * This app has one family of repos (yourchain-app/-node/-core/-openrpc,
- * your-org/yoursdk), all served through one tool (get_latest_release).
+ * Every release product in lib/release-sources.ts goes through this one
+ * picker (get_latest_release).
  *
  * TWO INDEPENDENT SIGNALS, AND WHY BOTH MATTER. A release's tag can look
  * stable (`v1.2.3`, no suffix) while GitHub's own `prerelease` flag says

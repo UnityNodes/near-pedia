@@ -18,7 +18,6 @@ import type Database from 'better-sqlite3';
 
 export const NOT_HASHED: Readonly<Record<string, string>> = {
   alert_state: 'operational: which alerts were last sent',
-  cip_alert_sent: 'operational: notification bookkeeping',
   contact_submissions: 'visitor submissions: personal data, never published',
   csp_violation_log: 'operational: browser security reports',
   db_anchors: 'the record of these hashes itself',
@@ -30,7 +29,6 @@ export const NOT_HASHED: Readonly<Record<string, string>> = {
   search_log: 'visitor queries: personal data, never published',
   sync_log: 'operational: run log of the syncs',
   sync_state: 'operational: sync watermarks',
-  trending_snapshot: 'derived: recomputed every 5 minutes from hashed tables',
 };
 
 /** Prefixes of derived tables: full-text indexes, embeddings and their sqlite-vec shadow tables. */

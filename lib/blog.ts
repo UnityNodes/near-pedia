@@ -1,3 +1,4 @@
+import { BLOG_SOURCES } from './near-blogs';
 import type Database from 'better-sqlite3';
 import { getDb } from './db';
 import { ftsPrefixMatch } from './rank';
@@ -51,7 +52,10 @@ export function parseBlogPage(raw: string | undefined): number {
 const TAGS_SQL = `(',' || replace(coalesce(tags, ''), ', ', ',') || ',')`;
 const hasTag = (tag: string): string => `instr(${TAGS_SQL}, ',${tag},') > 0`;
 
+const FIRST_PARTY_BLOGS = BLOG_SOURCES.map((b) => `'${b.label.replace(/'/g, "''")}'`).join(', ');
+
 export const KIND_SQL = `CASE
+  WHEN coalesce(tags, '') IN (${FIRST_PARTY_BLOGS}) THEN 'blog'
   WHEN ${hasTag('third-party')} THEN 'third-party'
   WHEN ${hasTag('partner-news')} THEN 'partner-news'
   WHEN ${hasTag('release-notes')} THEN 'release'

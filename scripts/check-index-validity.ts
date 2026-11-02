@@ -1,19 +1,17 @@
 /**
  * A row's validity is served with the row; the index does not drop it.
  *
- * Covers the two status-bearing source types this app actually has embedded.
+ * Covers the status-bearing source type this app actually has embedded.
  *
  * THE CLASS. The vector index is flat: semantic_search retrieves a chunk by
  * meaning and renders it from a switch on source_type. A row's VALIDITY - a
- * CIP being Withdrawn, a radar alert being expired - lives in a column that
- * switch reads only if someone wrote the case to. get_cip/list_cips and
- * get_radar filter or show it; semantic_search, the tool an agent actually
- * calls to answer "how does X work", did not: a Withdrawn CIP rendered
- * identically to a Final one (5 of 166 embedded CIPs, found writing this
- * check), and 27 embedded radar_item chunks had NO render case at all -
- * title and url stayed at their empty defaults, not even a validity problem,
- * a missing-content one. Both are fixed alongside this check, not left
- * broken with a check pointed at nothing.
+ * radar alert being expired - lives in a column that switch reads only if
+ * someone wrote the case to. get_radar filters it; semantic_search, the tool
+ * an agent actually calls to answer "how does X work", did not: 27 embedded
+ * radar_item chunks had NO render case at all - title and url stayed at
+ * their empty defaults, not even a validity problem, a missing-content one.
+ * Fixed alongside this check, not left broken with a check pointed at
+ * nothing.
  *
  * WHAT THIS ASSERTS. For each status-bearing source with non-current rows
  * ACTUALLY in the index, the semantic_search render case must read the
@@ -42,11 +40,6 @@ interface StatusSource {
 }
 
 const SOURCES: StatusSource[] = [
-  {
-    type: 'cip', from: 'cips t', join: 'e.source_id = t.id',
-    nonCurrent: "t.status IN ('Withdrawn','Rejected','Obsolete','Replaced','Superseded')",
-    mustRef: /\bstatus\b/, label: 'CIP status (Withdrawn/Rejected/Obsolete/Replaced)',
-  },
   {
     type: 'radar_item', from: 'radar_items t', join: 'e.source_id = CAST(t.id AS TEXT)',
     nonCurrent: "t.expires_at IS NOT NULL AND t.expires_at < :now",

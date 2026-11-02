@@ -18,7 +18,7 @@ const STAGGER_ROWS = 14;
 
 export const metadata = pageMetadata({
   title: 'Code Browser',
-  description: 'Browse GitHub issues and pull requests across yourchain-node, yourchain-app, yourchain-core, CIPs and other ecosystem repositories.',
+  description: 'Open GitHub issues and pull requests of nearcore, near-sdk-rs, near-api-js, Chain Signatures, IronClaw and other NEAR repositories.',
   path: '/code',
 });
 
@@ -63,7 +63,7 @@ export default async function CodePage({ searchParams }: PageProps) {
   const schemas = [
     collectionPage({
       name: 'NEAR Code Browser',
-      description: 'GitHub issues and pull requests across yourchain-node, yourchain-app, yourchain-core, CIPs and other NEAR ecosystem repositories.',
+      description: 'Open GitHub issues and pull requests of nearcore, near-sdk-rs, near-api-js, Chain Signatures, IronClaw and other NEAR repositories.',
       path: '/code',
       itemCount: totalRepos,
     }),
@@ -78,7 +78,7 @@ export default async function CodePage({ searchParams }: PageProps) {
       href="/code"
       title="Code"
       kicker="COMMUNITY · CODE BROWSER"
-      description="GitHub issues and pull requests across yourchain-node, yourchain-app, yourchain-core, CIPs and other ecosystem repos."
+      description="Open GitHub issues and pull requests of nearcore, near-sdk-rs, near-api-js, Chain Signatures, IronClaw and other NEAR repositories."
       stat={{ value: totalRepos, unit: 'issues and PRs' }}
       synced={getLastSync('github_items')}
       source="GitHub"

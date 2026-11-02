@@ -2,27 +2,16 @@ import { getDb } from '../lib/db';
 
 // One-time: prune embedding_chunks/embedding_doc_hash rows whose source_id no
 // longer matches any row in the table it claims to embed. check-index-coverage.ts
-// found two distinct causes, both leaving retrievable-but-uncitable content in
-// the index:
+// found this cause, leaving retrievable-but-uncitable content in the index:
 //
 //   blog_post   15 source_ids (39 chunks) in the old Mongo ObjectId id scheme,
 //               from before blog_posts.id became a slug. The current content
 //               (where it still exists) is already correctly embedded under
 //               its slug id; these are dead duplicates or references to rows
 //               deleted from blog_posts without a corresponding index prune.
-//
-//   whitepaper  2 source_ids (1, 2 - 2 chunks) are stale duplicates of
-//               two whitepapers already correctly embedded under their
-//               current ids (3, 4).
-//
-//               6 source_ids (2897-2902 - 162 chunks) are NOT nearpedia
-//               content at all: whitepapers from other projects, fully absent from the current whitepapers table
-//               (a cross-project data leak, not a rekey artifact) but still
-//               retrievable via semantic_search with no working citation.
 
 const TABLES: Record<string, { table: string; idExpr: string }> = {
   blog_post: { table: 'blog_posts', idExpr: 'id' },
-  whitepaper: { table: 'whitepapers', idExpr: 'CAST(id AS TEXT)' },
 };
 
 function main(): void {

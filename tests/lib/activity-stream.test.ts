@@ -13,13 +13,13 @@ describe('mergeActivityStream', () => {
     expect(s.items).toEqual([]);
     expect(s.window_days).toBe(7);
     // every kind starts at 0
-    expect(s.counts.cip_status_change).toBe(0);
+    expect(s.counts.change_event).toBe(0);
     expect(s.counts.new_blog_post).toBe(0);
   });
 
   it('sorts merged items descending by ISO timestamp', () => {
     const stream = mergeActivityStream(7, {
-      cip_status_change: [make('cip_status_change', '2026-06-01T10:00:00Z', 'a')],
+      change_event:      [make('change_event',      '2026-06-01T10:00:00Z', 'a')],
       new_blog_post:     [make('new_blog_post',     '2026-06-03T08:00:00Z', 'b')],
       new_release:       [make('new_release',       '2026-06-02T15:00:00Z', 'c')],
     }, 100);
@@ -28,10 +28,10 @@ describe('mergeActivityStream', () => {
 
   it('reports per-kind counts pre-limit (so consumers know what was truncated)', () => {
     const stream = mergeActivityStream(7, {
-      cip_status_change: Array.from({ length: 12 }, (_, i) => make('cip_status_change', `2026-06-03T0${i % 10}:00:00Z`, `x${i}`)),
+      change_event: Array.from({ length: 12 }, (_, i) => make('change_event', `2026-06-03T0${i % 10}:00:00Z`, `x${i}`)),
       new_release:       Array.from({ length: 3 }, (_, i) => make('new_release', `2026-06-02T0${i}:00:00Z`, `r${i}`)),
     }, 5);
-    expect(stream.counts.cip_status_change).toBe(12);
+    expect(stream.counts.change_event).toBe(12);
     expect(stream.counts.new_release).toBe(3);
     expect(stream.items.length).toBe(5);   // overall cap applied
     expect(stream.total).toBe(5);          // total reflects the served slice
@@ -45,9 +45,9 @@ describe('mergeActivityStream', () => {
 
   it('breaks ties on equal timestamps by item id (deterministic ordering)', () => {
     const stream = mergeActivityStream(1, {
-      new_cip: [
-        make('new_cip', '2026-06-03T00:00:00Z', 'beta'),
-        make('new_cip', '2026-06-03T00:00:00Z', 'alpha'),
+      new_forum_topic: [
+        make('new_forum_topic', '2026-06-03T00:00:00Z', 'beta'),
+        make('new_forum_topic', '2026-06-03T00:00:00Z', 'alpha'),
       ],
     }, 10);
     // Same when → ascending id within the tie.
@@ -62,11 +62,11 @@ describe('mergeActivityStream', () => {
   it('skips non-array source entries gracefully', () => {
     const s = mergeActivityStream(7, {
       // Simulating a per-source DB error that fell back to null.
-      new_cip: undefined,
+      new_forum_topic: undefined,
       new_release: [make('new_release', '2026-06-03T00:00:00Z', 'p1')],
     }, 100);
     expect(s.items.length).toBe(1);
-    expect(s.counts.new_cip).toBe(0);
+    expect(s.counts.new_forum_topic).toBe(0);
     expect(s.counts.new_release).toBe(1);
   });
 
@@ -74,9 +74,7 @@ describe('mergeActivityStream', () => {
     const s = mergeActivityStream(7, {}, 1);
     expect(Object.keys(s.counts).sort()).toEqual([
       'change_event',
-      'cip_status_change',
       'new_blog_post',
-      'new_cip',
       'new_forum_topic',
       'new_radar_item',
       'new_release',

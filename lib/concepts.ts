@@ -128,7 +128,7 @@ export const NOT_SHARED: { name: string; impls: number; why: string }[] = [
   {
     name: 'buildUrl', impls: 10,
     why:
-      'One per listing page (releases, videos, discussions, search, cips, blog, docs, code, '
+      'One per listing page (releases, videos, discussions, search, blog, docs, code, '
       + 'radar, ecosystem), each assembling that page\'s own query-string shape from its own '
       + 'filter state. Same name, ten different jobs.',
   },

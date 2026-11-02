@@ -54,13 +54,13 @@ const SAMPLE: Record<string, string> = {
   offset: '0',
   days: '7',
   page: '1',
-  q: 'yourchain',
-  query: 'yourchain',
+  q: 'near',
+  query: 'near',
   category: 'General',
   status: 'Final',
   type: 'Standards Track',
   source: 'docs',
-  repo: 'your-org/yourchain-app',
+  repo: 'near/nearcore',
   channel: '',
   environment: 'mainnet',
   level: 'critical',
@@ -78,11 +78,9 @@ function sampleId(reqPath: string, db: ReturnType<typeof getDb>): string | null 
     try { return String((db.prepare(sql).get() as { v: unknown } | undefined)?.v ?? '') || null; }
     catch { return null; }
   };
-  if (reqPath.includes('/cips/')) return pick(`SELECT id v FROM cips LIMIT 1`);
   if (reqPath.includes('/docs/')) return pick(`SELECT id v FROM doc_pages LIMIT 1`);
   if (reqPath.includes('/discussions/')) return pick(`SELECT id v FROM forum_topics LIMIT 1`);
   if (reqPath.includes('/videos/')) return pick(`SELECT id v FROM youtube_videos LIMIT 1`);
-  if (reqPath.includes('/whitepapers/')) return pick(`SELECT slug v FROM whitepapers LIMIT 1`);
   if (reqPath.includes('/github-discussions/')) return pick(`SELECT id v FROM github_discussions LIMIT 1`);
   return '1';
 }
@@ -115,7 +113,7 @@ async function main(): Promise<void> {
   for (const ep of ENDPOINTS) {
     let reqPath = ep.path;
 
-    // Some entries carry their verb ("POST /api/v1/cips/batch"). This check
+    // Some entries carry their verb ("POST /api/v1/check-code"). This check
     // is GET-only on purpose: it is a read probe, and firing POSTs at
     // production to see whether they 500 is the kind of "verification" that
     // creates the incident it was looking for. Reported as skipped, not
@@ -137,7 +135,7 @@ async function main(): Promise<void> {
 
     // Exercise the documented parameters, because the bare path proves
     // nothing. `ep.params` mixes real query-param names with descriptive
-    // prose (e.g. "id: \"0042\", \"CIP-0042\""); tokens that aren't in
+    // prose (e.g. "entry id, e.g. \"near-sdk-js\""); tokens that aren't in
     // SAMPLE are silently skipped rather than guessed at.
     const qs = new URLSearchParams();
     for (const raw of (ep.params ?? '').split(/[,\s]+/)) {

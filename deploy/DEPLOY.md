@@ -29,10 +29,10 @@ deploy/sync-tick.sh all
 ```
 which is equivalent to, and easier to keep in sync than retyping, this list:
 ```bash
-for s in sync-cips sync-cip-assets sync-docs sync-github-releases refresh-radar \
-         sync-github-discussions sync-github-items sync-papers sync-network-stats \
-         sync-ecosystem sync-foundation sync-youtube enrich-docs refresh-trending \
-         build-weekly-digest; do npx tsx "scripts/$s.ts"; done
+for s in sync-docs sync-packages sync-repos sync-github-releases sync-protocol \
+         sync-forum sync-hos refresh-radar sync-github-discussions sync-github-items \
+         sync-network-stats sync-ecosystem sync-incidents sync-partner-docs \
+         sync-site-docs sync-neps sync-blog sync-youtube; do npx tsx "scripts/$s.ts"; done
 npx tsx scripts/build-embeddings.ts
 ```
 Cloudflare-gated sources (forum, blog) are separate — they need a real headful
@@ -56,8 +56,8 @@ Add `deploy/Caddyfile` block to the shared Caddyfile (set TLS / Cloudflare as
 noted inside), then `caddy reload` (or `systemctl reload caddy`).
 
 ## 6. Cron (root crontab) + watchdog
-Real crontab has more buckets than a minimal setup needs on day one (weekly
-digest, the Cloudflare-gated forum/blog sync, DB backup, a staleness check) —
+Real crontab has more buckets than a minimal setup needs on day one (the weekly
+full re-read, DB backup, a staleness check) —
 see `docs/setup/CRON_SETUP.md` for the full list and how to verify it's
 running. Minimum to get syncs flowing:
 ```

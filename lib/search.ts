@@ -2,7 +2,7 @@ import Fuse from 'fuse.js';
 import { getDb } from './db';
 import { tokenize, scoreResult } from './rank';
 
-export type SearchResultType = 'cip' | 'discussion' | 'doc' | 'whitepaper' | 'youtube' | 'github' | 'blog';
+export type SearchResultType = 'discussion' | 'doc' | 'youtube' | 'github' | 'blog';
 
 export interface SearchResult {
   type: SearchResultType;
@@ -38,7 +38,7 @@ export function snippet(text: string | null | undefined, query: string, max = 20
   // A fixed window cut mid-URL leaves a dangling "https://github.com…" that
   // looks like a real, truncated link rather than an excerpt boundary - a
   // reader or an agent has no way to tell the two apart. check-citations
-  // caught this on a CIP's "discussions-to" frontmatter field. Extend the
+  // caught this on a "discussions-to" frontmatter field. Extend the
   // window to the next whitespace when the raw cut point lands inside a
   // run of non-space characters, capped so one link-free run of text can't
   // grow the window unboundedly.
@@ -71,38 +71,16 @@ export function unifiedSearch(q: string, _limit = 50, dbOverride?: DbLike): Unif
   // column filters, and REPLACE them with a space rather than deleting them.
   // Two separate bugs this guards against:
   //   ':'  -> FTS5 read "foo:bar" as a column filter on a non-existent column.
-  //   '-'  -> FTS5 read "CIP-0001" as the NOT operator, so every hyphenated
-  //           NEAR term (CIP-0001, yourchain-node) threw and the catch
+  //   '-'  -> FTS5 read "NEP-141" as the NOT operator, so every hyphenated
+  //           NEAR term (NEP-141, near-api-js) threw and the catch
   //           blocks below swallowed it: the whole FTS layer returned nothing.
-  // Deleting would fuse the halves ("CIP0001"); a space keeps both tokens.
+  // Deleting would fuse the halves ("NEP141"); a space keeps both tokens.
   const ftsQ = q.trim()
     .replace(/['"*:^(){}[\]~+\-.]/g, ' ')
     .split(/\s+/)
     .filter(Boolean)
     .map(w => `${w}*`)
     .join(' ');
-
-  try {
-    const cips = db.prepare(`
-      SELECT c.id, c.title, c.author, c.status, c.content_md
-      FROM cips c
-      JOIN cips_fts ON c.rowid = cips_fts.rowid
-      WHERE cips_fts MATCH ?
-      ORDER BY rank
-      LIMIT 10
-    `).all(ftsQ) as { id: string; title: string; author: string; status: string; content_md: string }[];
-
-    for (const c of cips) {
-      results.push({
-        type: 'cip',
-        id: c.id,
-        title: c.title ?? c.id,
-        excerpt: snippet(c.content_md, q),
-        url: `/cips/${c.id}`,
-        meta: [c.status, c.author].filter(Boolean).join(' · '),
-      });
-    }
-  } catch (e) { console.warn('[search] FTS block failed:', e instanceof Error ? e.message : e); }
 
   try {
     const topics = db.prepare(`
@@ -145,28 +123,6 @@ export function unifiedSearch(q: string, _limit = 50, dbOverride?: DbLike): Unif
         excerpt: snippet(d.content_text || d.excerpt, q),
         url: `/docs/${d.id}`,
         meta: d.source,
-      });
-    }
-  } catch (e) { console.warn('[search] FTS block failed:', e instanceof Error ? e.message : e); }
-
-  try {
-    const attachments = db.prepare(`
-      SELECT a.id, a.cip_id, a.filename, a.content_text
-      FROM cip_attachments a
-      JOIN cip_attachments_fts ON a.id = cip_attachments_fts.rowid
-      WHERE cip_attachments_fts MATCH ?
-      ORDER BY rank
-      LIMIT 5
-    `).all(ftsQ) as { id: number; cip_id: string; filename: string; content_text: string }[];
-
-    for (const a of attachments) {
-      results.push({
-        type: 'cip',
-        id: a.cip_id,
-        title: `CIP-${a.cip_id}: ${a.filename.replace('.pdf', '')}`,
-        excerpt: snippet(a.content_text, q),
-        url: `/cips/${a.cip_id}`,
-        meta: 'PDF · ' + a.filename,
       });
     }
   } catch (e) { console.warn('[search] FTS block failed:', e instanceof Error ? e.message : e); }
@@ -251,29 +207,6 @@ export function unifiedSearch(q: string, _limit = 50, dbOverride?: DbLike): Unif
       });
     }
   } catch (e) { console.warn('[search] FTS block failed:', e instanceof Error ? e.message : e); }
-
-  // Whitepapers (full PDF text)
-  try {
-    const wps = db.prepare(`
-      SELECT w.slug, w.title, w.description, w.content_text, w.tag
-      FROM whitepapers w
-      JOIN whitepapers_fts ON w.rowid = whitepapers_fts.rowid
-      WHERE whitepapers_fts MATCH ?
-      ORDER BY rank
-      LIMIT 4
-    `).all(ftsQ) as { slug: string; title: string; description: string; content_text: string | null; tag: string | null }[];
-
-    for (const w of wps) {
-      results.push({
-        type: 'whitepaper',
-        id: w.slug,
-        title: w.title,
-        excerpt: snippet(w.content_text || w.description, q),
-        url: `/whitepapers/${w.slug}`,
-        meta: w.tag ?? undefined,
-      });
-    }
-  } catch { /* whitepapers_fts not ready */ }
 
   // GitHub Releases
   try {
@@ -378,10 +311,11 @@ export function unifiedSearch(q: string, _limit = 50, dbOverride?: DbLike): Unif
 
 /**
  * Blocks are collected source-by-source, so the flat list is
- * [10 cips, 13 discussions, 10 docs, ...]. Callers slice it (`limit` defaults
- * to 10 on the MCP `search` tool), which meant every non-CIP result was
- * structurally unreachable: "upgrade" returned 10 CIPs and nothing else even
- * though 10 docs / 8 blog / 5 videos had matched.
+ * [13 discussions, 10 docs, 8 blog posts, ...]. Callers slice it (`limit`
+ * defaults to 10 on the MCP `search` tool), which meant every result after
+ * the first source was structurally unreachable: "upgrade" returned 10 of
+ * one kind and nothing else even though docs, blog posts and videos had
+ * matched.
  *
  * Round-robin across types so any prefix of the list is a mix. Within a type
  * the original per-source order (FTS `rank`) is preserved, so this reorders
@@ -468,28 +402,6 @@ function likeClause(needles: string[], cols: string[]): { sql: string; args: str
 
 function fuzzyFallback(q: string, db: ReturnType<typeof getDb>): SearchResult[] {
   const results: SearchResult[] = [];
-
-  try {
-    const cips = db.prepare(
-      'SELECT id, title, author, status, content_md FROM cips WHERE title IS NOT NULL ORDER BY cip_number DESC LIMIT 2000'
-    ).all() as { id: string; title: string; author: string; status: string; content_md: string }[];
-
-    const fuse = new Fuse(cips, {
-      keys: [{ name: 'title', weight: 2 }, { name: 'content_md', weight: 1 }],
-      threshold: 0.4,
-      distance: 200,
-      minMatchCharLength: 3,
-    });
-    for (const r of fuse.search(q, { limit: 5 })) {
-      results.push({
-        type: 'cip', id: r.item.id,
-        title: r.item.title,
-        excerpt: truncate(r.item.content_md),
-        url: `/cips/${r.item.id}`,
-        meta: [r.item.status, r.item.author].filter(Boolean).join(' · '),
-      });
-    }
-  } catch { /* skip */ }
 
   try {
     const topics = db.prepare(

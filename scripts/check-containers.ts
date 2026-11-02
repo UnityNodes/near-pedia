@@ -57,21 +57,6 @@ const CONTAINERS: Container[] = [
     parentKey: 'id', childKey: 'topic_id',
     why: 'a Discourse topic is created by its first post; a topic with none is a title with no body',
   },
-  // Reverse-only relations. Nothing requires a CIP to carry an attachment or
-  // a status change, so only the dangling direction is a claim here, and it
-  // is the one that catches a delete that left its children behind.
-  {
-    parent: 'cips', child: 'cip_attachments',
-    parentKey: 'id', childKey: 'cip_id',
-    scope: '1 = 0',
-    why: 'an attachment naming a CIP we do not hold is a file with no proposal behind it',
-  },
-  {
-    parent: 'cips', child: 'cip_status_history',
-    parentKey: 'id', childKey: 'cip_id',
-    scope: '1 = 0',
-    why: 'a status transition naming a CIP we do not hold describes something we cannot show',
-  },
 ];
 
 function main(): void {
