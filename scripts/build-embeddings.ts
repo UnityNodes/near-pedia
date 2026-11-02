@@ -5,6 +5,7 @@ import { getDb } from '../lib/db';
 import { guardSync } from '../lib/sync-log';
 import { isEntrypoint } from '../lib/is-entrypoint';
 import { embedBatch } from '../lib/embeddings';
+import { KIND_SQL } from '../lib/blog';
 import {
   upsertChunk, upsertVector, getChunkId, hasEmbedding, chunkText,
   hashContent, getDocHash, setDocHash, deleteSourceEmbeddings,
@@ -48,7 +49,7 @@ export function loadAllDocs(): SourceDoc[] {
 
   try {
     const blogs = db.prepare(
-      'SELECT id, title, content_text FROM blog_posts WHERE content_text IS NOT NULL'
+      `SELECT id, title, content_text FROM blog_posts WHERE content_text IS NOT NULL AND ${KIND_SQL} != 'release'`
     ).all() as { id: string; title: string; content_text: string }[];
     for (const b of blogs) {
       docs.push({ sourceType: 'blog_post', sourceId: b.id, text: `${b.title}\n\n${b.content_text}` });

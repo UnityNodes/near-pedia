@@ -86,7 +86,7 @@ export const SPAM_TOPIC_IDS = new Set<number>([]);
  * SELLS instead.
  */
 export const SPAM_TITLE_PATTERNS: RegExp[] = [
-  /\b(viagra|casino|payday\s+loan)\b/i,
+  /\b(viagra|payday\s+loans?|online\s+casinos?|casino\s+(?:bonus|online|free\s+spins))\b/i,
 ];
 
 /**
