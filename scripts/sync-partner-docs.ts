@@ -1,6 +1,6 @@
 /**
- * Partner documentation (lib/partners.ts, the partners with a Mintlify
- * docs_feed) into doc_pages under source='partner-docs', one URL namespace
+ * Partner documentation (lib/partners.ts, the partners with a docs_feed:
+ * a Mintlify llms-full.txt, or one single-document llms.txt) into doc_pages under source='partner-docs', one URL namespace
  * per partner origin. Same parser and the same removal rule as sync-docs: a
  * page is removed only when its feed stops announcing it, through
  * pruneConfirmingUrls, scoped to that partner's origin so one partner's
@@ -23,7 +23,7 @@ import { SITE } from '../lib/site.config';
 import { politeFetch } from '../lib/polite-fetch';
 import { prune } from '../lib/prune';
 import { pruneConfirmingUrls } from '../lib/confirm-gone';
-import { announcedUrls, diffPages, parseLlmsFull, type NearDocPage } from '../lib/near-docs';
+import { announcedUrls, diffPages, parseLlmsFull, singleDocPage, type NearDocPage } from '../lib/near-docs';
 import { recordEvents, type ChangeEvent } from '../lib/change-events';
 import { PARTNERS, type Partner } from '../lib/partners';
 
@@ -35,8 +35,8 @@ async function syncPartner(p: Partner, feed: NonNullable<Partner['docs_feed']>, 
   const r = await politeFetch(feed.url, { userAgent: UA, timeoutMs: 60_000 });
   if (r.kind !== 'ok') return { pages: 0, problem: `${feed.url}: ${r.kind}` };
   const text = await r.res.text();
-  const pages = parseLlmsFull(text, feed.origin);
-  const announced = announcedUrls(text, feed.origin);
+  const pages = feed.single ? [singleDocPage(text, feed.url)].filter((pg): pg is NearDocPage => pg !== null) : parseLlmsFull(text, feed.origin);
+  const announced = feed.single ? pages.map((pg) => pg.url) : announcedUrls(text, feed.origin);
   if (pages.length === 0) return { pages: 0, problem: `${feed.url}: no pages parsed` };
 
   const db = getDb();
@@ -62,7 +62,7 @@ async function syncPartner(p: Partner, feed: NonNullable<Partner['docs_feed']>, 
       synced_at = excluded.synced_at, content_hash = excluded.content_hash
   `);
   db.transaction((rows: NearDocPage[]) => {
-    for (const pg of rows) upsert.run({ ...pg, title: `${p.name}: ${pg.title}`, content_html: marked.parse(pg.content_text, { async: false }) as string, synced_at: now });
+    for (const pg of rows) upsert.run({ ...pg, title: pg.title === p.name ? pg.title : `${p.name}: ${pg.title}`, content_html: marked.parse(pg.content_text, { async: false }) as string, synced_at: now });
     recordEvents(db, events, now);
   })(pages);
 

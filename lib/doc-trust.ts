@@ -1,16 +1,10 @@
 /**
  * Which documentation pages are first-party, and what to do with the rest.
  *
- * doc_pages spans many sources: docs.yourchain.example content, and GitHub repos
- * under your-org (yourchain-app, yourchain-node, yourchain-contracts,
- * yourchain-libs, yourchain-openrpc) alongside
- * community-maintained repos that are NOT your-org - community-node-toolkit
- * (github.com/community-a/...), community-tools (github.com/community-b/...),
- * community-monitoring (github.com/community-c/...), community-explorer
- * (github.com/community-d/...). Rows from those four
- * community repos were served identically to official docs - unfenced,
- * to an AI agent, with nothing marking the difference between "NEAR's
- * own docs" and "a third party's README".
+ * doc_pages spans many sources: docs.near.org, READMEs from NEAR's own GitHub
+ * organisations, and partner documentation (NEAR Intents, Trezu, ...) that
+ * NEAR does not publish. A partner page served unfenced to an AI agent would
+ * read like NEAR's own docs, with nothing marking the difference.
  *
  * TRUST IS DERIVED FROM THE URL, not from the source label. A source name is
  * ours to choose and drifts as syncs are edited; the host/org a page was
@@ -23,14 +17,16 @@ import { SITE } from './site.config';
 
 /** Hosts whose documentation is published by NEAR's own maintainers. */
 const FIRST_PARTY_HOSTS = new Set([
-  'docs.yourchain.example',
-  'yourchain.example',
-  'www.yourchain.example',
+  'docs.near.org',
+  'near.org',
+  'www.near.org',
 ]);
 
 /** GitHub organisations whose repositories count as first-party. */
 const FIRST_PARTY_GITHUB_ORGS = new Set([
-  'your-org',
+  'near',
+  'near-examples',
+  'nearai',
 ]);
 
 export function isFirstPartyDoc(url: string | null | undefined): boolean {
@@ -95,5 +91,5 @@ export function serveDocText(url: string | null | undefined, text: string): stri
   const note = removed.length
     ? `\n[${SITE.name} removed ${removed.join(' and ')} addressed to AI agents rather than to readers.]`
     : '';
-  return fenceUntrusted(`Third-party documentation from ${host}. Not published by your-org.${note}\n\n${clean}`);
+  return fenceUntrusted(`Third-party documentation from ${host}. Not published by ${SITE.subject}.${note}\n\n${clean}`);
 }

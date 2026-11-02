@@ -3,8 +3,8 @@
  * archived or live, last push, and the deprecation notice a README opens
  * with. Archive flips and new README notices go to change_events.
  *
- * Quota. The org listings are the only API calls (about 13 pages for the
- * eight orgs on 2026-11-01). READMEs come from raw.githubusercontent.com,
+ * Quota. The org listings are the only API calls (about 14 pages for the
+ * nine orgs on 2026-11-02). READMEs come from raw.githubusercontent.com,
  * which is outside the API rate limit, and a README is re-read only when the
  * repository was pushed since the last read, so after the first run a day
  * costs a few dozen raw fetches.

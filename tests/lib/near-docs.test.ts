@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { announcedUrls, diffPages, parseLlmsFull } from '@/lib/near-docs';
+import { announcedUrls, diffPages, parseLlmsFull, singleDocPage } from '@/lib/near-docs';
 
 const sample = fs.readFileSync(path.join(__dirname, '..', 'fixtures', 'near', 'docs-llms-full-sample.txt'), 'utf8');
 
@@ -72,5 +72,21 @@ describe('diffPages', () => {
   it('does not call a page changed when the stored row predates hashing', () => {
     const a = page('https://docs.near.org/a', 'one');
     expect(diffPages([{ url: a.url, title: 'T', content_hash: null }], [a])).toEqual([]);
+  });
+});
+
+describe('singleDocPage', () => {
+  it('reads a one-document llms.txt as one page titled by its first heading', () => {
+    const pg = singleDocPage('# NEAR Intents Agent API\n\n> Backend HTTP API for agents.\n\n## Conventions\n\nUse X-API-Key.', 'https://api.agentsonintents.com/llms.txt');
+    expect(pg?.url).toBe('https://api.agentsonintents.com/llms.txt');
+    expect(pg?.title).toBe('NEAR Intents Agent API');
+    expect(pg?.content_text).toContain('## Conventions');
+    expect(pg?.content_text).not.toContain('# NEAR Intents Agent API');
+    expect(pg?.excerpt).toBe('Backend HTTP API for agents. Conventions Use X-API-Key.');
+  });
+
+  it('returns null for an empty document', () => {
+    expect(singleDocPage('# Title only\n', 'https://example.org/llms.txt')).toBeNull();
+    expect(singleDocPage('   ', 'https://example.org/llms.txt')).toBeNull();
   });
 });
