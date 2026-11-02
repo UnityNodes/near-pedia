@@ -5,6 +5,7 @@ import { fileURLToPath } from 'url';
 import * as sqliteVec from 'sqlite-vec';
 import { registerCipCitesFn } from './cip-mention-patterns';
 import { initNearSchema } from './near-schema';
+import { DIMENSIONS } from './embedding-dims';
 
 // The default database is resolved from this module's own location, not from
 // process.cwd(). A cwd-relative default means code from one checkout silently
@@ -408,12 +409,15 @@ export function initSchema(db: Database.Database = getDb()): void {
     )
   `).run();
 
-  const hasVec = db.prepare(
-    "SELECT name FROM sqlite_master WHERE type='table' AND name='embedding_vectors'"
-  ).get();
-  if (!hasVec) {
+  const vec = db.prepare(
+    "SELECT sql FROM sqlite_master WHERE type='table' AND name='embedding_vectors'"
+  ).get() as { sql: string } | undefined;
+  const vecWidth = vec ? Number(/FLOAT\[(\d+)\]/i.exec(vec.sql)?.[1]) : null;
+  const noChunks = () => (db.prepare('SELECT COUNT(*) n FROM embedding_chunks').get() as { n: number }).n === 0;
+  if (!vec || (vecWidth !== DIMENSIONS && noChunks())) {
     try {
-      db.prepare("CREATE VIRTUAL TABLE embedding_vectors USING vec0(embedding FLOAT[1536])").run();
+      if (vec) db.prepare('DROP TABLE embedding_vectors').run();
+      db.prepare(`CREATE VIRTUAL TABLE embedding_vectors USING vec0(embedding FLOAT[${DIMENSIONS}])`).run();
     } catch {
       // sqlite-vec extension not loaded
     }

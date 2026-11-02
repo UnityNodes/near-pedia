@@ -22,6 +22,7 @@
  */
 import { getDb } from '../lib/db';
 import { logRun, logRunOnCrash } from '../lib/sync-log';
+import { DIMENSIONS } from '../lib/embedding-dims';
 
 logRunOnCrash('check-vec');
 
@@ -37,6 +38,12 @@ const dims = (() => {
   }
   return parseInt(m[1], 10);
 })();
+
+if (dims !== DIMENSIONS) {
+  console.error(`[check-vec] embedding_vectors holds ${dims}-dim vectors, the embedder returns ${DIMENSIONS}: run clean-vec, then build-embeddings`);
+  logRun('check-vec', { status: 'error', items: 1, error: `vector table is ${dims}-dim, embedder is ${DIMENSIONS}-dim` });
+  process.exit(1);
+}
 
 const maxRowid = (db.prepare('SELECT MAX(rowid) AS m FROM embedding_vectors').get() as { m: number | null }).m ?? 0;
 // No BigInt literal: check-scheduled type-checks scripts/ at a pre-ES2020 target.

@@ -108,7 +108,7 @@ async function main(): Promise<number> {
         : 'transcript_text IS NULL AND transcript_synced_at IS NULL';
 
   const pending = db
-    .prepare(`SELECT id, title, (transcript_text IS NOT NULL) AS has_text, transcript_text AS old_text FROM youtube_videos WHERE ${where} ORDER BY published_at DESC`)
+    .prepare(`SELECT id, title, (transcript_text IS NOT NULL) AS has_text, transcript_text AS old_text FROM youtube_videos WHERE ${where} ORDER BY (channel_name = 'NEAR DevHub') DESC, published_at DESC`)
     .all() as PendingVideo[];
 
   console.log(`Found ${pending.length} videos to process.`);

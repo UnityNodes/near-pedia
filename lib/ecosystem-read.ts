@@ -178,10 +178,9 @@ export function renderPartner(db: Database.Database, p: Partner, fence: Fence): 
     `${p.name}  (${p.id})`,
     p.summary,
     `site ${p.website} · docs ${p.docs}${p.llms_txt ? ` · llms.txt ${p.llms_txt}` : ''}`,
-    `docs in this index: ${docs ? `${docs} pages (search_docs finds them)` : 'not ingested; read the llms.txt above'}`,
+    `docs in this index: ${docs ? `${docs} pages (search and semantic_search find them)` : 'not ingested; read the llms.txt above'}`,
     `GitHub: ${p.github.map((g) => `https://github.com/${g}`).join(', ')}`,
-    'contracts (mainnet):',
-    ...p.contracts.map((c) => `  ${c.account}: ${c.role}`),
+    ...(p.contracts.length ? ['contracts (mainnet):', ...p.contracts.map((c) => `  ${c.account}: ${c.role}`)] : ['contracts (mainnet): none of its own']),
   ];
   for (const r of projects) lines.push('', renderProject(r, fence));
   if (incidents.length) {

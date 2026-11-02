@@ -56,6 +56,18 @@ export const PARTNERS: readonly Partner[] = [
     catalog_slugs: [],
   },
   {
+    id: 'near-ai-cloud',
+    name: 'NEAR AI Cloud',
+    summary: 'Private, verifiable inference: OpenAI-compatible chat, embeddings and rerank served from models running in TEEs, each response signed and checkable against the hardware attestation. NEAR-pedia runs /ask, its embeddings and its reranker on it.',
+    website: 'https://cloud.near.ai',
+    docs: 'https://docs.near.ai',
+    llms_txt: 'https://docs.near.ai/llms.txt',
+    docs_feed: { url: 'https://docs.near.ai/llms-full.txt', origin: 'https://docs.near.ai' },
+    github: ['nearai'],
+    contracts: [],
+    catalog_slugs: [],
+  },
+  {
     id: 'outlayer',
     name: 'NEAR OutLayer',
     summary: 'Verifiable off-chain compute and TEE-held custody for agents: a contract requests execution, a TEE worker runs it and returns an attested result.',

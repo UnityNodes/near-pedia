@@ -63,12 +63,14 @@ export default function PrivacyPage() {
             <a href="https://groq.com/privacy-policy" target="_blank" rel="noopener noreferrer">privacy</a>
           </li>
           <li>
-            <strong>Cohere</strong> (used internally for reranking):{' '}
-            <a href="https://cohere.com/privacy" target="_blank" rel="noopener noreferrer">privacy</a>
+            <strong>NEAR AI Cloud</strong> (answers on /ask, and the embeddings and reranking behind semantic search; models run in TEEs):{' '}
+            <a href="https://near.ai/privacy-policy" target="_blank" rel="noopener noreferrer">privacy</a>
           </li>
           <li>
-            <strong>Voyage AI</strong> (used internally for embeddings):{' '}
-            <a href="https://www.voyageai.com/privacy-policy" target="_blank" rel="noopener noreferrer">privacy</a>
+            <strong>Cloudflare Workers AI</strong> or <strong>Cohere</strong> (fallback reranking, only when NEAR AI Cloud is not configured):{' '}
+            <a href="https://www.cloudflare.com/privacypolicy/" target="_blank" rel="noopener noreferrer">Cloudflare privacy</a>
+            {' · '}
+            <a href="https://cohere.com/privacy" target="_blank" rel="noopener noreferrer">Cohere privacy</a>
           </li>
         </ul>
         <p>

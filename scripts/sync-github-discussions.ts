@@ -14,10 +14,12 @@ import { isEntrypoint } from '../lib/is-entrypoint';
 // list this sync reads, rather than a second, hand-typed copy that can drift
 // from it.
 export const REPOS: [owner: string, name: string][] = [
-  ['your-org', 'yourchain-node'],
-  ['your-org', 'yourchain-app'],
-  ['your-org', 'yourchain-core'],
-  ['your-org', 'CIPs'],
+  ['near', 'nearcore'],
+  ['near', 'near-sdk-rs'],
+  ['near', 'near-api-js'],
+  ['near', 'docs'],
+  ['near', 'NEPs'],
+  ['nearai', 'ironclaw'],
 ];
 
 const TOKEN = process.env.GITHUB_TOKEN;

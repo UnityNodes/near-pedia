@@ -4,9 +4,11 @@
  *
  * The forum holds about 15,000 topics, most of them community and marketing
  * threads (creatives alone had 6,079 on 2026-11-01). The listings below are
- * the governance and developer ones; a parent listing already includes its
- * subcategories' topics, so House of Stake's 158 covers governance,
- * proposals and the working groups.
+ * the governance, developer, ecosystem and education ones; a parent listing
+ * already includes its subcategories' topics, so House of Stake's 158 covers
+ * governance, proposals and the working groups. Community, creatives, the
+ * open-web sandbox and gaming are left out: grant pitches and marketing,
+ * not answers.
  */
 
 export const FORUM_ORIGIN = 'https://gov.near.org';
@@ -24,6 +26,11 @@ export const FORUM_LISTINGS: readonly Listing[] = [
   { id: 29, label: 'Dev / standards', posts: true },
   { id: 100, label: 'Dev / engineering updates', posts: true },
   { id: 68, label: 'Dev / proposals', posts: false },
+  { id: 22, label: 'Development (questions, tooling, announcements)', posts: true },
+  { id: 16, label: 'Ecosystem (projects, launches, post-mortems)', posts: true },
+  { id: 33, label: 'Education (guides, explainers)', posts: true },
+  { id: 102, label: 'NDC (NEAR Digital Collective, past governance; its parent 105 also holds creatives and marketing)', posts: false },
+  { id: 1, label: 'Uncategorized', posts: false },
 ];
 
 /**

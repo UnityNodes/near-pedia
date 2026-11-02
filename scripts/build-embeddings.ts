@@ -227,8 +227,8 @@ async function main() {
   // Check the credential BEFORE anything destructive. The loop below deletes the
   // stale vectors of every changed document first and only then calls the
   // embedding API, so a missing key would empty part of the index and then fail.
-  if (!process.env.OPENAI_API_KEY) {
-    console.error('OPENAI_API_KEY is not set. Refusing to start: this script deletes stale');
+  if (!process.env.NEARAI_API_KEY?.trim()) {
+    console.error('NEARAI_API_KEY is not set. Refusing to start: this script deletes stale');
     console.error('vectors before it embeds anything, so running without a key would empty');
     console.error('part of the index and then fail. Source the environment first:');
     console.error('  set -a; . ./.env.production; set +a');
@@ -288,7 +288,7 @@ async function main() {
         embeddings = await embedBatch(batch.map(c => c.chunkText));
         break;
       } catch (err: unknown) {
-        const status = (err as { statusCode?: number }).statusCode;
+        const status = (err as { status?: number }).status;
         if (status === 429 && retries < 10) {
           retries++;
           const wait = RATE_LIMIT_DELAY_MS * retries;

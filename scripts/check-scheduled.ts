@@ -15,15 +15,8 @@
  *
  * A script may legitimately be manual: a one-off migration, a backfill, a
  * diagnostic. Those are declared in MANUAL below with the reason, so "not
- * scheduled" always means either an entry in sync-tick.sh/sync-cf.sh or an
+ * scheduled" always means either an entry in sync-tick.sh or an
  * explicit decision, never an oversight.
- *
- * TWO DISPATCHERS. Most syncs run from deploy/sync-tick.sh; forum and blog
- * are Cloudflare-gated and run from deploy/sync-cf.sh under xvfb instead
- * (deploy/sync-tick.sh's own header comment says so). Reading only the first
- * file would have reported sync-forum.ts and sync-blog.ts as unscheduled
- * when they are not - a false alarm is exactly the kind of noise that
- * teaches people to stop reading this check's output.
  *
  * WHY GUARDED. A script that writes sync_log must route its outcome through
  * lib/sync-log.ts, where the failure path exists by construction. Copying an
@@ -53,6 +46,13 @@ const MANUAL: Record<string, string> = {
   'backfill-video-dates': 'one-off backfill for videos migrated without a real published_at',
   'fix-duplicate-cips': 'one-off data-repair, re-run by hand if the underlying dupe bug recurs',
   'fix-blog-releases': 'one-off data-repair for github_releases mirrored into blog_posts',
+  'sync-cips': 'template source (CIPs); NEAR has none, its standards come from sync-neps',
+  'sync-cip-assets': 'template source (CIP assets); NEAR has no CIPs',
+  'backfill-cip-history': 'template source (CIP history); NEAR has no CIPs',
+  'sync-foundation': 'template source (a foundation team page); not read for NEAR',
+  'sync-papers': 'template source (arXiv / IACR papers); not configured for NEAR',
+  'backfill-tldrs': 'template CIP TL;DRs through the LLM cascade; NEAR has no CIPs',
+  'enrich-docs': 'template migration folding repo_docs/adrs/rpc tables into doc_pages; this index has none of those tables',
   'fix-flattened-doc-code': 'one-off repair for content_text flattened by a since-fixed cleanup-doc-html.ts bug, re-run by hand if it recurs',
   'fix-orphaned-embeddings': 'one-off prune of embedding_chunks/embedding_doc_hash rows left behind by a blog_posts/whitepapers id-scheme change, re-run by hand if new orphans appear',
   'backfill-blog-text': 'one-off repair of blog_posts.content_text glued by the old node-html-parser .text, re-derived offline from content_html; re-run by hand if it recurs',
@@ -75,8 +75,7 @@ const MANUAL: Record<string, string> = {
 
 function main(): void {
   const scriptsDir = path.join(ROOT, 'scripts');
-  const tick = fs.readFileSync(path.join(ROOT, 'deploy', 'sync-tick.sh'), 'utf-8')
-    + '\n' + fs.readFileSync(path.join(ROOT, 'deploy', 'sync-cf.sh'), 'utf-8');
+  const tick = fs.readFileSync(path.join(ROOT, 'deploy', 'sync-tick.sh'), 'utf-8');
 
   const scripts = fs
     .readdirSync(scriptsDir)
@@ -102,7 +101,7 @@ function main(): void {
 
   const problems: string[] = [];
   if (unscheduled.length) {
-    problems.push(`not in sync-tick.sh/sync-cf.sh and not declared manual: ${unscheduled.join(', ')}`);
+    problems.push(`not in sync-tick.sh and not declared manual: ${unscheduled.join(', ')}`);
     for (const n of unscheduled) console.error(`  UNSCHEDULED  ${n}`);
   }
 
