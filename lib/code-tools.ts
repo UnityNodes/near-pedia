@@ -112,7 +112,9 @@ const BREAKING_HEADING = /breaking|major changes/i;
 /** "**Breaking Changes**" written as a bold line inside a list, as changesets does. */
 const BOLD_BREAKING = /^\s*(?:[-*+]\s+)?\*\*\s*breaking changes?\s*\*\*\s*$/i;
 /** Prose that announces a break without a heading or a bullet (near-api-js 6.0.0). */
-const BREAKING_PROSE = /\b(?:has been (?:deprecated|removed)|(?:is|are) no longer (?:exported|supported|available|used)|no longer (?:exported|built|supported)|was (?:completely )?(?:overwritten|rewritten|removed)|received major changes|breaking change)/i;
+const BREAKING_PROSE = /\b(?:has been (?:deprecated|removed)|(?:is|are) no longer (?:exported|supported|available|used)|no longer (?:exported|built|supported)|was (?:completely )?(?:overwritten|rewritten|removed)|received major changes|(?<!non-|not |no )breaking change)/i;
+/** "non-breaking change", "not breaking changes": a line that says it breaks nothing. */
+const NOT_BREAKING = /\b(?:non-breaking|not (?:a )?breaking|no breaking)\b/i;
 /** The "[#1353](…) [`7369055`](…) Thanks [@someone](…)! - " prefix of a changesets line. */
 const CHANGESET_PREFIX = /^(?:\[#\d+\]\([^)]*\)\s*)?(?:\[`?[0-9a-f]{7,40}`?\]\([^)]*\)\s*)?(?:Thanks \[@[^\]]+\]\([^)]*\)!\s*-\s*)?/;
 
@@ -136,6 +138,7 @@ export function breakingLines(body: string): string[] {
       inBreaking = true;
       continue;
     }
+    if (NOT_BREAKING.test(raw)) continue;
     if (/^\s*[-*+]\s/.test(raw)) {
       if (inBreaking || /\bBREAKING\b|\[breaking\]|⚠️|breaking change/i.test(raw)) out.push(clean(raw));
     } else if (raw.trim() && BREAKING_PROSE.test(raw)) {
@@ -230,7 +233,7 @@ export function explainError(db: Database.Database, text: string, limit = 3): Er
   // A recognised error is looked up by the words it was recognised by
   // ("Exceeded the prepaid gas"), not by its first word: "Exceeded" alone
   // matched agent-framework issues about unrelated limits.
-  const recognised = known.map((k) => k.match.exec(text)?.[0]).find((m): m is string => !!m && m.length >= 6);
+  const recognised = known.map((k) => { const m = k.match.exec(text); return m?.[1] ?? m?.[0]; }).find((m): m is string => !!m && m.length >= 6);
   const first = recognised ?? tokens[0];
   const github = first ? tryTable(() => db.prepare(`SELECT title, url, repo, state, created_at FROM github_items
     WHERE title LIKE ? ESCAPE '\\' OR body LIKE ? ESCAPE '\\' ORDER BY (repo LIKE 'near/%') DESC, created_at DESC LIMIT ?`).all(`%${escLike(first)}%`, `%${escLike(first)}%`, limit) as ErrorExplanation['github'], []) : [];
