@@ -169,3 +169,17 @@ export function titleKey(title: string): string {
     .replace(/[^a-z0-9]+/g, ' ')
     .trim();
 }
+
+/**
+ * A topic as a person or a tool hands it over: its number, or a gov.near.org
+ * URL with or without the slug, with or without a trailing post number
+ * (/t/42644, /t/42644/7, /t/slug/42644, /t/slug/42644/10). A slug always
+ * holds a non-digit, so a number after /t/ is the topic, never a slug.
+ */
+export function forumTopicRef(ref: number | string): { id: number; post: number | null } | null {
+  if (typeof ref === 'number') return Number.isInteger(ref) ? { id: ref, post: null } : null;
+  const s = ref.trim();
+  if (/^\d{1,15}$/.test(s)) return { id: Number(s), post: null };
+  const m = /\/t\/(\d{1,15})(?:\/(\d{1,6}))?(?:[/?#]|$)/.exec(s) ?? /\/t\/[^/?#]*[^/?#\d][^/?#]*\/(\d{1,15})(?:\/(\d{1,6}))?(?:[/?#]|$)/.exec(s);
+  return m ? { id: Number(m[1]), post: m[2] ? Number(m[2]) : null } : null;
+}
