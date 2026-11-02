@@ -1848,6 +1848,12 @@ app.set('trust proxy', 'loopback');
 app.use('/api/v1/check-code', express.json({ limit: '1mb' }));
 // The same file reaches check_code through /mcp inside a JSON-RPC envelope.
 app.use('/mcp', express.json({ limit: '1mb' }));
+// One JSON-RPC message per request on /mcp: MCP dropped batching, and a batch
+// would carry up to 100 tool calls past the per-call rate limit below.
+app.use('/mcp', (req, res, next) => {
+  if (!Array.isArray(req.body)) return next();
+  res.status(400).json({ jsonrpc: '2.0', id: null, error: { code: -32600, message: 'Batched JSON-RPC requests are not accepted: send one message per request.' } });
+});
 app.use(express.json());
 
 // ── Rate limiting ─────────────────────────────────────────────────────────────

@@ -80,9 +80,9 @@ const STALE: ReadonlySet<Finding['severity']> = new Set(['error', 'warning']);
 /** check_code runs synchronously on the server's one event loop: at most this many blocks a call. */
 const MAX_CHECKED = 30;
 
-/** Words of a topic that are code identifiers: snake_case, camelCase, or a path with :: or a dot. */
+/** Words of a topic that are code identifiers: snake_case, a path with ::, or camelCase. "Next.js" and "e.g" are not. */
 export function identifiersIn(topic: string): string[] {
-  return [...new Set(topic.match(/[A-Za-z][A-Za-z0-9]*(?:(?:_|::|\.)[A-Za-z0-9]+)+|\b[a-z]+[A-Z][A-Za-z0-9]*\b/g) ?? [])];
+  return [...new Set(topic.match(/[A-Za-z][A-Za-z0-9]*(?:(?:_|::)[A-Za-z0-9]+)+|\b[a-z]+[A-Z][A-Za-z0-9]*\b/g) ?? [])];
 }
 
 export function findCodeExamples(db: Database.Database, topic: string, limit: number): { live: CodeExample[]; stale: CodeExample[] } {

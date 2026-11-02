@@ -12,6 +12,7 @@
 export interface KnownError {
   id: string;
   title: string;
+  /** Recognises the error; a capture group, when present, holds the error's own words (what GitHub issues are searched for). */
   match: RegExp;
   cause: string;
   fix: string;
@@ -191,7 +192,7 @@ export const KNOWN_ERRORS: readonly KnownError[] = [
   {
     id: 'tx-status-method-not-found',
     title: 'Method not found for tx_status',
-    match: /METHOD_NOT_FOUND|Method not found|-32601/i,
+    match: /^(?=[\s\S]*\btx_status\b)[\s\S]*?(METHOD_NOT_FOUND|Method not found|-32601)/i,
     cause: 'The RPC node runs a nearcore older than 2.14.0, which only knows this method as EXPERIMENTAL_tx_status (or the method name is misspelled).',
     fix: 'Call EXPERIMENTAL_tx_status, a deprecated alias that 2.14.0 still answers, until every node you use runs 2.14.0; the status method gives a node\'s version.',
     source_url: 'https://docs.near.org/api/rpc/transactions',

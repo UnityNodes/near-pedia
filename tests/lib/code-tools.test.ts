@@ -52,6 +52,10 @@ describe('breakingLines on changesets and prose notes', () => {
     ]);
   });
 
+  it('does not read a line that says it breaks nothing as a break', () => {
+    expect(breakingLines("It's a non-breaking change.\n- This is not a breaking change\n## Breaking\n- no breaking changes in this release")).toEqual([]);
+  });
+
   it('reads prose that deprecates or rewrites an API, and ignores prose that does not', () => {
     const body = '## Account\n`Account` has received major changes to its interface.\n\n## Connection\n`Connection` has been deprecated, as it is no longer used by the `Account` class\n\nPackages are now truly independent.';
     expect(breakingLines(body)).toEqual([
@@ -74,7 +78,8 @@ describe('errorTokens and the error catalog', () => {
     expect(matchErrors('{"InvalidTxError":{"NotEnoughBalance":{"signer_id":"a.near","balance":"1","cost":"2"}}}').map((e) => e.id)).toEqual(['not-enough-balance']);
     expect(matchErrors('{"ActionError":{"kind":{"LackBalanceForState":{"account_id":"a.near","amount":"1"}}}}').map((e) => e.id)).toEqual(['lack-balance-for-state']);
     expect(matchErrors('account alice.testnet does not exist while viewing').map((e) => e.id)).toEqual(['unknown-account']);
-    expect(matchErrors('{"code":-32601,"message":"Method not found","name":"METHOD_NOT_FOUND"}').map((e) => e.id)).toEqual(['tx-status-method-not-found']);
+    expect(matchErrors('tx_status: {"code":-32601,"message":"Method not found","name":"METHOD_NOT_FOUND"}').map((e) => e.id)).toEqual(['tx-status-method-not-found']);
+    expect(matchErrors('{"code":-32601,"message":"Method not found","name":"METHOD_NOT_FOUND"}')).toEqual([]);
     for (const e of KNOWN_ERRORS) {
       expect(e.source_url).toMatch(/^https:\/\/(docs\.near\.org|nomicon\.io)\//);
       expect(e.quote.length).toBeGreaterThan(20);
@@ -187,6 +192,7 @@ describe('code examples: cleaning and identifiers', () => {
     expect(identifiersIn('near-api-js viewFunction')).toEqual(['viewFunction']);
     expect(identifiersIn('near_sdk::env::predecessor_account_id')).toEqual(['near_sdk::env::predecessor_account_id']);
     expect(identifiersIn('cross contract call')).toEqual([]);
+    expect(identifiersIn('Next.js wallet login, e.g. v1.2')).toEqual([]);
   });
 });
 

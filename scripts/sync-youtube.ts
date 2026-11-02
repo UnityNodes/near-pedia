@@ -294,8 +294,9 @@ async function refreshDescriptions(): Promise<void> {
  * have no description.
  */
 async function backfillDescriptions(db: ReturnType<typeof getDb>): Promise<{ enriched: number; left: number }> {
-  const missing = () => (db.prepare("SELECT COUNT(*) n FROM youtube_videos WHERE trim(COALESCE(description, '')) = ''").get() as { n: number }).n;
-  const rows = db.prepare(`SELECT id FROM youtube_videos WHERE trim(COALESCE(description, '')) = ''
+  // description NULL: never read. '' : read, and the video has none, so it is not asked again.
+  const missing = () => (db.prepare('SELECT COUNT(*) n FROM youtube_videos WHERE description IS NULL').get() as { n: number }).n;
+  const rows = db.prepare(`SELECT id FROM youtube_videos WHERE description IS NULL
     ORDER BY published_at IS NULL, published_at DESC, rowid DESC LIMIT ?`).all(BACKFILL_PER_RUN) as { id: string }[];
   if (rows.length === 0) return { enriched: 0, left: 0 };
   const update = db.prepare(`UPDATE youtube_videos SET description = @description,
@@ -309,9 +310,9 @@ async function backfillDescriptions(db: ReturnType<typeof getDb>): Promise<{ enr
       break;
     }
     const meta = await enrichVideo(id);
-    if (meta?.description) {
-      update.run({ id, description: meta.description, published_at: meta.published_at, title: meta.title });
-      enriched++;
+    if (meta) {
+      update.run({ id, description: meta.description ?? '', published_at: meta.published_at, title: meta.title });
+      if (meta.description) enriched++;
       fails = 0;
     } else {
       fails++;
