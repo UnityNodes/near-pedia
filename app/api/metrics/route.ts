@@ -21,7 +21,7 @@ export const dynamic = 'force-dynamic';
  * header.
  *
  * IT USED TO FAIL OPEN. With METRICS_TOKEN unset (it was, on this box) the
- * endpoint was public - confirmed live: `curl nearpedia.example/api/metrics`
+ * endpoint was public - confirmed live: `curl near-pedia.xyz/api/metrics`
  * returned full operational telemetry (content counts, chat/search volume,
  * sync job names) with no auth at all. A default that publishes operational
  * telemetry when nobody has configured anything is the wrong default; the

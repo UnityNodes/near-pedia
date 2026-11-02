@@ -7,7 +7,7 @@
 #
 #   /srv/nearpedia/scripts/post-deploy-check.sh && echo "Deploy OK"
 #
-# WHICH SERVER IT ASKS. By default the box's own origin: https://nearpedia.example
+# WHICH SERVER IT ASKS. By default the box's own origin: https://near-pedia.xyz
 # resolved to 127.0.0.1 (Caddy's Cloudflare Origin certificate is not publicly
 # trusted, hence -k). The public host goes through Cloudflare, which answers a
 # machine on this box with a 401 on /api/metrics, so a check that
@@ -25,10 +25,10 @@
 
 set -euo pipefail
 
-BASE="${BASE_URL:-https://nearpedia.example}"
+BASE="${BASE_URL:-https://near-pedia.xyz}"
 TIMEOUT="${TIMEOUT:-15}"
 if [[ -z "${BASE_URL:-}" && -z "${CURL_EXTRA+x}" ]]; then
-  CURL_EXTRA="-k --resolve nearpedia.example:443:127.0.0.1"
+  CURL_EXTRA="-k --resolve near-pedia.xyz:443:127.0.0.1"
 fi
 # shellcheck disable=SC2206  # word splitting is the point
 CURL=(curl -sS -m "$TIMEOUT" ${CURL_EXTRA:-})

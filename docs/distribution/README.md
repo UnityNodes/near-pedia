@@ -4,13 +4,13 @@ Where NEAR-pedia is listed so agents find it, and what each listing needs.
 Every step that publishes something is done only after the maintainers say yes;
 the files are ready in this repository before then.
 
-All of them carry `nearpedia.example`, the placeholder of the domain (see
+All of them carry `near-pedia.xyz`, the placeholder of the domain (see
 CLAUDE.md); replace it with the real one everywhere at once.
 
 ## 1. One command, no listing
 
 ```bash
-claude mcp add --transport http nearpedia https://nearpedia.example/mcp
+claude mcp add --transport http nearpedia https://near-pedia.xyz/mcp
 ```
 
 Codex, Cursor and other clients: the configurations on `/for-ai`.

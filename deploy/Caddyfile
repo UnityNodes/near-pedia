@@ -5,7 +5,7 @@
 # CSP is set per-request by Next middleware, so it is intentionally NOT set
 # here.
 
-nearpedia.example, www.nearpedia.example {
+near-pedia.xyz, www.near-pedia.xyz {
 	encode zstd gzip
 
 	tls /etc/ssl/cf-origin-nearpedia.pem /etc/ssl/cf-origin-nearpedia-key.pem
@@ -21,8 +21,8 @@ nearpedia.example, www.nearpedia.example {
 	}
 
 	# www → apex (canonical)
-	@www host www.nearpedia.example
-	redir @www https://nearpedia.example{uri} permanent
+	@www host www.near-pedia.xyz
+	redir @www https://near-pedia.xyz{uri} permanent
 
 	# MCP server (stateless Streamable HTTP) + the REST API it serves.
 	# /api/v1/* lives on the MCP process, not Next - without this the

@@ -2,7 +2,7 @@
   "mcpServers": {
     "nearpedia": {
       "type": "http",
-      "url": "https://nearpedia.example/mcp"
+      "url": "https://near-pedia.xyz/mcp"
     }
   }
 }
