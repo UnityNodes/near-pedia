@@ -24,6 +24,7 @@ import { isEntrypoint } from '../lib/is-entrypoint';
 import { SITE } from '../lib/site.config';
 import { politeGetJson } from '../lib/polite-fetch';
 import { FORUM_LISTINGS, FORUM_ORIGIN, parseListing, parseTopic, type PostRow, type TopicRow } from '../lib/gov-forum';
+import { isSpamTopic } from '../lib/refusals';
 
 const UA = `${SITE.slug}-sync/1.0 (+${SITE.publisher.url})`;
 const FULL = process.argv.includes('--full');
@@ -88,7 +89,7 @@ async function syncListing(id: number, now: string): Promise<{ topics: number; c
     const doc = await get<unknown>(`/c/${id}.json?page=${page}`);
     if (doc === null) throw new Error(`/c/${id}.json not found`);
     const { topics, hasMore } = parseListing(doc);
-    const fresh = topics.filter((t: TopicRow) => t.pinned || !mark || (t.bumped_at ?? '') > mark);
+    const fresh = topics.filter((t: TopicRow) => !isSpamTopic(t) && (t.pinned || !mark || (t.bumped_at ?? '') > mark));
     db.transaction(() => {
       for (const t of fresh) upsert.run({ ...t, synced_at: now });
     })();
