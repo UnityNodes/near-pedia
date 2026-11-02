@@ -138,7 +138,7 @@ export const parseJson = <T>(s: string | null, fallback: T): T => {
   }
 };
 
-export function renderIncident(i: IncidentRow, fence: Fence): string {
+export function renderIncident(i: IncidentRow, fence: Fence, opts: { toolHints?: boolean } = {}): string {
   const chains = parseJson<string[]>(i.chains, []);
   const lost = usd(i.amount_usd);
   const back = i.returned_usd ? `, ${usd(i.returned_usd)} returned` : '';
@@ -146,7 +146,7 @@ export function renderIncident(i: IncidentRow, fence: Fence): string {
     `${i.date}  ${fence(i.name)}: ${lost}${back}  [${i.relevance === 'near' ? 'NEAR' : 'NEAR Catalog project, hacked elsewhere'}]  id: ${i.id}`,
     `  ${[i.classification, i.technique, i.target_type].filter(Boolean).map((v) => fence(v!)).join(' · ')}${chains.length ? `  chains: ${fence(chains.join(', '))}` : ''}${i.bridge_hack ? '  bridge' : ''}`,
   ];
-  if (i.catalog_slug) lines.push(`  project: ${i.catalog_slug} (find_project)`);
+  if (i.catalog_slug) lines.push(`  project: ${i.catalog_slug}${opts.toolHints === false ? '' : ' (find_project)'}`);
   lines.push(`  source: ${i.source_url}`);
   return lines.join('\n');
 }

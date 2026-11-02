@@ -26,7 +26,7 @@ export default function AskPage() {
         <h2>What happens to what you send</h2>
         <ul>
           <li>
-            Your question and any pasted file are matched against this index (docs, deprecations, the radar) and run through{' '}
+            Your question and any pasted file are matched against this index (docs, deprecations, NEAR Catalog projects, security incidents, the radar) and run through{' '}
             <code>check_code</code> on this server, in memory. Nothing you send is stored or logged.
           </li>
           <li>
