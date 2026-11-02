@@ -49,7 +49,7 @@ import { countProposals, getProposal, hosSynced, listProposals, proposalsForHsp,
 import { MAX_CODE, MAX_QUESTION, askMessages, buildAskContext } from './lib/ask.js';
 import { relatedPassages } from './lib/ask-related.js';
 import { chunkSource } from './lib/chunk-source.js';
-import { FORUM_ORIGIN } from './lib/gov-forum.js';
+import { FORUM_ORIGIN, forumTopicRef } from './lib/gov-forum.js';
 import { toolFilter } from './lib/mcp-toolset.js';
 import { findCodeExamples, renderExamples } from './lib/code-examples.js';
 import { recentEvents } from './lib/change-events.js';
@@ -292,15 +292,16 @@ server.tool('search',
 server.tool('get_discussion', 'Read a gov.near.org forum thread in full: House of Stake proposals and their debate, validator threads, incident write-ups, developer standards. Takes the topic number or the gov.near.org URL that search, semantic_search and get_proposal give, and returns the posts in order, 15 at a time.',
   {
     topic: z.union([numericId, z.string().trim().max(300)]).describe('Topic number (42644) or its gov.near.org URL (https://gov.near.org/t/slug/42644).'),
-    from_post: z.number().int().min(1).optional().default(1).describe('First post to return, for reading past the first 15.'),
+    from_post: z.number().int().min(1).optional().describe('First post to return, for reading past the first 15. A URL ending in a post number starts there.'),
   },
   async ({ topic: ref, from_post }) => {
     const db = getDb();
-    const id = typeof ref === 'number' ? ref : Number(/\/t\/(?:[^/?#]+\/)?(\d{1,15})(?:[/?#]|$)/.exec(ref)?.[1] ?? (/^\d{1,15}$/.test(ref) ? ref : NaN));
+    const parsed = forumTopicRef(ref);
+    const id = parsed?.id ?? NaN;
     if (!Number.isInteger(id)) return { content: [{ type: 'text', text: `"${fenceUntrustedInline(String(ref).slice(0, 120))}" is not a topic number or a gov.near.org topic URL.` }] };
     const topic = db.prepare('SELECT ft.*, c.name AS category_name FROM forum_topics ft LEFT JOIN categories c ON c.id = ft.category_id WHERE ft.id = ?').get(id) as (ForumTopicsRow & { category_name: string | null }) | undefined;
     if (!topic) return { content: [{ type: 'text', text: `Topic ${id} is not in this index: it may sit in a gov.near.org category this index does not read. ${FORUM_ORIGIN}/t/${id}` }] };
-    const first = from_post ?? 1;
+    const first = from_post ?? parsed?.post ?? 1;
     const posts = db.prepare('SELECT post_number, username, cooked, created_at, like_count FROM forum_posts WHERE topic_id = ? AND post_number >= ? ORDER BY post_number ASC LIMIT ?')
       .all(id, first, DISCUSSION_PAGE) as Array<Pick<ForumPostsRow, 'username' | 'cooked' | 'created_at' | 'like_count'> & { post_number: number }>;
     const held = (db.prepare('SELECT COUNT(*) c FROM forum_posts WHERE topic_id = ?').get(id) as { c: number }).c;
@@ -320,6 +321,7 @@ server.tool('get_discussion', 'Read a gov.near.org forum thread in full: House o
           : `${head}\n${fenceUntrusted(full.slice(0, DISCUSSION_POST_CHARS))}\n[cut at ${DISCUSSION_POST_CHARS} of ${full.length} characters; the whole post is in the thread above]`;
       }),
       more > 0 ? `${more} more post(s): call get_discussion again with from_post: ${last + 1}.` : '',
+      posts.length === 0 && held > 0 ? `No post from #${first} on: the thread holds ${held} post(s); start from from_post: 1.` : '',
     ].filter(Boolean).join('\n\n');
     return { content: [{ type: 'text', text }] };
   }
@@ -1572,10 +1574,10 @@ server.tool('get_proposal',
 const notSynced = (what: string) => ({ content: [{ type: 'text' as const, text: `${what} has not been synced on this server yet.` }] });
 
 server.tool('find_project',
-  'Find NEAR ecosystem projects in NEAR Catalog (340) by name, by what they do, or by category: category, phase, website, GitHub, tokens with their NEAR contract, TVL on NEAR from DefiLlama, security incidents, and whether it is a NEAR partner. An empty query lists the projects with the most TVL, or every project of a category ("Wallet", "DEX", "Liquid Staking"). Use for "what is Rhea Finance", "which wallets can I use on NEAR", "who does intents swaps", "has Meta Pool been hacked".',
+  'Find NEAR ecosystem projects in NEAR Catalog (340) by name, by what they do, or by category: category, phase, website, GitHub, tokens with their NEAR contract, TVL on NEAR from DefiLlama, security incidents, and whether it is a NEAR partner. An empty query lists the projects with the most TVL, or every project of a category ("Wallet", "DEX", "Validator"). Use for "what is Rhea Finance", "which wallets can I use on NEAR", "who does intents swaps", "has Meta Pool been hacked".',
   {
     query: z.string().max(100).describe('Project name or words for what it does ("lending", "intents swap"); empty to list.'),
-    category: z.string().max(60).optional().describe('NEAR Catalog category, any case, singular or plural ("wallets", "DeFi", "DEX"). An unknown one returns the list of categories.'),
+    category: z.string().max(60).optional().describe('NEAR Catalog category, any case, singular or plural ("wallets", "DeFi", "DEX", "Validator"). An unknown one returns the list of categories.'),
     limit: z.number().int().min(1).max(50).optional().describe('Most projects to return (default 5; up to 50 for a whole category).'),
   },
   async ({ query, category, limit }) => {

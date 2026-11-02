@@ -61,7 +61,8 @@ export async function mainnetRpc<T>(method: string, params: unknown): Promise<{ 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ jsonrpc: '2.0', id: 'nearpedia', method, params }),
       })) as { result?: T; error?: unknown };
-      if (body.error !== undefined || body.result === undefined) throw new Error(`${method}: ${JSON.stringify(body.error).slice(0, 200)}`);
+      if (body.error !== undefined) throw new Error(`${method}: ${String(JSON.stringify(body.error)).slice(0, 200)}`);
+      if (body.result === undefined || body.result === null) throw new Error(`${method}: the answer carried no result`);
       return { result: body.result, endpoint };
     } catch (e) {
       last = e;
