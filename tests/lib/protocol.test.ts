@@ -171,6 +171,25 @@ describe('protocolReport and renderProtocol', () => {
     expect(effectLine(effectOn(getDb(), 87, ['mainnet'], later), 87)).toContain('current state unknown');
   });
 
+  it('measures the block rate from a sampled vote block when there is one snapshot, and makes no guess without one', () => {
+    seed();
+    const db = getDb();
+    expect(protocolReport(db, ['mainnet'], new Date('2026-11-01T17:05:00Z')).networks[0].block_rate).toBeNull();
+    db.prepare("UPDATE validator_votes SET block_height = 222598280, block_time = '2026-11-01T16:43:20Z'").run();
+    const n = protocolReport(db, ['mainnet'], new Date('2026-11-01T17:05:00Z')).networks[0];
+    expect(n.block_rate).toBeCloseTo(1.72, 2);
+    expect(n.seconds_left).not.toBeNull();
+  });
+
+  it('says nothing about the epoch once the projection runs past its end', () => {
+    seed();
+    const db = getDb();
+    db.prepare("UPDATE validator_votes SET block_height = 222598280, block_time = '2026-11-01T16:43:20Z'").run();
+    const n = protocolReport(db, ['mainnet'], new Date('2026-11-02T06:00:00Z')).networks[0];
+    expect(n.epoch_progress).toBeNull();
+    expect(renderProtocol({ networks: [n], schedule: null }, new Date('2026-11-02T06:00:00Z'))).not.toMatch(/through now/);
+  });
+
   it('says plainly when nothing has been synced', () => {
     expect(renderProtocol(protocolReport(getDb(), ['mainnet']), new Date())).toMatch(/has not run/);
   });

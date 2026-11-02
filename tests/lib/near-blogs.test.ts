@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { BLOG_SOURCES, parsePost, postUrls } from '@/lib/near-blogs';
+import { BLOG_SOURCES, articleText, parsePost, postUrls } from '@/lib/near-blogs';
 
 const fixture = (f: string) => fs.readFileSync(path.join(__dirname, '../fixtures/near-blogs', f), 'utf8');
 const [nearOrg, nearAi] = BLOG_SOURCES;
@@ -42,5 +42,27 @@ describe('parsePost', () => {
 
   it('refuses a page with no article text', () => {
     expect(parsePost('<html><main><p>Loading…</p></main></html>', 'https://www.near.org/blog/x', nearOrg)).toBeNull();
+  });
+});
+
+describe('articleText', () => {
+  const [org, ai] = BLOG_SOURCES;
+
+  it('cuts a near.org post at the community footer and drops the Share line', () => {
+    const text = 'Title\n Intents \n Share \n\n October 20, 2026\n\n The article.\n\n Join the community:\n • Telegram\n\n More posts\n\n Another post title';
+    expect(articleText(text, org)).toBe('Title\n Intents \n\n October 20, 2026\n\n The article.');
+  });
+
+  it('cuts at More posts when the community block is missing', () => {
+    expect(articleText('The article.\n More posts\n Other title', org)).toBe('The article.');
+  });
+
+  it('cuts a near.ai post at More from NEAR AI and drops the back link', () => {
+    const text = '← All articles Cybersecurity Models\n October 29, 2026\n\n Body text.\n\n More from NEAR AI\n NEAR AI Team · October 26, 2026\n Other post';
+    expect(articleText(text, ai)).toBe('Cybersecurity Models\n October 29, 2026\n\n Body text.');
+  });
+
+  it('keeps a word like Share inside a sentence', () => {
+    expect(articleText('Share your thoughts on the forum.', org)).toBe('Share your thoughts on the forum.');
   });
 });

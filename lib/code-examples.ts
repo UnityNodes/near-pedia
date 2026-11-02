@@ -33,12 +33,29 @@ const FENCE_LANG: Record<string, Language> = {
   rust: 'rust', rs: 'rust', toml: 'toml', json: 'json',
 };
 
+/**
+ * A block as written, without the page's presentation: the "> " of a block
+ * quoted in a callout, and Mintlify's diff markers (a line marked
+ * `[!code --]` is the old line and is dropped; `[!code ++]`, `focus` and
+ * `highlight` marks are removed from the line they annotate).
+ */
+export function cleanBlock(code: string): string {
+  const lines = code.split('\n');
+  const quoted = lines.filter((l) => l.trim()).every((l) => /^\s*>\s?/.test(l));
+  return lines
+    .map((l) => (quoted ? l.replace(/^\s*>\s?/, '') : l))
+    .filter((l) => !/\[!code\s+--\]/.test(l))
+    .map((l) => l.replace(/\s*(?:\/\/|#|\/\*|<!--)\s*\[!code\s+[^\]]*\]\s*(?:\*\/|-->)?\s*$/, ''))
+    .join('\n')
+    .trim();
+}
+
 /** ```lang … ``` blocks of a Markdown page, with the language the fence names. */
 export function markdownBlocks(md: string): Array<{ language: Language; code: string }> {
   const out: Array<{ language: Language; code: string }> = [];
   for (const m of md.matchAll(/```([A-Za-z]+)[^\n]*\n([\s\S]*?)```/g)) {
     const language = FENCE_LANG[m[1].toLowerCase()];
-    const code = m[2].trim();
+    const code = cleanBlock(m[2]);
     if (language && code.length >= MIN_BLOCK && code.length <= MAX_BLOCK) out.push({ language: code.includes('[package]') || code.includes('[dependencies]') ? 'cargo' : language, code });
   }
   return out;
@@ -51,7 +68,7 @@ export function htmlBlocks(html: string): Array<{ language: Language; code: stri
   const out: Array<{ language: Language; code: string }> = [];
   for (const m of html.matchAll(/<pre[^>]*>\s*<code([^>]*)>([\s\S]*?)<\/code>\s*<\/pre>/g)) {
     const cls = m[1].match(/lang-(\w+)/)?.[1]?.toLowerCase();
-    const code = decode(m[2]).trim();
+    const code = cleanBlock(decode(m[2]));
     if (code.length < MIN_BLOCK || code.length > MAX_BLOCK) continue;
     const guessed: Language | undefined = (cls && FENCE_LANG[cls]) || (/\b(fn|impl|pub|use)\s/.test(code) && /;\s*$/m.test(code) ? 'rust' : /\b(import|const|await|function)\b/.test(code) ? 'js' : undefined);
     if (guessed) out.push({ language: guessed, code });
@@ -63,13 +80,22 @@ const STALE: ReadonlySet<Finding['severity']> = new Set(['error', 'warning']);
 /** check_code runs synchronously on the server's one event loop: at most this many blocks a call. */
 const MAX_CHECKED = 30;
 
+/** Words of a topic that are code identifiers: snake_case, camelCase, or a path with :: or a dot. */
+export function identifiersIn(topic: string): string[] {
+  return [...new Set(topic.match(/[A-Za-z][A-Za-z0-9]*(?:(?:_|::|\.)[A-Za-z0-9]+)+|\b[a-z]+[A-Z][A-Za-z0-9]*\b/g) ?? [])];
+}
+
 export function findCodeExamples(db: Database.Database, topic: string, limit: number): { live: CodeExample[]; stale: CodeExample[] } {
   const terms = likeTokens(tokenize(topic)).slice(0, 4);
   if (!terms.length) return { live: [], stale: [] };
-  // A block has to carry at least half the topic's words: "ft_transfer_call"
-  // is "transfer" and "call", and any one of them alone matched everything.
+  // A topic that names an identifier (ft_transfer_call, viewFunction,
+  // near_sdk::env) wants code that uses that identifier: half its words
+  // matched nft_transfer. Otherwise a block has to carry half the topic's words.
+  const idents = identifiersIn(topic);
   const need = Math.ceil(terms.length / 2);
-  const relevant = (code: string) => terms.filter((t) => code.toLowerCase().includes(t)).length >= need;
+  const relevant = (code: string) => idents.length
+    ? idents.every((id) => new RegExp(`(?<![A-Za-z0-9_])${id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?![A-Za-z0-9_])`, 'i').test(code))
+    : terms.filter((t) => code.toLowerCase().includes(t)).length >= need;
   const fts = terms.map((t) => `"${t.replace(/"/g, '""')}"`).join(' OR ');
   const candidates: Array<Omit<CodeExample, 'stale'>> = [];
   const pages = db.prepare(`SELECT d.title, d.url, d.content_text FROM doc_pages d JOIN docs_fts ON d.id = docs_fts.rowid

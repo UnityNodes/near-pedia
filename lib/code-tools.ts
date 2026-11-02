@@ -107,20 +107,42 @@ export interface ReleaseStep {
   code: string | null; protocol_upgrade: boolean; security: boolean;
 }
 
-/** Lines a release puts under a "Breaking" heading, or marks breaking itself. */
+/** A heading that opens breaking notes: "Breaking Changes", and changesets' "Major Changes". */
+const BREAKING_HEADING = /breaking|major changes/i;
+/** "**Breaking Changes**" written as a bold line inside a list, as changesets does. */
+const BOLD_BREAKING = /^\s*(?:[-*+]\s+)?\*\*\s*breaking changes?\s*\*\*\s*$/i;
+/** Prose that announces a break without a heading or a bullet (near-api-js 6.0.0). */
+const BREAKING_PROSE = /\b(?:has been (?:deprecated|removed)|(?:is|are) no longer (?:exported|supported|available|used)|no longer (?:exported|built|supported)|was (?:completely )?(?:overwritten|rewritten|removed)|received major changes|breaking change)/i;
+/** The "[#1353](…) [`7369055`](…) Thanks [@someone](…)! - " prefix of a changesets line. */
+const CHANGESET_PREFIX = /^(?:\[#\d+\]\([^)]*\)\s*)?(?:\[`?[0-9a-f]{7,40}`?\]\([^)]*\)\s*)?(?:Thanks \[@[^\]]+\]\([^)]*\)!\s*-\s*)?/;
+
+const clean = (line: string): string => line.replace(/^\s*[-*+]\s+/, '').trim().replace(CHANGESET_PREFIX, '').slice(0, 300);
+
+/**
+ * Lines a release marks as breaking: bullets under a "Breaking" or "Major
+ * Changes" heading or a bold "Breaking Changes" line, bullets that say so
+ * themselves, and prose sentences that announce a removal or deprecation.
+ */
 export function breakingLines(body: string): string[] {
   const out: string[] = [];
   let inBreaking = false;
   for (const raw of body.split(/\r?\n/)) {
     const h = raw.match(/^#{1,6}\s+(.*)$/);
     if (h) {
-      inBreaking = /breaking/i.test(h[1]);
+      inBreaking = BREAKING_HEADING.test(h[1]);
       continue;
     }
-    if (!/^\s*[-*+]\s/.test(raw)) continue;
-    if (inBreaking || /\bBREAKING\b|\[breaking\]|⚠️|breaking change/i.test(raw)) out.push(raw.replace(/^\s*[-*+]\s+/, '').trim().slice(0, 300));
+    if (BOLD_BREAKING.test(raw)) {
+      inBreaking = true;
+      continue;
+    }
+    if (/^\s*[-*+]\s/.test(raw)) {
+      if (inBreaking || /\bBREAKING\b|\[breaking\]|⚠️|breaking change/i.test(raw)) out.push(clean(raw));
+    } else if (raw.trim() && BREAKING_PROSE.test(raw)) {
+      out.push(clean(raw));
+    }
   }
-  return out.slice(0, 20);
+  return [...new Set(out.filter(Boolean))].slice(0, 20);
 }
 
 export function releasesBetween(db: Database.Database, product: ReleaseProductSpec, from: string, to: string): ReleaseStep[] {
@@ -146,14 +168,35 @@ export function renderBreaking(product: ReleaseProductSpec, from: string, to: st
   const head = `${product.label} ${fence(from)} → ${fence(to)}: ${steps.length} release(s) in between (${product.repo}).`;
   if (steps.length === 0) return `${head}\nNo synced release of ${product.label} falls in that range; check the versions: resolve_package gives the published ones.`;
   const parts = [head];
+  const major = (v: string): number => Number(/^(\d+)/.exec(v)?.[1] ?? NaN);
+  // Releases with nothing to report are folded into one line per run, so the
+  // ones that break something are not buried among thirty that do not.
+  let quiet: ReleaseStep[] = [];
+  const flushQuiet = () => {
+    if (!quiet.length) return;
+    const span = quiet.length === 1 ? fence(quiet[0].version) : `${fence(quiet[0].version)} … ${fence(quiet[quiet.length - 1].version)} (${quiet.length} releases)`;
+    parts.push(`${span}: no removal, deprecation or breaking line in the notes`);
+    quiet = [];
+  };
+  let previous = from;
   for (const s of steps) {
+    const newMajor = major(s.version) > major(previous);
+    previous = s.version;
     const flags = [s.code, s.protocol_upgrade ? 'PROTOCOL_UPGRADE' : '', s.security ? 'SECURITY_UPGRADE' : '', s.prerelease ? 'prerelease' : ''].filter(Boolean).join(', ');
     const lines = [`## ${fence(s.version)}${s.published_at ? ` (${s.published_at.slice(0, 10)})` : ''}${flags ? `  [${flags}]` : ''}  ${s.url}`];
     for (const r of s.removals) lines.push(`- ${r.action.toUpperCase()}: ${fence(r.line)}`);
     for (const b of s.breaking) if (!s.removals.some((r) => r.line.includes(b.slice(0, 40)))) lines.push(`- BREAKING: ${fence(b)}`);
-    if (lines.length === 1) lines.push('- no removal, deprecation or breaking line in the notes');
+    if (lines.length === 1 && !flags && !newMajor) {
+      quiet.push(s);
+      continue;
+    }
+    flushQuiet();
+    if (lines.length === 1) lines.push(newMajor
+      ? '- a new major version, and no line in its notes reads as a removal or a break: read them before upgrading'
+      : '- no removal, deprecation or breaking line in the notes');
     parts.push(lines.join('\n'));
   }
+  flushQuiet();
   return parts.join('\n\n');
 }
 
@@ -184,9 +227,13 @@ export function explainError(db: Database.Database, text: string, limit = 3): Er
   const fts = tokens.map((t) => `"${t.replace(/"/g, '""')}"`).join(' OR ');
   const forum = fts ? tryTable(() => db.prepare(`SELECT ft.title, ft.url, ft.created_at FROM forum_fts JOIN forum_topics ft ON ft.id = forum_fts.rowid
     WHERE forum_fts MATCH ? ORDER BY rank LIMIT ?`).all(fts, limit) as ErrorExplanation['forum'], []) : [];
-  const first = tokens[0];
+  // A recognised error is looked up by the words it was recognised by
+  // ("Exceeded the prepaid gas"), not by its first word: "Exceeded" alone
+  // matched agent-framework issues about unrelated limits.
+  const recognised = known.map((k) => k.match.exec(text)?.[0]).find((m): m is string => !!m && m.length >= 6);
+  const first = recognised ?? tokens[0];
   const github = first ? tryTable(() => db.prepare(`SELECT title, url, repo, state, created_at FROM github_items
-    WHERE title LIKE ? ESCAPE '\\' OR body LIKE ? ESCAPE '\\' ORDER BY created_at DESC LIMIT ?`).all(`%${escLike(first)}%`, `%${escLike(first)}%`, limit) as ErrorExplanation['github'], []) : [];
+    WHERE title LIKE ? ESCAPE '\\' OR body LIKE ? ESCAPE '\\' ORDER BY (repo LIKE 'near/%') DESC, created_at DESC LIMIT ?`).all(`%${escLike(first)}%`, `%${escLike(first)}%`, limit) as ErrorExplanation['github'], []) : [];
   return { token: first ?? null, known, deprecations: [...seen.values()].slice(0, 3), forum, github };
 }
 

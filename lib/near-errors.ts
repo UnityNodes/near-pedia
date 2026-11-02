@@ -22,6 +22,8 @@ export interface KnownError {
 
 const RPC_TX = 'https://docs.near.org/api/rpc/transactions';
 const RPC_CONTRACTS = 'https://docs.near.org/api/rpc/contracts';
+const NOMICON_TRANSACTIONS = 'https://nomicon.io/RuntimeSpec/Transactions';
+const NOMICON_ACTIONS = 'https://nomicon.io/RuntimeSpec/Actions';
 
 export const KNOWN_ERRORS: readonly KnownError[] = [
   {
@@ -54,7 +56,7 @@ export const KNOWN_ERRORS: readonly KnownError[] = [
   {
     id: 'unknown-account',
     title: 'UNKNOWN_ACCOUNT',
-    match: /UNKNOWN_ACCOUNT|AccountDoesNotExist/,
+    match: /UNKNOWN_ACCOUNT|AccountDoesNotExist|does not exist while viewing/,
     cause: 'No account of that name exists on the network queried.',
     fix: 'Check the spelling, and that you query the network the account lives on (mainnet `.near` names do not exist on testnet).',
     source_url: RPC_CONTRACTS,
@@ -167,6 +169,33 @@ export const KNOWN_ERRORS: readonly KnownError[] = [
     fix: 'Call storage_deposit for the receiver on the token contract (storage_balance_bounds gives the amount), then transfer.',
     source_url: 'https://docs.near.org/primitives/ft/standard',
     quote: 'Returns the storage balance of a given account, or `null` if the account is not registered',
+  },
+  {
+    id: 'not-enough-balance',
+    title: 'InvalidTxError NotEnoughBalance',
+    match: /\bNotEnoughBalance\b(?!ForDeposit)/,
+    cause: 'The signer account does not hold enough NEAR to pay for the transaction: its gas plus the deposits it attaches.',
+    fix: 'Top up the signer account, or attach a smaller deposit or less gas; the error carries the balance and the cost it needed.',
+    source_url: NOMICON_TRANSACTIONS,
+    quote: '/// Account does not have enough balance to cover TX cost NotEnoughBalance {',
+  },
+  {
+    id: 'lack-balance-for-state',
+    title: 'LackBalanceForState',
+    match: /LackBalanceForState/,
+    cause: 'After the transaction the account would not hold enough NEAR to pay for the storage it uses (storage staking): every byte an account stores locks part of its balance.',
+    fix: 'Send NEAR to the account, or free storage (delete state, remove keys) before the call that adds it.',
+    source_url: NOMICON_ACTIONS,
+    quote: '`LackBalanceForState` if the account does not hold enough NEAR to cover the added storage.',
+  },
+  {
+    id: 'tx-status-method-not-found',
+    title: 'Method not found for tx_status',
+    match: /METHOD_NOT_FOUND|Method not found|-32601/i,
+    cause: 'The RPC node runs a nearcore older than 2.14.0, which only knows this method as EXPERIMENTAL_tx_status (or the method name is misspelled).',
+    fix: 'Call EXPERIMENTAL_tx_status, a deprecated alias that 2.14.0 still answers, until every node you use runs 2.14.0; the status method gives a node\'s version.',
+    source_url: 'https://docs.near.org/api/rpc/transactions',
+    quote: 'Earlier versions call this method `EXPERIMENTAL_tx_status`. Nodes that run them return a "Method not found" error for `tx_status`.',
   },
 ];
 

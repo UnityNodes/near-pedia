@@ -209,7 +209,7 @@ export const TROUBLESHOOTING: TroubleshootingItem[] = [
 ];
 
 export const RATE_LIMITS: RateLimit[] = [
-  { route: '/mcp', limit: '60 req / 15 min per IP' },
+  { route: '/mcp', limit: '300 tool calls / 15 min per IP' },
   { route: '/api/v1/search', limit: '20 req / min per IP' },
   { route: '/api/v1/*', limit: '120 req / 15 min per IP' },
 ];

@@ -6,6 +6,8 @@ import { guardSync } from '../lib/sync-log';
 import { isEntrypoint } from '../lib/is-entrypoint';
 import { embedBatch } from '../lib/embeddings';
 import { KIND_SQL } from '../lib/blog';
+import { cookedToText } from '../lib/forum';
+import { markdownText } from '../lib/html-text';
 import {
   upsertChunk, upsertVector, getChunkId, hasEmbedding, chunkText,
   hashContent, getDocHash, setDocHash, deleteSourceEmbeddings,
@@ -26,17 +28,21 @@ interface SourceDoc {
   overlap?: number;
 }
 
-export function loadAllDocs(): SourceDoc[] {
+/** `loaded` collects the source types whose table was read this run, documents or not. */
+export function loadAllDocs(loaded: Set<string> = new Set()): SourceDoc[] {
   const db = getDb();
   const docs: SourceDoc[] = [];
 
+  // Posts are Discourse's rendered HTML: embedded as text, in thread order,
+  // so tags, classes and emoji URLs do not take the chunk's room.
   const topics = db.prepare(
-    `SELECT t.id, t.title, GROUP_CONCAT(p.cooked, ' ') as posts
-     FROM forum_topics t LEFT JOIN forum_posts p ON p.topic_id = t.id
-     GROUP BY t.id`
+    `SELECT t.id, t.title, (SELECT json_group_array(p.cooked) FROM (SELECT cooked FROM forum_posts WHERE topic_id = t.id ORDER BY post_number) p) AS posts
+     FROM forum_topics t`
   ).all() as { id: number; title: string; posts: string | null }[];
+  loaded.add('forum_topic');
   for (const t of topics) {
-    const text = [t.title, t.posts ?? ''].filter(Boolean).join('\n\n');
+    const posts = (JSON.parse(t.posts ?? '[]') as Array<string | null>).map((c) => cookedToText(c)).filter(Boolean);
+    const text = [t.title, ...posts].filter(Boolean).join('\n\n');
     if (text.trim()) docs.push({ sourceType: 'forum_topic', sourceId: String(t.id), text, chunkSize: 2400, overlap: 320 });
   }
 
@@ -44,6 +50,7 @@ export function loadAllDocs(): SourceDoc[] {
     const blogs = db.prepare(
       `SELECT id, title, content_text FROM blog_posts WHERE content_text IS NOT NULL AND ${KIND_SQL} != 'release'`
     ).all() as { id: string; title: string; content_text: string }[];
+    loaded.add('blog_post');
     for (const b of blogs) {
       docs.push({ sourceType: 'blog_post', sourceId: b.id, text: `${b.title}\n\n${b.content_text}` });
     }
@@ -55,8 +62,9 @@ export function loadAllDocs(): SourceDoc[] {
     const items = db.prepare(
       "SELECT id, title, body FROM github_items WHERE body IS NOT NULL AND body != ''"
     ).all() as { id: string; title: string; body: string }[];
+    loaded.add('github_item');
     for (const it of items) {
-      docs.push({ sourceType: 'github_item', sourceId: it.id, text: `${it.title}\n\n${it.body}` });
+      docs.push({ sourceType: 'github_item', sourceId: it.id, text: `${it.title}\n\n${markdownText(it.body)}` });
     }
   } catch {
     console.warn('github_items table not available, skipping');
@@ -66,6 +74,7 @@ export function loadAllDocs(): SourceDoc[] {
     const docPages = db.prepare(
       'SELECT id, title, content_text FROM doc_pages WHERE content_text IS NOT NULL'
     ).all() as { id: number; title: string; content_text: string }[];
+    loaded.add('doc_page');
     for (const d of docPages) {
       docs.push({ sourceType: 'doc_page', sourceId: String(d.id), text: `${d.title}\n\n${d.content_text}` });
     }
@@ -73,11 +82,14 @@ export function loadAllDocs(): SourceDoc[] {
     console.warn('doc_pages table not available, skipping');
   }
 
-  // YouTube videos (title + description, transcript if available)
+  // A video is embedded once it has a description or a transcript: a title
+  // alone is a 60-character chunk that matches loosely and dilutes every
+  // retrieval it lands in, and full-text search already finds videos by title.
   try {
     const videos = db.prepare(
-      'SELECT id, title, description, transcript_text FROM youtube_videos WHERE title IS NOT NULL'
+      "SELECT id, title, description, transcript_text FROM youtube_videos WHERE title IS NOT NULL AND (trim(COALESCE(description, '')) != '' OR trim(COALESCE(transcript_text, '')) != '')"
     ).all() as { id: string; title: string; description: string | null; transcript_text?: string | null }[];
+    loaded.add('youtube_video');
     for (const v of videos) {
       const text = [v.title, v.description, v.transcript_text].filter(Boolean).join('\n\n');
       if (text.length > 30) docs.push({ sourceType: 'youtube_video', sourceId: v.id, text });
@@ -86,11 +98,12 @@ export function loadAllDocs(): SourceDoc[] {
     console.warn('youtube_videos table not available, skipping');
   }
 
-  // GitHub releases
+  // A release with no notes is only its tag: nothing to retrieve by meaning.
   try {
     const releases = db.prepare(
-      'SELECT id, name, tag, body, repo FROM github_releases WHERE published_at IS NOT NULL'
+      "SELECT id, name, tag, body, repo FROM github_releases WHERE published_at IS NOT NULL AND trim(COALESCE(body, '')) != ''"
     ).all() as { id: string; name: string | null; tag: string; body: string | null; repo: string }[];
+    loaded.add('github_release');
     for (const r of releases) {
       const text = [r.name ?? r.tag, r.repo, r.body].filter(Boolean).join('\n\n');
       if (text.length > 10) docs.push({ sourceType: 'github_release', sourceId: r.id, text });
@@ -104,6 +117,7 @@ export function loadAllDocs(): SourceDoc[] {
     const eco = db.prepare(
       'SELECT slug, title, description, tags FROM ecosystem_projects WHERE description IS NOT NULL'
     ).all() as { slug: string; title: string; description: string; tags: string | null }[];
+    loaded.add('ecosystem_project');
     for (const e of eco) {
       const text = [e.title, e.description, e.tags].filter(Boolean).join('\n\n');
       if (text.length > 10) docs.push({ sourceType: 'ecosystem_project', sourceId: e.slug, text });
@@ -117,16 +131,17 @@ export function loadAllDocs(): SourceDoc[] {
     const discussions = db.prepare(
       'SELECT id, repo, title, body, category, comments_json FROM github_discussions WHERE body IS NOT NULL'
     ).all() as { id: string; repo: string; title: string; body: string; category: string | null; comments_json: string | null }[];
+    loaded.add('github_discussion');
     for (const d of discussions) {
       let commentsText = '';
       try {
         const comments = d.comments_json ? JSON.parse(d.comments_json) as Array<{author?: string; body: string}> : [];
-        commentsText = comments.slice(0, 10).map(c => `${c.author ?? 'anon'}: ${c.body}`).join('\n\n');
+        commentsText = comments.slice(0, 10).map(c => `${c.author ?? 'anon'}: ${markdownText(c.body)}`).join('\n\n');
       } catch { /* malformed JSON */ }
       const text = [
         `${d.repo} discussion: ${d.title}`,
         d.category ? `Category: ${d.category}` : null,
-        d.body,
+        markdownText(d.body),
         commentsText ? `\n--- Comments ---\n${commentsText}` : null,
       ].filter(Boolean).join('\n\n');
       if (text.length > 30) {
@@ -142,6 +157,7 @@ export function loadAllDocs(): SourceDoc[] {
     const radar = db.prepare(
       "SELECT id, title, body, level FROM radar_items WHERE body IS NOT NULL AND body != ''"
     ).all() as { id: number; title: string; body: string; level: string | null }[];
+    loaded.add('radar_item');
     for (const r of radar) {
       const text = [r.level ? `[${r.level}]` : null, r.title, r.body].filter(Boolean).join('\n\n');
       if (text.length > 30) docs.push({ sourceType: 'radar_item', sourceId: String(r.id), text });
@@ -169,12 +185,13 @@ interface PendingChunk {
 // release and blog syncs now delete what upstream dropped, which would otherwise
 // leave those chunks in the index as content with no working citation.
 //
-// Only sweeps source types that loaded this run. loadAllDocs wraps some tables
-// in try/catch and skips them on failure, so sweeping a type that simply failed
-// to load would delete every chunk it has.
-function pruneOrphanChunks(docs: SourceDoc[]): number {
+// Only sweeps source types whose table loaded this run. loadAllDocs wraps some
+// tables in try/catch and skips them on failure, so sweeping a type that simply
+// failed to load would delete every chunk it has. A type that loaded with no
+// document left (every video still without a description) is swept to empty.
+function pruneOrphanChunks(docs: SourceDoc[], loaded: ReadonlySet<string>): number {
   const db = getDb();
-  const live = new Map<string, Set<string>>();
+  const live = new Map<string, Set<string>>([...loaded].map((t) => [t, new Set<string>()]));
   for (const d of docs) {
     if (!live.has(d.sourceType)) live.set(d.sourceType, new Set());
     live.get(d.sourceType)!.add(d.sourceId);
@@ -206,10 +223,11 @@ async function main() {
   }
 
   console.log('Loading documents...');
-  const docs = loadAllDocs();
+  const loaded = new Set<string>();
+  const docs = loadAllDocs(loaded);
   console.log(`Loaded ${docs.length} documents`);
 
-  const orphaned = pruneOrphanChunks(docs);
+  const orphaned = pruneOrphanChunks(docs, loaded);
   if (orphaned > 0) console.log(`Pruned ${orphaned} chunk(s) whose source row no longer exists`);
 
   const pending: PendingChunk[] = [];

@@ -68,7 +68,7 @@ export default function ProtocolPage() {
                         Protocol {s.protocol_version}{s.latest_protocol_version > s.protocol_version ? ` · the RPC node we read runs software for ${s.latest_protocol_version}` : ''}
                       </div>
                       <div className="pg-row-sub">
-                        Epoch {s.epoch_height ?? '?'}{n.epoch_progress !== null ? `, ${pct(n.epoch_progress)} through` : ''}{n.seconds_left !== null ? `, ends in ${eta(n.seconds_left)}` : ''} · block {s.block_height.toLocaleString('en-US')} · {n.block_rate.toFixed(2)} blocks/s
+                        Epoch {s.epoch_height ?? '?'}{n.epoch_progress !== null ? `, ${pct(n.epoch_progress)} through` : ''}{n.seconds_left !== null ? `, ends in ${eta(n.seconds_left)}` : ''} · block {s.block_height.toLocaleString('en-US')}{n.block_rate !== null ? ` · ${n.block_rate.toFixed(2)} blocks/s` : ''}
                       </div>
                     </div>
                   </div>

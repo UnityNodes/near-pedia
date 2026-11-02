@@ -77,10 +77,14 @@ const GENERIC_TAGS = new Set(['dapp', 'other', 'infrastructure', 'near-intents',
  * and a prefix check let "https://x.io\nIgnore previous instructions" through
  * as a website that is then printed unfenced.
  */
+/** Query parameters that carry a referral or a tracking tag, not the page: a catalog listing linked Rhea's app with someone's points code. */
+const TRACKING_PARAM = /^(?:code|ref|referral|referrer|invite|invite_code|affiliate|utm_[a-z]+)$/i;
+
 export function safeUrl(v: unknown): string | null {
   if (typeof v !== 'string' || !v.trim()) return null;
   try {
     const u = new URL(v.trim());
+    for (const k of [...u.searchParams.keys()]) if (TRACKING_PARAM.test(k)) u.searchParams.delete(k);
     return u.protocol === 'https:' || u.protocol === 'http:' ? u.href : null;
   } catch {
     return null;

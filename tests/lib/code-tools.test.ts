@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { breakingLines, errorTokens, parsePackageRef, productOf } from '@/lib/code-tools';
+import { breakingLines, errorTokens, parsePackageRef, productOf, renderBreaking } from '@/lib/code-tools';
 import { matchErrors, KNOWN_ERRORS } from '@/lib/near-errors';
 import { isNepPath, nepNumber, parseNep } from '@/lib/neps';
 import { standardsFromMethods, wasmExports, ACCOUNT_ID_RE } from '@/lib/contract-info';
-import { htmlBlocks, markdownBlocks } from '@/lib/code-examples';
+import { cleanBlock, htmlBlocks, identifiersIn, markdownBlocks } from '@/lib/code-examples';
 
 describe('parsePackageRef', () => {
   it.each([
@@ -31,6 +31,36 @@ describe('breakingLines', () => {
   });
 });
 
+describe('breakingLines on changesets and prose notes', () => {
+  it('reads Major Changes and a bold Breaking Changes line, without the PR and commit prefix', () => {
+    const body = [
+      '### Major Changes',
+      '',
+      '-   [#1353](https://github.com/near/near-api-js/pull/1353) [`73690557`](https://github.com/near/near-api-js/commit/73690557c8e2) Thanks [@andy-haynes](https://github.com/andy-haynes)! - Update to Node.js 20 LTS & pnpm 9.4, modularize packages',
+      '',
+      '    **Breaking Changes**',
+      '',
+      '        -   The following functions are no longer exported:',
+      '            -   `logWarning`',
+      '### Patch Changes',
+      '-   Updated dependencies',
+    ].join('\n');
+    expect(breakingLines(body)).toEqual([
+      'Update to Node.js 20 LTS & pnpm 9.4, modularize packages',
+      'The following functions are no longer exported:',
+      '`logWarning`',
+    ]);
+  });
+
+  it('reads prose that deprecates or rewrites an API, and ignores prose that does not', () => {
+    const body = '## Account\n`Account` has received major changes to its interface.\n\n## Connection\n`Connection` has been deprecated, as it is no longer used by the `Account` class\n\nPackages are now truly independent.';
+    expect(breakingLines(body)).toEqual([
+      '`Account` has received major changes to its interface.',
+      '`Connection` has been deprecated, as it is no longer used by the `Account` class',
+    ]);
+  });
+});
+
 describe('errorTokens and the error catalog', () => {
   it('picks the codes and variants out of an RPC error', () => {
     expect(errorTokens('Server error: {"TxExecutionError":{"InvalidTxError":"Expired"}} HANDLER_ERROR')).toEqual(expect.arrayContaining(['TxExecutionError', 'InvalidTxError', 'HANDLER_ERROR']));
@@ -41,8 +71,12 @@ describe('errorTokens and the error catalog', () => {
     expect(matchErrors('{"InvalidTxError":"Expired"}').map((e) => e.id)).toEqual(['tx-expired']);
     expect(matchErrors('Smart contract panicked: The account doesn\'t have enough balance').map((e) => e.id)).toEqual(['ft-not-enough-balance']);
     expect(matchErrors('everything is fine')).toEqual([]);
+    expect(matchErrors('{"InvalidTxError":{"NotEnoughBalance":{"signer_id":"a.near","balance":"1","cost":"2"}}}').map((e) => e.id)).toEqual(['not-enough-balance']);
+    expect(matchErrors('{"ActionError":{"kind":{"LackBalanceForState":{"account_id":"a.near","amount":"1"}}}}').map((e) => e.id)).toEqual(['lack-balance-for-state']);
+    expect(matchErrors('account alice.testnet does not exist while viewing').map((e) => e.id)).toEqual(['unknown-account']);
+    expect(matchErrors('{"code":-32601,"message":"Method not found","name":"METHOD_NOT_FOUND"}').map((e) => e.id)).toEqual(['tx-status-method-not-found']);
     for (const e of KNOWN_ERRORS) {
-      expect(e.source_url).toMatch(/^https:\/\/docs\.near\.org\//);
+      expect(e.source_url).toMatch(/^https:\/\/(docs\.near\.org|nomicon\.io)\//);
       expect(e.quote.length).toBeGreaterThan(20);
     }
   });
@@ -135,5 +169,42 @@ describe('findNeps', () => {
     ins.run(145, 'Storage Management', '[]', 'paying for state');
     expect(findNeps(d, 'fungible token', 3).map((r) => [r.nep, r.replaced_by])).toEqual([[141, []], [21, [141]]]);
     expect(findNeps(d, 'storage management', 3).map((r) => r.nep)).toEqual([145]);
+  });
+});
+
+describe('code examples: cleaning and identifiers', () => {
+  it('drops the callout quote prefix and Mintlify diff markers, keeping the new line', () => {
+    const code = '> const a = 1;\n> const old = 2; // [!code --]\n> const updated = 3; // [!code ++]\n> call(a); // [!code focus]';
+    expect(cleanBlock(code)).toBe('const a = 1;\nconst updated = 3;\ncall(a);');
+  });
+
+  it('leaves a comparison or a quoted line inside ordinary code alone', () => {
+    expect(cleanBlock('if (a > b) {\n  return a;\n}')).toBe('if (a > b) {\n  return a;\n}');
+  });
+
+  it('names the identifiers a topic asks for', () => {
+    expect(identifiersIn('ft_transfer_call example')).toEqual(['ft_transfer_call']);
+    expect(identifiersIn('near-api-js viewFunction')).toEqual(['viewFunction']);
+    expect(identifiersIn('near_sdk::env::predecessor_account_id')).toEqual(['near_sdk::env::predecessor_account_id']);
+    expect(identifiersIn('cross contract call')).toEqual([]);
+  });
+});
+
+describe('renderBreaking', () => {
+  const step = (version: string, breaking: string[] = []) => ({
+    tag: version, version, published_at: null, url: `https://x/${version}`, prerelease: false, removals: [], breaking, code: null, protocol_upgrade: false, security: false,
+  });
+  const product = { key: 'near-api-js', label: 'near-api-js', repo: 'near/near-api-js', prefixes: [] } as unknown as Parameters<typeof renderBreaking>[0];
+
+  it('folds a run of releases with nothing to report into one line and keeps the ones that break', () => {
+    const text = renderBreaking(product, '4.0.0', '5.0.1', [step('4.0.1'), step('4.0.2'), step('4.0.3'), step('5.0.0', ['`fetchJson` is no longer exported']), step('5.0.1')], (s) => s);
+    expect(text).toContain('4.0.1 … 4.0.3 (3 releases): no removal, deprecation or breaking line in the notes');
+    expect(text).toContain('## 5.0.0');
+    expect(text).toContain('- BREAKING: `fetchJson` is no longer exported');
+    expect(text).toContain('5.0.1: no removal');
+  });
+
+  it('flags a new major version whose notes name no break', () => {
+    expect(renderBreaking(product, '5.1.1', '6.0.0', [step('6.0.0')], (s) => s)).toContain('a new major version');
   });
 });

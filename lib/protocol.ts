@@ -193,7 +193,8 @@ export interface NetworkProtocol {
   /** Estimated seconds until the epoch ends, from `now` and the measured block rate. */
   seconds_left: number | null;
   /** Blocks a second between the last two snapshots, or 1 when they are too close to measure. */
-  block_rate: number;
+  /** Blocks a second, measured from two observed blocks at least MIN_RATE_SPAN_S apart; null when there are none. */
+  block_rate: number | null;
   threshold: number | null;
   /** The version this epoch's tally carries past the threshold, if any (decides the version two epochs on). */
   passing: number | null;
@@ -213,6 +214,28 @@ function tallyFor(db: Database.Database, network: string, epochId: string): Tall
   return tallyVotes(votes, stakes);
 }
 
+const MIN_RATE_SPAN_S = 300;
+
+/**
+ * Blocks a second between this snapshot's head and an earlier block we
+ * observed: the previous snapshot, or else the first block sampled for this
+ * epoch's vote, so a fresh database with one snapshot still has a rate.
+ */
+function blockRate(db: Database.Database, network: string, snapshot: Snapshot): number | null {
+  const candidates = [
+    db.prepare(`SELECT block_height, block_time FROM protocol_snapshots WHERE network = ? AND observed_at < ?
+      ORDER BY observed_at DESC LIMIT 1`).get(network, snapshot.observed_at),
+    db.prepare(`SELECT block_height, block_time FROM validator_votes WHERE network = ? AND epoch_id = ?
+      ORDER BY block_height ASC LIMIT 1`).get(network, snapshot.epoch_id),
+  ] as Array<{ block_height: number; block_time: string } | undefined>;
+  for (const c of candidates) {
+    if (!c) continue;
+    const dt = (Date.parse(snapshot.block_time) - Date.parse(c.block_time)) / 1000;
+    if (dt >= MIN_RATE_SPAN_S && snapshot.block_height > c.block_height) return (snapshot.block_height - c.block_height) / dt;
+  }
+  return null;
+}
+
 export function networkProtocol(db: Database.Database, network: string, now: Date = new Date()): NetworkProtocol | null {
   const snapshot = latestSnapshot(db, network);
   if (!snapshot) return null;
@@ -226,19 +249,20 @@ export function networkProtocol(db: Database.Database, network: string, now: Dat
     ? { epoch_id: prevSnap.epoch_id, tally: prevTally, passing: passingVersion(prevTally, snapshot.protocol_version, snapshot.threshold_num, snapshot.threshold_den) }
     : null;
 
-  const earlier = db.prepare(`SELECT block_height, block_time FROM protocol_snapshots WHERE network = ? AND observed_at < ?
-      ORDER BY observed_at DESC LIMIT 1`).get(network, snapshot.observed_at) as { block_height: number; block_time: string } | undefined;
-  const dt = earlier ? (Date.parse(snapshot.block_time) - Date.parse(earlier.block_time)) / 1000 : 0;
-  const block_rate = earlier && dt >= 300 ? (snapshot.block_height - earlier.block_height) / dt : 1;
+  const block_rate = blockRate(db, network, snapshot);
   const age_s = Math.max(0, (now.getTime() - Date.parse(snapshot.block_time)) / 1000);
-  const heightNow = snapshot.block_height + Math.round(age_s * block_rate);
+  const heightNow = snapshot.block_height + Math.round(age_s * (block_rate ?? 0));
   const done = heightNow - snapshot.epoch_start_height;
+  // Projected past the end of the epoch this snapshot read: that epoch is
+  // over, and "100% through, 0m left" would describe one nobody is in.
+  const length = snapshot.epoch_length ?? 0;
+  const known = block_rate !== null && length > 0 && done < length;
   return {
     snapshot,
     tally,
     previous,
-    epoch_progress: snapshot.epoch_length ? Math.min(1, Math.max(0, done / snapshot.epoch_length)) : null,
-    seconds_left: snapshot.epoch_length && block_rate > 0 ? Math.max(0, (snapshot.epoch_length - done) / block_rate) : null,
+    epoch_progress: known ? Math.max(0, done / length) : null,
+    seconds_left: known ? (length - done) / block_rate! : null,
     block_rate,
     threshold,
     passing: passingVersion(tally, snapshot.protocol_version, snapshot.threshold_num, snapshot.threshold_den),
@@ -337,7 +361,7 @@ export function renderProtocol(r: ProtocolReport, now: Date): string {
       `nearcore ${s.node_version ? fenceUntrustedInline(s.node_version) : '?'} at ${s.endpoint}, block ${s.block_height} (${s.block_time.slice(0, 19)} UTC), observed ${s.observed_at.slice(0, 16)} UTC${n.age_s > STALE_SNAPSHOT_S ? ` — STALE: ${duration(n.age_s * 1000)} old, the sync has not refreshed it` : ''}.`,
     ];
     if (n.epoch_progress !== null && n.seconds_left !== null) {
-      lines.push(`Epoch ${s.epoch_height ?? '?'}: about ${pct(n.epoch_progress)} through now, roughly ${duration(n.seconds_left * 1000)} left at ${n.block_rate.toFixed(2)} blocks a second.`);
+      lines.push(`Epoch ${s.epoch_height ?? '?'}: about ${pct(n.epoch_progress)} through now, roughly ${duration(n.seconds_left * 1000)} left at ${n.block_rate!.toFixed(2)} blocks a second.`);
     }
     if (n.previous?.passing) {
       lines.push(`The previous epoch's vote carried ${n.previous.passing} past the threshold (${pct(n.previous.tally.shares.find((x) => x.version === n.previous!.passing)!.share)} of block-producer stake, read from ${pct(n.previous.tally.coverage)}): the switch is decided and is expected when this epoch ends.`);

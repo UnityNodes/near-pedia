@@ -5,7 +5,11 @@
  * latest 50, so the sitemap is the set and each post page is read once.
  *
  * A post page carries og:title, article:published_time and og:description
- * in its head and the article inside <main>.
+ * in its head and the article inside <main>, followed in the same <main> by
+ * the site's footer: community links and a list of other posts on near.org,
+ * "More from NEAR AI" on near.ai. Left in, those titles were embedded with
+ * every post (613 of 639 near.org posts), so a search for one post's subject
+ * returned a dozen others that only link to it. articleText cuts there.
  */
 
 import { extractMain, htmlDecode, htmlToTextWithCode } from './html-extract';
@@ -18,6 +22,10 @@ export interface BlogSource {
   post: RegExp;
   /** Suffix the site appends to og:title. */
   titleSuffix: RegExp;
+  /** The line where the article ends and the site's footer (community links, related posts) begins. */
+  footer: RegExp;
+  /** Whole lines of page chrome inside the article: share buttons, back links. */
+  chrome: RegExp;
 }
 
 export const BLOG_SOURCES: readonly BlogSource[] = [
@@ -27,6 +35,8 @@ export const BLOG_SOURCES: readonly BlogSource[] = [
     sitemap: 'https://near.org/sitemap.xml',
     post: /^https:\/\/(?:www\.)?near\.org\/blog\/(?!category\/|page\/|tag\/)[a-z0-9-]+\/?$/,
     titleSuffix: /\s*\|\s*NEAR\s*$/,
+    footer: /^[ \t]*(?:Join the community:|More posts)[ \t]*$/m,
+    chrome: /^[ \t]*Share[ \t]*$/gm,
   },
   {
     id: 'near-ai',
@@ -34,6 +44,8 @@ export const BLOG_SOURCES: readonly BlogSource[] = [
     sitemap: 'https://near.ai/sitemap.xml',
     post: /^https:\/\/(?:www\.)?near\.ai\/blog\/(?!category\/|page\/|tag\/)[a-z0-9-]+\/?$/,
     titleSuffix: /\s*\|\s*NEAR AI\s*$/,
+    footer: /^[ \t]*More from NEAR AI[ \t]*$/m,
+    chrome: /^[ \t]*← All articles[ \t]*/gm,
   },
 ];
 
@@ -63,10 +75,17 @@ const meta = (html: string, prop: string): string | null => {
   return m ? htmlDecode(m).trim() : null;
 };
 
+/** The article alone: cut at the site footer, page chrome lines dropped, blank runs collapsed. */
+export function articleText(text: string, source: BlogSource): string {
+  const end = source.footer.exec(text);
+  const body = end ? text.slice(0, end.index) : text;
+  return body.replace(source.chrome, '').replace(/\n[ \t]*\n(?:[ \t]*\n)+/g, '\n\n').trim();
+}
+
 export function parsePost(html: string, url: string, source: BlogSource): BlogPost | null {
   const main = extractMain(html);
   if (!main) return null;
-  const content_text = htmlToTextWithCode(main);
+  const content_text = articleText(htmlToTextWithCode(main), source);
   if (content_text.length < MIN_TEXT) return null;
   const slug = url.replace(/\/$/, '').split('/').pop()!;
   const title = (meta(html, 'og:title') ?? slug).replace(source.titleSuffix, '').trim();

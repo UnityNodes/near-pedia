@@ -9,7 +9,7 @@
 import type Database from 'better-sqlite3';
 import { escLike } from './rank';
 import { usd } from './incidents';
-import { CATALOG_PAGE_URL } from './near-catalog';
+import { CATALOG_PAGE_URL, safeUrl } from './near-catalog';
 import { PARTNERS, getPartner, type Partner } from './partners';
 
 export interface ProjectRow {
@@ -159,7 +159,8 @@ export function renderProject(p: ProjectRow, fence: Fence, extra: { incidents?: 
   if (p.tagline || p.description) lines.push(`  ${fence(((p.tagline ?? p.description) as string).slice(0, 240))}`);
   if (p.tvl_usd !== null) lines.push(`  TVL on NEAR: ${usd(p.tvl_usd)} (DefiLlama, ${p.tvl_at?.slice(0, 10)})${tvl.length > 1 ? `: ${tvl.map((c) => `${fence(c.name)} ${usd(c.tvl_usd)}`).join(' + ')}` : ''}`);
   if (tokens.length) lines.push(`  tokens: ${tokens.map((t) => (t.near ? `${fence(t.symbol)} (${fence(t.near)})` : fence(t.symbol))).join(', ')}`);
-  const links = [p.website && `site ${p.website}`, p.github && `GitHub ${p.github}`, p.dapp && p.dapp !== p.website && `app ${p.dapp}`].filter(Boolean);
+  const dapp = safeUrl(p.dapp);
+  const links = [p.website && `site ${p.website}`, p.github && `GitHub ${p.github}`, dapp && dapp !== p.website && `app ${dapp}`].filter(Boolean);
   if (links.length) lines.push(`  ${links.join(' · ')}`);
   if (extra.partner) lines.push(`  NEAR partner: ${extra.partner.name}, see get_partner("${extra.partner.id}") for contracts and docs`);
   if (extra.incidents?.length) {

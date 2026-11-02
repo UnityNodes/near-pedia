@@ -26,3 +26,18 @@ export function htmlText(fragment: string): string {
     .replace(/\s+([.,;:!?])/g, '$1')
     .trim();
 }
+
+const MARKDOWN_HTML_TAG = /<\/?(?:a|abbr|b|br|code|details|div|em|h[1-6]|hr|i|img|kbd|li|ol|p|picture|source|span|strong|sub|summary|sup|table|tbody|td|th|thead|tr|u|ul)\b[^>]*>/gi;
+
+/**
+ * Markdown with the HTML GitHub lets into it (dependabot's link tables,
+ * <details> blocks, issue-template comments) reduced to its text, line
+ * breaks kept, so an issue is embedded by what it says.
+ */
+export function markdownText(markdown: string): string {
+  return decode(markdown.replace(/<!--[\s\S]*?-->/g, '').replace(MARKDOWN_HTML_TAG, ' '))
+    .replace(/[ \t]+/g, ' ')
+    .replace(/ *\n */g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
