@@ -43,6 +43,9 @@ const STOPWORDS = new Set([
   'the', 'a', 'an', 'and', 'or', 'of', 'to', 'in', 'on', 'for', 'is', 'are', 'be',
   'do', 'does', 'how', 'what', 'why', 'when', 'where', 'i', 'we', 'you', 'it',
   'my', 'me', 'can', 'with', 'from', 'by', 'at', 'as', 'that', 'this', 'not',
+  'too', 'very', 'all', 'any', 'but', 'has', 'have', 'had', 'was', 'were', 'will', 'would', 'should', 'could',
+  'get', 'gets', 'got', 'its', 'our', 'their', 'they', 'them', 'there', 'here', 'into', 'out', 'than', 'then',
+  'your', 'just', 'also', 'only', 'some', 'such', 'after', 'before', 'when', 'while', 'which', 'who', 'why',
 ]);
 
 /** Tokens worth putting in a LIKE conjunct: discriminative enough to narrow. */

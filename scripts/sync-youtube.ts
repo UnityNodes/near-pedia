@@ -7,6 +7,7 @@ import { getDb } from '../lib/db';
 import { capText } from '../lib/cap-text';
 import { descriptionFromWatchPage } from '../lib/video-description';
 import { VIDEO_CHANNELS } from '../lib/video-channels';
+import { NEXT_URL, nextRequestBody, parseNext } from '../lib/youtube-next';
 
 const CHANNELS = VIDEO_CHANNELS;
 
@@ -19,6 +20,9 @@ const MAX_DISCOVER_PAGES = 30; // hard cap so a renderer change can't infinite-l
 const MAX_ENRICH_FAILS_BEFORE_ABORT = 8; // bail the enrich pass on a hard rate-limit
 const REFRESH_DELAY_MS = 3000;
 const REFRESH_ABORT_AFTER = 4;
+const WEB_CLIENT_VERSION = '2.20260606.02.00';
+/** Held videos still without a description that one run tries to complete, newest first. */
+const BACKFILL_PER_RUN = Number(process.env.YOUTUBE_BACKFILL ?? 300);
 
 // A discovered video. title comes straight from the playlist/browse JSON
 // (lockupViewModel.title.content), so rows can be written even when the
@@ -105,7 +109,7 @@ async function discoverChannelVideos(channelId: string): Promise<DiscoveredChann
     console.warn(`  context parse failed for ${channelId}: ${(err as Error).message}`);
     return { videos: [], complete: false };
   }
-  const clientVersion = context.client?.clientVersion ?? '2.20260606.02.00';
+  const clientVersion = context.client?.clientVersion ?? WEB_CLIENT_VERSION;
 
   const byId = new Map<string, DiscoveredVideo>();
   for (const v of extractLockupVideos(html)) if (!byId.has(v.id)) byId.set(v.id, v);
@@ -183,15 +187,42 @@ function parsePublishDate(s: string | null): string | null {
   return d.toISOString();
 }
 
+let watchPageRefused = false;
+
+async function enrichFromNext(id: string): Promise<EnrichedMetadata | null> {
+  try {
+    const res = await fetch(NEXT_URL, {
+      method: 'POST',
+      headers: { 'User-Agent': UA, 'Content-Type': 'application/json', 'X-Youtube-Client-Name': '1', 'X-Youtube-Client-Version': WEB_CLIENT_VERSION },
+      body: nextRequestBody(id, WEB_CLIENT_VERSION),
+    });
+    if (!res.ok) return null;
+    const meta = parseNext(await res.json() as Record<string, unknown>);
+    return { ...meta, description: meta.description ? capText(meta.description, 20_000) : null };
+  } catch {
+    return null;
+  }
+}
+
 // Best-effort: pull description + publishDate (and a cleaner title) from a
 // video's watch page. No JS evaluation — patterns target the embedded JSON.
-// Returns null when the page is unavailable (HTTP 429 rate-limit from this
-// server IP, LOGIN_REQUIRED, region-blocked, deleted); callers fall back to
-// the discovery title so the row is still written.
+// Once the watch page refuses this server (a 302 to a sign-in check, a 429),
+// the rest of the run asks the innertube `next` endpoint instead
+// (lib/youtube-next.ts). Returns null when neither answers; callers fall back
+// to the discovery title so the row is still written.
 async function enrichVideo(id: string): Promise<EnrichedMetadata | null> {
+  if (watchPageRefused) return enrichFromNext(id);
+  const fromWatch = await enrichFromWatchPage(id);
+  if (fromWatch?.description) return fromWatch;
+  if (!fromWatch) watchPageRefused = true;
+  return (await enrichFromNext(id)) ?? fromWatch;
+}
+
+async function enrichFromWatchPage(id: string): Promise<EnrichedMetadata | null> {
   try {
     const res = await fetch(`https://www.youtube.com/watch?v=${id}&hl=en&gl=US`, {
       headers: { 'User-Agent': UA, 'Accept-Language': 'en-US,en;q=0.9' },
+      redirect: 'manual',
     });
     if (!res.ok) return null;
     const html = await res.text();
@@ -254,6 +285,41 @@ async function refreshDescriptions(): Promise<void> {
     await sleep(REFRESH_DELAY_MS);
   }
   console.log(`\nDone. Updated: ${changed}, unreadable: ${failed}, unchanged: ${rows.length - changed - failed}`);
+}
+
+/**
+ * Enrichment only ever ran on videos new to this run, so a video first
+ * written while YouTube refused this server kept its bare title for good.
+ * Each run now also completes up to BACKFILL_PER_RUN held videos that still
+ * have no description.
+ */
+async function backfillDescriptions(db: ReturnType<typeof getDb>): Promise<{ enriched: number; left: number }> {
+  const missing = () => (db.prepare("SELECT COUNT(*) n FROM youtube_videos WHERE trim(COALESCE(description, '')) = ''").get() as { n: number }).n;
+  const rows = db.prepare(`SELECT id FROM youtube_videos WHERE trim(COALESCE(description, '')) = ''
+    ORDER BY published_at IS NULL, published_at DESC, rowid DESC LIMIT ?`).all(BACKFILL_PER_RUN) as { id: string }[];
+  if (rows.length === 0) return { enriched: 0, left: 0 };
+  const update = db.prepare(`UPDATE youtube_videos SET description = @description,
+    published_at = COALESCE(published_at, @published_at), title = COALESCE(@title, title) WHERE id = @id`);
+  console.log(`\n=== Backfill: ${rows.length} held video(s) without a description ===`);
+  let enriched = 0;
+  let fails = 0;
+  for (const { id } of rows) {
+    if (fails >= MAX_ENRICH_FAILS_BEFORE_ABORT) {
+      console.warn(`  backfill stopped after ${fails} consecutive failures`);
+      break;
+    }
+    const meta = await enrichVideo(id);
+    if (meta?.description) {
+      update.run({ id, description: meta.description, published_at: meta.published_at, title: meta.title });
+      enriched++;
+      fails = 0;
+    } else {
+      fails++;
+    }
+    await sleep(ENRICH_DELAY_MS);
+  }
+  console.log(`  backfilled ${enriched} description(s)`);
+  return { enriched, left: missing() };
 }
 
 async function main(): Promise<void> {
@@ -398,6 +464,10 @@ async function main(): Promise<void> {
       console.log(`  pruned ${res.deleted} video(s) no longer in the uploads playlist`);
     }
   }
+
+  const backfill = await backfillDescriptions(db);
+  totalEnriched += backfill.enriched;
+  if (backfill.left > 0) problems.push(`${backfill.left} held video(s) still without a description`);
 
   // FTS is kept in sync by AFTER INSERT/UPDATE/DELETE triggers, but rebuild
   // once at the end so a fresh run reconciles the contentless index exactly.

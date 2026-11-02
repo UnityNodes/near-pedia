@@ -124,5 +124,8 @@ export const PARTNERS: readonly Partner[] = [
 
 export function getPartner(idOrName: string): Partner | null {
   const k = idOrName.trim().toLowerCase();
-  return PARTNERS.find((p) => p.id === k || p.name.toLowerCase() === k || p.catalog_slugs.includes(k) || p.contracts.some((c) => c.account === k)) ?? null;
+  const bare = (x: string) => x.replace(/^near[\s-]+/, '');
+  return PARTNERS.find((p) => p.id === k || p.name.toLowerCase() === k || p.catalog_slugs.includes(k) || p.contracts.some((c) => c.account === k))
+    ?? PARTNERS.find((p) => bare(p.id) === bare(k) || bare(p.name.toLowerCase()) === bare(k))
+    ?? null;
 }

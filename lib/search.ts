@@ -1,6 +1,7 @@
 import Fuse from 'fuse.js';
 import { getDb } from './db';
 import { tokenize, scoreResult } from './rank';
+import { radarLiveSql } from './constants';
 
 export type SearchResultType = 'discussion' | 'doc' | 'youtube' | 'github' | 'blog';
 
@@ -11,6 +12,10 @@ export interface SearchResult {
   excerpt: string;
   url: string;
   meta?: string;
+  /** The page upstream (gov.near.org, docs.near.org, the post itself), where url is this site's page for it. */
+  source_url?: string;
+  /** What the row is when its type is a coarser bucket: release, radar, project. */
+  label?: string;
 }
 
 export interface UnifiedSearchResult {
@@ -84,14 +89,14 @@ export function unifiedSearch(q: string, _limit = 50, dbOverride?: DbLike): Unif
 
   try {
     const topics = db.prepare(`
-      SELECT t.id, t.title, t.url,
+      SELECT t.id, t.title, t.url, t.last_post_at,
         (SELECT cooked FROM forum_posts WHERE topic_id = t.id ORDER BY post_number LIMIT 1) as first_post
       FROM forum_topics t
       JOIN forum_fts ON t.id = forum_fts.rowid
       WHERE forum_fts MATCH ?
       ORDER BY rank
       LIMIT 10
-    `).all(ftsQ) as { id: number; title: string; url: string; first_post: string | null }[];
+    `).all(ftsQ) as { id: number; title: string; url: string; last_post_at: string | null; first_post: string | null }[];
 
     for (const t of topics) {
       const rawText = t.first_post?.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim() ?? '';
@@ -101,19 +106,21 @@ export function unifiedSearch(q: string, _limit = 50, dbOverride?: DbLike): Unif
         title: t.title,
         excerpt: snippet(rawText, q),
         url: `/discussions/${t.id}`,
+        source_url: t.url,
+        meta: t.last_post_at ? `forum · last post ${t.last_post_at.slice(0, 10)}` : 'forum',
       });
     }
   } catch (e) { console.warn('[search] FTS block failed:', e instanceof Error ? e.message : e); }
 
   try {
     const docs = db.prepare(`
-      SELECT d.id, d.title, d.breadcrumb, d.excerpt, d.content_text, d.source
+      SELECT d.id, d.title, d.breadcrumb, d.excerpt, d.content_text, d.source, d.url
       FROM doc_pages d
       JOIN docs_fts ON d.id = docs_fts.rowid
       WHERE docs_fts MATCH ?
       ORDER BY rank
       LIMIT 10
-    `).all(ftsQ) as { id: number; title: string; breadcrumb: string; excerpt: string; content_text: string; source: string }[];
+    `).all(ftsQ) as { id: number; title: string; breadcrumb: string; excerpt: string; content_text: string; source: string; url: string }[];
 
     for (const d of docs) {
       results.push({
@@ -123,6 +130,7 @@ export function unifiedSearch(q: string, _limit = 50, dbOverride?: DbLike): Unif
         excerpt: snippet(d.content_text || d.excerpt, q),
         url: `/docs/${d.id}`,
         meta: d.source,
+        source_url: d.url,
       });
     }
   } catch (e) { console.warn('[search] FTS block failed:', e instanceof Error ? e.message : e); }
@@ -189,7 +197,7 @@ export function unifiedSearch(q: string, _limit = 50, dbOverride?: DbLike): Unif
       SELECT b.id, b.title, b.excerpt, b.content_text, b.author, b.published_at, b.url, b.tags
       FROM blog_posts b
       JOIN blog_posts_fts ON b.rowid = blog_posts_fts.rowid
-      WHERE blog_posts_fts MATCH ?
+      WHERE blog_posts_fts MATCH ? AND instr(',' || replace(coalesce(b.tags, ''), ', ', ',') || ',', ',release-notes,') = 0
       ORDER BY rank
       LIMIT 8
     `).all(ftsQ) as { id: string; title: string; excerpt: string; content_text: string | null; author: string; published_at: string; url: string; tags: string | null }[];
@@ -204,6 +212,7 @@ export function unifiedSearch(q: string, _limit = 50, dbOverride?: DbLike): Unif
         // an internal /blog page - we index it for search/RAG, we don't re-host.
         url: b.tags?.includes('third-party') ? b.url : getBlogInternalUrl(b.id, b.tags),
         meta: [b.author, b.published_at?.slice(0, 10)].filter(Boolean).join(' · '),
+        source_url: b.url,
       });
     }
   } catch (e) { console.warn('[search] FTS block failed:', e instanceof Error ? e.message : e); }
@@ -226,6 +235,7 @@ export function unifiedSearch(q: string, _limit = 50, dbOverride?: DbLike): Unif
         excerpt: snippet(r.body, q),
         url: r.url,
         meta: `${r.repo} · release · ${r.published_at?.slice(0, 10) ?? ''}`,
+        label: 'release',
       });
     }
   } catch { /* table not ready */ }
@@ -237,7 +247,7 @@ export function unifiedSearch(q: string, _limit = 50, dbOverride?: DbLike): Unif
     const radars = nd.length === 0 ? [] : db.prepare(`
       SELECT id, title, body, source_url, level, published_at
       FROM radar_items
-      WHERE ${ndSql}
+      WHERE (${ndSql}) AND ${radarLiveSql()}
       ORDER BY published_at DESC LIMIT 5
     `).all(...ndArgs) as { id: number; title: string; body: string | null; source_url: string | null; level: string; published_at: string }[];
     for (const r of radars) {
@@ -248,6 +258,7 @@ export function unifiedSearch(q: string, _limit = 50, dbOverride?: DbLike): Unif
         excerpt: snippet(r.body, q),
         url: r.source_url ?? '/radar',
         meta: `radar · ${r.published_at?.slice(0, 10) ?? ''}`,
+        label: 'radar',
       });
     }
   } catch { /* table not ready */ }
@@ -271,6 +282,7 @@ export function unifiedSearch(q: string, _limit = 50, dbOverride?: DbLike): Unif
         excerpt: truncate(e.description, 200),
         url: e.url,
         meta: e.category ?? 'ecosystem',
+        label: 'project',
       });
     }
   } catch { /* table not ready */ }
@@ -418,6 +430,7 @@ function fuzzyFallback(q: string, db: ReturnType<typeof getDb>): SearchResult[] 
         type: 'discussion', id: String(r.item.id),
         title: r.item.title, excerpt: '',
         url: `/discussions/${r.item.id}`,
+        source_url: r.item.url,
       });
     }
   } catch { /* skip */ }

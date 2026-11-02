@@ -1,3 +1,5 @@
+import { KIND_SQL } from './blog';
+
 /**
  * What the embedding index is supposed to hold, and what it may leave out.
  *
@@ -72,8 +74,8 @@ export const INDEXED_SOURCES: IndexedSource[] = [
     why: "scripts/build-embeddings.ts:39-47. The loader embeds a topic when its title-plus-posts text is non-empty after trimming; approximated here as a non-empty title, since a real forum topic with an empty title and zero posts is not a state the sync produces" },
 
   { type: 'blog_post', table: 'blog_posts', keyExpr: 'id', syncedAt: 'synced_at',
-    where: 'content_text IS NOT NULL',
-    why: 'scripts/build-embeddings.ts:50-58' },
+    where: `content_text IS NOT NULL AND ${KIND_SQL} != 'release'`,
+    why: 'scripts/build-embeddings.ts, blog_posts. Release notes copied into blog_posts are left out: they are embedded once, as github_release' },
 
   { type: 'github_item', table: 'github_items', keyExpr: 'id', syncedAt: 'synced_at',
     where: "body IS NOT NULL AND body != ''",
@@ -84,12 +86,12 @@ export const INDEXED_SOURCES: IndexedSource[] = [
     why: 'scripts/build-embeddings.ts:72-77' },
 
   { type: 'youtube_video', table: 'youtube_videos', keyExpr: 'id', syncedAt: 'synced_at',
-    where: "title IS NOT NULL AND length(COALESCE(title,'') || COALESCE(description,'') || COALESCE(transcript_text,'')) > 30",
-    why: 'scripts/build-embeddings.ts:95-101. A video whose title, description and transcript combined are under 30 chars has nothing worth retrieving' },
+    where: "title IS NOT NULL AND (trim(COALESCE(description, '')) != '' OR trim(COALESCE(transcript_text, '')) != '') AND length(COALESCE(title,'') || COALESCE(description,'') || COALESCE(transcript_text,'')) > 30",
+    why: 'scripts/build-embeddings.ts, youtube_videos. A video with only its title is left to full-text search until its description or transcript is read' },
 
   { type: 'github_release', table: 'github_releases', keyExpr: 'id', syncedAt: 'synced_at',
-    where: 'published_at IS NOT NULL',
-    why: "scripts/build-embeddings.ts:108-114. The loader also requires the joined name/tag+repo+body text to exceed 10 chars, which the repo name alone clears in every observed row; restated as the published_at gate, which is the one that actually excludes rows (drafts)" },
+    where: "published_at IS NOT NULL AND trim(COALESCE(body, '')) != ''",
+    why: "scripts/build-embeddings.ts, github_releases. Drafts (no published_at) and releases with no notes, which are only their tag, are not embedded" },
 
   { type: 'ecosystem_project', table: 'ecosystem_projects', keyExpr: 'slug', syncedAt: 'synced_at',
     where: "description IS NOT NULL AND length(COALESCE(title,'') || COALESCE(description,'')) > 10",
