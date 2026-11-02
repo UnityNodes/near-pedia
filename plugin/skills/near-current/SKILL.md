@@ -1,6 +1,6 @@
 ---
 name: near-current
-description: Use before writing, reviewing or upgrading NEAR Protocol code (smart contracts, near-api-js, near-sdk, cargo-near, wallet connections, RPC calls) or answering what changed on NEAR. Checks the code and its dependencies against NEAR-pedia's live index of deprecations, breaking changes and protocol upgrades instead of trusting training data.
+description: Use before writing, reviewing or upgrading NEAR Protocol code (smart contracts, near-api-js, near-sdk, cargo-near, wallet connections, RPC calls), or when answering what is happening on NEAR (protocol upgrades, House of Stake votes, validators and staking, projects, incidents, news). Checks code and answers against NEAR-pedia's live index instead of trusting training data.
 ---
 
 # Writing NEAR code against what NEAR looks like today
@@ -23,6 +23,14 @@ Your training data predates changes NEAR has made: near-sdk-js is archived, Dele
 
 - `explain_error` with the exact error text.
 - `get_breaking_changes` between the version you had and the version you have.
+
+## Questions about NEAR itself
+
+- What is changing now: `get_radar`; the upgrade vote: `get_protocol_status`.
+- Governance: `list_proposals`, `get_proposal`, and `get_discussion` for the gov.near.org debate behind one.
+- Price, supply, stake: `get_network_state`. Where to stake, and how reliable a pool is: `get_validators`.
+- Projects, wallets by category, TVL: `find_project`. Hacks: `list_incidents`.
+- News and talks: `list_blog_posts` and `get_blog_post`, `list_videos`; anything else: `semantic_search`.
 
 ## Rules
 

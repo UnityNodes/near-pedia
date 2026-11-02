@@ -81,7 +81,7 @@ export function unifiedSearch(q: string, _limit = 50, dbOverride?: DbLike): Unif
   //           blocks below swallowed it: the whole FTS layer returned nothing.
   // Deleting would fuse the halves ("NEP141"); a space keeps both tokens.
   const ftsQ = q.trim()
-    .replace(/['"*:^(){}[\]~+\-.]/g, ' ')
+    .replace(/[^\p{L}\p{N}_]+/gu, ' ')
     .split(/\s+/)
     .filter(Boolean)
     .map(w => `${w}*`)

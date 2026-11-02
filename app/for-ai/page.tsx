@@ -1,4 +1,4 @@
-import { Activity, Boxes, ChevronRight, Code2 } from 'lucide-react';
+import { Activity, Boxes, ChevronRight, Code2, Users } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { pageMetadata } from '@/lib/seo';
 import { getDb } from '@/lib/db';
@@ -54,6 +54,7 @@ export const metadata = pageMetadata({
 const GROUP_ICONS: Record<string, LucideIcon> = {
   code: Code2,
   ecosystem: Activity,
+  everyone: Users,
   other: Boxes,
 };
 

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { groupTools } from '@/app/for-ai/tool-groups';
 import { MCP_TOOLS_FALLBACK } from '@/app/for-ai/data';
-import { CODE_TOOLS, ECOSYSTEM_TOOLS, PUBLIC_TOOLS, toolFilter } from '@/lib/mcp-toolset';
+import { CODE_TOOLS, ECOSYSTEM_TOOLS, EVERYONE_TOOLS, PUBLIC_TOOLS, toolFilter } from '@/lib/mcp-toolset';
 
 const tool = (name: string) => ({ name, desc: `${name} description` });
 
@@ -27,15 +27,17 @@ describe('groupTools', () => {
 });
 
 describe('the public tool set', () => {
-  it('is the spec\'s twelve code and nine ecosystem tools, and the fallback list names exactly them', () => {
+  it('is twelve code, ten builder and five everyone tools, no tool in two groups, and the fallback list names exactly them', () => {
     expect(CODE_TOOLS).toHaveLength(12);
-    expect(ECOSYSTEM_TOOLS).toHaveLength(9);
+    expect(ECOSYSTEM_TOOLS).toHaveLength(10);
+    expect(EVERYONE_TOOLS).toHaveLength(5);
+    expect(PUBLIC_TOOLS.size).toBe(27);
     expect(MCP_TOOLS_FALLBACK.map((t) => t.name).sort()).toEqual([...PUBLIC_TOOLS].sort());
   });
 
   it('offers every tool only to a scratch server that asks for the full set', () => {
-    expect(toolFilter({})('list_cips')).toBe(false);
+    expect(toolFilter({})('search_talks')).toBe(false);
     expect(toolFilter({})('check_code')).toBe(true);
-    expect(toolFilter({ MCP_TOOLSET: 'full' })('list_cips')).toBe(true);
+    expect(toolFilter({ MCP_TOOLSET: 'full' })('search_talks')).toBe(true);
   });
 });

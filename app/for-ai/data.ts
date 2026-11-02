@@ -49,6 +49,12 @@ export const MCP_TOOLS_FALLBACK: ToolItem[] = [
   { name: 'get_partner', desc: 'A NEAR partner\'s contracts, docs, GitHub and catalog entry' },
   { name: 'get_contract_info', desc: 'What is deployed on an account, live: methods, standards, source metadata' },
   { name: 'get_recent_changes', desc: 'What changed on NEAR in the last N days' },
+  { name: 'get_discussion', desc: 'A gov.near.org thread in full, by number or URL' },
+  { name: 'get_network_state', desc: 'NEAR price, market cap, supply, block height and stake, live' },
+  { name: 'get_validators', desc: 'Validators live from RPC: stake, share, work done, kickouts; one pool\'s fee and vote' },
+  { name: 'list_blog_posts', desc: 'The near.org and near.ai blogs, newest first' },
+  { name: 'get_blog_post', desc: 'One blog post in full' },
+  { name: 'list_videos', desc: 'The newest NEAR Protocol, NEAR DevHub and NEAR AI videos' },
 ];
 
 export const IDE_CONFIGS: ClientConfig[] = [
