@@ -76,21 +76,15 @@ check_redirect() {
 
 echo "=== Pages ==="
 check "home"           "$BASE/"                                  200 "NEAR-pedia"
-check "/cips"          "$BASE/cips"                              200 "CIP"
-check "/cips/graph"    "$BASE/cips/graph"                        200
 check "/discussions"   "$BASE/discussions"                       200
 check "/docs"          "$BASE/docs"                              200
 check "/for-ai"        "$BASE/for-ai"                            200 "MCP"
 check "/radar"         "$BASE/radar"                             200
 check "/blog"          "$BASE/blog"                              200
 check "/releases"      "$BASE/releases"                          200
-check "/digest"        "$BASE/digest"                            200
-check "/trending"      "$BASE/trending"                          200
 check "/ecosystem"     "$BASE/ecosystem"                         200
 check "/sources"       "$BASE/sources"                           200
-check "/validators"    "$BASE/validators"                        200
 check "/videos"        "$BASE/videos"                            200
-check "/whitepapers"   "$BASE/whitepapers"                       200
 check "/search"        "$BASE/search"                            200
 check "/privacy"       "$BASE/privacy"                           200
 check "/terms"         "$BASE/terms"                             200
@@ -109,8 +103,6 @@ check "home names NEAR" "$BASE/"                             200 'NEAR'
 check "home FAQ schema"  "$BASE/"                                200 '"@type":"FAQPage"'
 check "Skip link"        "$BASE/"                                200 'Skip to content'
 check "JSON-LD home"     "$BASE/"                                200 'application/ld+json'
-# Assumes CIP-0001 has been synced.
-check "CIP-0001 metadata" "$BASE/cips/0001"                      200 '"@type":"TechArticle"'
 
 # Dynamic OG image generation: verify the per-route ImageResponse pipeline did
 # not break. Probes Content-Type and byte length, since the body is a PNG.
@@ -137,37 +129,20 @@ probe_image() {
 }
 
 probe_image "root OG"             "$BASE/opengraph-image"
-probe_image "CIP-0001 OG"         "$BASE/cips/0001/opengraph-image"
 
 echo "=== APIs ==="
 check "/api/health"    "$BASE/api/health"                        200 '"status"'
-check "/api/metrics"   "$BASE/api/metrics"                       200 'nearpedia_cips_total'
+check "/api/metrics"   "$BASE/api/metrics"                       200 'nearpedia_docs_total'
 check "metrics:search" "$BASE/api/metrics"                       200 'nearpedia_search_24h'
-check "metrics:tldr"   "$BASE/api/metrics"                       200 'nearpedia_cips_tldr_coverage_ratio'
 check "v1 pop searches" "$BASE/api/v1/searches/popular?limit=1"  200 '"items"'
 
-# Batch CIP lookup: POST helper since check() only does GET.
-printf "  %-32s " "v1 cips/batch POST"
-batch_resp=$("${CURL[@]}" -X POST "$BASE/api/v1/cips/batch" \
-  -H 'Content-Type: application/json' \
-  -d '{"ids":["0001","CIP-0002"]}' 2>&1 || true)
-if echo "$batch_resp" | grep -q '"requested":2'; then
-  echo "ok"
-else
-  echo "FAIL: batch endpoint did not return requested:2"
-  fail=$((fail + 1))
-fi
 check "/api/v1"        "$BASE/api/v1"                            200 "endpoints"
-check "/api/v1/cips"   "$BASE/api/v1/cips?limit=1"               200 '"items"'
 check "/api/v1/stats"  "$BASE/api/v1/stats"                      200 '"latest"'
-check "/api/v1/search" "$BASE/api/v1/search?q=yourchain&limit=1"  200 '"items"'
+check "/api/v1/search" "$BASE/api/v1/search?q=near&limit=1"       200 '"items"'
 check "/api/v1/discussions"        "$BASE/api/v1/discussions?limit=1"        200
 check "/api/v1/github-discussions" "$BASE/api/v1/github-discussions?limit=1" 200
 check "/api/v1/network"            "$BASE/api/v1/network"                    200 '"chain"'
 check "/api/v1/csp-violations"     "$BASE/api/v1/csp-violations?window=7"    200 '"items"'
-check "/api/v1 CIP tldr"           "$BASE/api/v1/cips/0001/tldr"             200 '"tldr"'
-check "/api/v1 CIP tldrs batch"    "$BASE/api/v1/cips/tldrs?ids=0001,0002"   200 '"requested":2'
-check "/api/v1 CIP mentions"       "$BASE/api/v1/cips/0001/mentions"         200 '"counts"'
 check "/api/v1 sources"            "$BASE/api/v1/sources"                    200 '"source_count"'
 check "/api/v1 changes"            "$BASE/api/v1/changes?days=30"            200 '"counts"'
 check "/api/v1 openapi.json"       "$BASE/api/v1/openapi.json"               200 '"openapi"'
@@ -179,7 +154,6 @@ cc=$("${CURL[@]}" -I "$BASE/api/v1/sources" 2>&1 | grep -i '^cache-control:' || 
 if echo "$cc" | grep -q 'max-age=300'; then echo "ok"; else echo "FAIL: missing max-age=300 on /api/v1/sources"; fail=$((fail + 1)); fi
 
 echo "=== Feeds ==="
-check "atom cips"       "$BASE/api/feed/cips"                    200 "<feed"
 check "atom forum"      "$BASE/api/feed/forum"                   200 "<feed"
 check "atom pulse"      "$BASE/api/feed/pulse"                   200 "<feed"
 check "atom blog"       "$BASE/api/feed/blog"                    200 "<feed"

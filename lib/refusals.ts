@@ -50,25 +50,25 @@ export interface Refusal {
 }
 
 // ---------------------------------------------------------------------------
-// blog.yourchain.example
+// blog (sync-blog.ts)
 // ---------------------------------------------------------------------------
 
 /** sync-blog.ts:28 - image assets and the sitemap file itself are not posts. */
 const BLOG_NOT_A_POST = /\/content\/images\/|\/sitemap-posts\.xml$/;
 
 // ---------------------------------------------------------------------------
-// forum.yourchain.example
+// forum (gov.near.org)
 // ---------------------------------------------------------------------------
 
 /**
  * Topics we never want indexed. Empty on purpose: a full scan of every
  * quiet, one-shot topic in the corpus (255 topics, 2026-09) found nothing
- * that looked like spam - validator announcements, CIP drafts, category-
+ * that looked like spam - validator announcements, proposal drafts, category-
  * intro posts, none of it promotional. Add an id here the day a real one
  * shows up, so a recurring spammer re-creating the thread under a new id
  * can be added in one line.
  *
- * Deliberately NOT scored by category: forum.yourchain.example has no
+ * Deliberately NOT scored by category: gov.near.org has no
  * low-moderation category that spam tends to land in
  * (scripts/refresh-radar.ts documents the same absence), so there is no
  * category-based signal, only whatever a title itself says.
@@ -101,22 +101,11 @@ export function isSpamTopic(t: { id: number; title: string }): boolean {
 }
 
 // ---------------------------------------------------------------------------
-// docs.yourchain.example
+// docs.near.org
 // ---------------------------------------------------------------------------
 
 /** sync-docs.ts:94 - only pages under this host are this sync's own. */
 const DOCS_HOST = `${DOCS_ORIGIN}/`;
-
-// ---------------------------------------------------------------------------
-// arXiv relevance
-// ---------------------------------------------------------------------------
-
-/**
- * sync-papers.ts:16 - the same regex the sync tests title+summary against
- * before storing an arXiv result. Scoped to arxiv-* slugs only: iacr-*
- * whitepapers are hardcoded and curated, deliberately bypassing this filter.
- */
-const PAPER_RELEVANT = /yourchain|your topic/i;
 
 // ---------------------------------------------------------------------------
 // radar_items (refresh-radar.ts)
@@ -165,18 +154,10 @@ export const REFUSALS: Refusal[] = [
   },
   {
     id: 'ecosystem-missing-title-or-url',
-    what: 'an ecosystem_projects row with no title or no url; sync-ecosystem.ts refuses to insert one, and unlike cip_attachments this is not schema-enforced (no NOT NULL on either column)',
+    what: 'an ecosystem_projects row with no title or no url; sync-ecosystem.ts refuses to insert one, and this is not schema-enforced (no NOT NULL on either column)',
     table: 'ecosystem_projects',
     sql: `SELECT slug, title, url FROM ecosystem_projects`,
     refuses: (r) => !String(r.title ?? '').trim() || !String(r.url ?? '').trim(),
-    label: (r) => `${r.slug}`,
-  },
-  {
-    id: 'whitepaper-arxiv-relevance',
-    what: 'an arXiv-sourced whitepaper whose title+summary does not match sync-papers.ts\'s RELEVANT topic filter',
-    table: 'whitepapers',
-    sql: `SELECT id, slug, content_text FROM whitepapers WHERE slug LIKE 'arxiv-%'`,
-    refuses: (r) => !PAPER_RELEVANT.test(String(r.content_text ?? '')),
     label: (r) => `${r.slug}`,
   },
   {
@@ -206,10 +187,8 @@ export const REFUSALS: Refusal[] = [
  * and leaving it unlisted would read as coverage nobody wrote down.
  */
 export const NOT_ROW_DECIDABLE: Record<string, string> = {
-  'sync-cip-assets.ts:prune-on-confirmed-404':
-    'deletes cip_attachments rows whose github_url no longer resolves upstream (confirmed by a live probe, guarded at a 20% max-delete ratio). Whether a currently-held row is stale depends on an HTTP check against GitHub right now, not any stored column',
   'sync-docs.ts:prune-ratio-guard':
-    'deletes doc_pages rows (source=docs, under docs.yourchain.example, non-.md) no longer listed in the current llms-full.txt fetch, refusing above a 20% delete ratio. "Still published upstream" is upstream-only state; when the ratio guard trips, stale rows are left in place with nothing on the row marking them as such',
+    'deletes doc_pages rows (source=docs, under docs.near.org, non-.md) no longer listed in the current llms-full.txt fetch, refusing above a 20% delete ratio. "Still published upstream" is upstream-only state; when the ratio guard trips, stale rows are left in place with nothing on the row marking them as such',
   'sync-github-releases.ts:draft-filter':
     'filters out draft releases (line 97: releases.filter(r => !r.draft)) before writing github_releases or mirroring into blog_posts. github_releases has no draft column at all - the evidence a release was a draft never reaches either table, so a held row can never be re-tested for this after the fact',
 };

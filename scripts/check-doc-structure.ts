@@ -13,7 +13,7 @@
  * check-corpus-text finds markup left IN the text (a high tag ratio) and bodies
  * that went missing against upstream. Flattening adds nothing and removes
  * nothing a byte-count or tag-ratio can see: the same words, the newlines gone.
- * yourchain-network-docs (1352 pages), yourchain-sdk-docs (89) and yourchain-foundation (42) each
+ * three template doc sources (1352, 89 and 42 pages) each
  * sat at ZERO newlines under a green board while every other doc source was
  * 100% multi-line, because sync-docs.ts alone built content_text from `.text`
  * plus `\s+`->space instead of htmlToTextWithCode like every other doc sync.

@@ -18,9 +18,9 @@ describe('docs landing cards', () => {
   beforeEach(() => { resetDb(); });
 
   it('links each guide by its address, so a renumbered table does not break the card', () => {
-    seed(7001, 'https://docs.example.com/overview');
-    seed(7002, 'https://docs.example.com/run-a-node');
-    seed(7003, 'https://docs.example.com/build');
+    seed(7001, 'https://docs.near.org/getting-started/what-is-near');
+    seed(7002, 'https://docs.near.org/smart-contracts/quickstart');
+    seed(7003, 'https://docs.near.org/protocol/network/validators');
     const html = renderToStaticMarkup(<DocsLanding />);
     expect(html).toContain('href="/docs/7001"');
     expect(html).toContain('href="/docs/7002"');
@@ -34,7 +34,7 @@ describe('docs landing cards', () => {
   });
 
   it('keeps a fixed link as it is', () => {
-    expect(cardHref({ href: '/whitepapers/x' }, () => 1)).toBe('/whitepapers/x');
+    expect(cardHref({ href: '/ask' }, () => 1)).toBe('/ask');
     expect(cardHref({ doc: 'https://x' }, () => 12)).toBe('/docs/12');
     expect(cardHref({ doc: 'https://x' }, () => null)).toBe('/docs');
   });

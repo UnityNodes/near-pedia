@@ -18,7 +18,7 @@
  * TWO SIDES, TWO SOURCES. get_latest_release used to pick
  * `majorOf(stable[0].tag)` - the newest STABLE-TAGGED release by date, not
  * the highest line.
- * Fixed to call latestStableByLine() from lib/yourchain-versions.ts instead.
+ * Fixed to call latestStableByLine() from lib/release-lines.ts instead.
  * Asserting that fixed function against itself would only prove it agrees
  * with itself, so this calls the LIVE served tool over HTTP and compares its
  * answer to latestStableByLine() computed independently here - a future edit
@@ -36,7 +36,7 @@
 import { getDb } from '../lib/db';
 import { logRun } from '../lib/sync-log';
 import { isEntrypoint } from '../lib/is-entrypoint';
-import { latestStableByLine, type ReleaseRow } from '../lib/yourchain-versions';
+import { latestStableByLine, type ReleaseRow } from '../lib/release-lines';
 import { startScratchMcp, type ScratchMcp } from '../lib/mcp-probe';
 
 /** Started once: a failed start is not retried per repo, which would hold the daily bucket a minute per repository. */

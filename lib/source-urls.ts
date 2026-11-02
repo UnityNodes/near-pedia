@@ -22,16 +22,8 @@ export function buildSourceLink(sourceType: string, sourceId: string): SourceLin
 
 function buildSourceLinkUnsafe(sourceType: string, sourceId: string): SourceLink | null {
   switch (sourceType) {
-    case 'cip': {
-      // sourceId can be number like "0042" or "PR-204"
-      if (sourceId.startsWith('PR-')) {
-        const num = sourceId.slice(3);
-        return { url: `https://github.com/your-org/CIPs/pull/${num}`, label: `CIP draft PR #${num}`, sourceType };
-      }
-      return { url: `${SITE.url}/cips/${sourceId}`, label: `CIP-${sourceId}`, sourceType };
-    }
     case 'github_item': {
-      // sourceId like "your-org/yourchain-node#5071"; app/proposals/[...slug]
+      // sourceId like "near/nearcore#5071"; app/proposals/[...slug]
       // reconstructs this same id from the org/repo/number it parses back out
       // of the slug, so the replace below must keep producing exactly 3
       // '/'-separated segments.
@@ -52,11 +44,6 @@ function buildSourceLinkUnsafe(sourceType: string, sourceId: string): SourceLink
     case 'doc_page': {
       const row = getDb().prepare('SELECT url, title FROM doc_pages WHERE id = ?').get(sourceId) as { url: string; title: string } | undefined;
       if (row) return { url: row.url, label: row.title || 'Documentation', sourceType };
-      return null;
-    }
-    case 'whitepaper': {
-      const row = getDb().prepare('SELECT slug, title, pdf_url FROM whitepapers WHERE id = ?').get(sourceId) as { slug: string; title: string; pdf_url: string } | undefined;
-      if (row) return { url: `${SITE.url}/whitepapers/${row.slug}`, label: row.title || 'Whitepaper', sourceType };
       return null;
     }
     case 'youtube_video': {
@@ -95,14 +82,6 @@ function buildSourceLinkUnsafe(sourceType: string, sourceId: string): SourceLink
       } catch {
         return null;
       }
-    }
-    case 'foundation_kb': {
-      const row = getDb().prepare(
-        'SELECT title, url, category FROM foundation_kb WHERE id = ?'
-      ).get(sourceId) as { title: string; url: string | null; category: string | null } | undefined;
-      if (!row) return null;
-      const label = row.category ? `${row.title} (${row.category})` : (row.title || 'Foundation KB');
-      return { url: row.url || `${SITE.url}/docs`, label, sourceType };
     }
     case 'radar_item': {
       const row = getDb().prepare(

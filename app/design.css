@@ -23,7 +23,7 @@
   from { opacity: 0; transform: translateX(-14px); background: color-mix(in srgb, var(--accent) 8%, transparent); }
   to { opacity: 1; transform: none; background: transparent; }
 }
-@keyframes dp-reveal { from { opacity: 0; transform: translateY(36px); } to { opacity: 1; transform: none; } }
+@keyframes dp-reveal { from { transform: translateY(36px); } to { transform: none; } }
 @keyframes dp-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
 @keyframes dp-bob-a { 0%, 100% { transform: translateY(0) rotate(-6deg); } 50% { transform: translateY(-8px) rotate(-6deg); } }
 @keyframes dp-bob-b { 0%, 100% { transform: translateY(0) rotate(4deg); } 50% { transform: translateY(-8px) rotate(4deg); } }
@@ -128,16 +128,19 @@
 }
 .dp-chip:hover { color: var(--on-accent); background: var(--accent); border-color: var(--accent-line); }
 
-.dp-newhere {
-  display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;
-  padding: 10px 14px; border-radius: 12px; font-size: 13px;
-  border: 1px dashed color-mix(in srgb, var(--cy) 35%, transparent);
-  transition: border-color 0.2s, background 0.2s;
+.dp-doors { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 12px; }
+.dp-door {
+  display: flex; flex-direction: column; gap: 6px; padding: 16px 18px; border-radius: 14px;
+  background: var(--bg-card); border: 1px solid var(--rule);
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
 }
-.dp-newhere:hover { border-style: solid; background: color-mix(in srgb, var(--cy) 6%, transparent); }
-.dp-newhere span { color: var(--fg-soft); }
-.dp-newhere a { color: var(--cy); font-family: var(--mono); font-size: 12px; }
-.dp-newhere a:hover { color: var(--fg); }
+.dp-door:hover { border-color: color-mix(in srgb, var(--accent-line) 55%, transparent); box-shadow: var(--glow); transform: translateY(-2px); }
+.dp-door:focus-visible { outline: 2px solid var(--accent-line); outline-offset: 2px; }
+.dp-door:active { transform: scale(0.99); }
+.dp-door-k { display: flex; align-items: center; gap: 8px; font-family: var(--mono); font-size: 12px; color: var(--accent-text); }
+.dp-door b { font-size: 17px; font-weight: 600; letter-spacing: -0.01em; color: var(--fg); }
+.dp-door-d { font-size: 13px; line-height: 1.5; color: var(--fg-mute); }
+.dp-door-go { margin-top: auto; padding-top: 4px; font-family: var(--mono); font-size: 12px; color: var(--cy); }
 .dp-promises {
   list-style: none; margin: 0; padding: 0; display: flex; gap: 10px 22px; flex-wrap: wrap;
   font-size: 13px; color: var(--fg-mute);

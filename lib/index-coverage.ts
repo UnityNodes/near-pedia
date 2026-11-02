@@ -49,9 +49,7 @@ export interface IndexedSource {
  * build-embeddings.ts, mcp-server.ts's facet enum and citation builder,
  * lib/source-urls.ts, and a one-time data migration on the ~2100 already-embedded rows.
  */
-export const SHARES_INDEX_TYPE: Record<string, string> = {
-  cip_pull_request: 'cip',
-};
+export const SHARES_INDEX_TYPE: Record<string, string> = {};
 
 export const PUBLISHED_TO_INDEXED: Record<string, string> = {
   doc: 'doc_page',
@@ -69,10 +67,6 @@ export const PUBLISHED_TO_INDEXED: Record<string, string> = {
 export const NOT_INDEXED: Record<string, string> = {};
 
 export const INDEXED_SOURCES: IndexedSource[] = [
-  { type: 'cip', table: 'cips', keyExpr: 'id', syncedAt: 'synced_at',
-    where: 'content_md IS NOT NULL',
-    why: 'scripts/build-embeddings.ts:32-37. A CIP row with no body has nothing to embed' },
-
   { type: 'forum_topic', table: 'forum_topics', keyExpr: 'id', syncedAt: 'synced_at',
     where: "title IS NOT NULL AND trim(title) != ''",
     why: "scripts/build-embeddings.ts:39-47. The loader embeds a topic when its title-plus-posts text is non-empty after trimming; approximated here as a non-empty title, since a real forum topic with an empty title and zero posts is not a state the sync produces" },
@@ -89,10 +83,6 @@ export const INDEXED_SOURCES: IndexedSource[] = [
     where: 'content_text IS NOT NULL',
     why: 'scripts/build-embeddings.ts:72-77' },
 
-  { type: 'whitepaper', table: 'whitepapers', keyExpr: 'id', syncedAt: 'synced_at',
-    where: 'content_text IS NOT NULL',
-    why: 'scripts/build-embeddings.ts:83-88' },
-
   { type: 'youtube_video', table: 'youtube_videos', keyExpr: 'id', syncedAt: 'synced_at',
     where: "title IS NOT NULL AND length(COALESCE(title,'') || COALESCE(description,'') || COALESCE(transcript_text,'')) > 30",
     why: 'scripts/build-embeddings.ts:95-101. A video whose title, description and transcript combined are under 30 chars has nothing worth retrieving' },
@@ -108,10 +98,6 @@ export const INDEXED_SOURCES: IndexedSource[] = [
   { type: 'github_discussion', table: 'github_discussions', keyExpr: 'id', syncedAt: 'synced_at',
     where: 'body IS NOT NULL',
     why: "scripts/build-embeddings.ts:134-151. The loader also requires the joined repo+title+body+comments text to exceed 30 chars, which a non-null body plus its repo/title prefix clears in every observed row" },
-
-  { type: 'foundation_kb', table: 'foundation_kb', keyExpr: 'id', syncedAt: 'synced_at',
-    where: 'content IS NOT NULL',
-    why: 'scripts/build-embeddings.ts:159-165. No length gate in this loader' },
 
   { type: 'radar_item', table: 'radar_items', keyExpr: 'id', syncedAt: 'created_at',
     where: "body IS NOT NULL AND body != '' AND length(COALESCE(level,'') || COALESCE(title,'') || body) > 30",

@@ -9,10 +9,8 @@
  *
  *   PATH=/root/.nvm/versions/node/v22.18.0/bin:$PATH npx tsx scripts/backfill-video-dates.ts
  */
-import Database from 'better-sqlite3';
-import path from 'path';
+import { getDb } from '../lib/db';
 
-const DB_PATH = path.join(process.cwd(), 'data', 'cips.db');
 const UA =
   'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36';
 const CONCURRENCY = 5;
@@ -46,7 +44,7 @@ async function fetchDate(id: string): Promise<string | null> {
 }
 
 async function main() {
-  const db = new Database(DB_PATH);
+  const db = getDb();
   const rows = db
     .prepare("SELECT id, title FROM youtube_videos WHERE published_at IS NULL OR published_at = ''")
     .all() as Row[];
@@ -72,7 +70,6 @@ async function main() {
 
   console.log(`[backfill-dates] done: ${filled} filled, ${failures.length} unresolved`);
   if (failures.length) console.log('  unresolved:\n   ' + failures.slice(0, 20).join('\n   '));
-  db.close();
 }
 
 main().catch((e) => {

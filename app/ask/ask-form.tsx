@@ -14,6 +14,13 @@ interface Answer { answer: string; truncated: boolean; sources: Source[]; receip
 
 const isHttp = (u: string | null): u is string => !!u && /^https?:\/\//.test(u);
 
+const EXAMPLES = [
+  'Was Rhea Finance hacked, and what happened?',
+  'When does mainnet move to protocol 88?',
+  'What does HSP-029 change, and did it pass?',
+  'Is near-sdk-js still safe to use?',
+];
+
 export function AskForm() {
   const ids = { q: useId(), code: useId(), file: useId() };
   const [question, setQuestion] = useState('');
@@ -51,14 +58,19 @@ export function AskForm() {
         <div className="contact-form-row">
           <label htmlFor={ids.q}>Question</label>
           <textarea id={ids.q} rows={3} maxLength={MAX_QUESTION} value={question} onChange={(e) => setQuestion(e.target.value)}
-            placeholder="How do I write a NEAR contract with meta-transactions?" required />
+            placeholder="Ask about a protocol upgrade, a vote, a project, an incident or your code" required />
+          <div className="pg-chips" aria-label="Example questions">
+            {EXAMPLES.map((q) => (
+              <button key={q} type="button" className="pg-chip" onClick={() => setQuestion(q)}>{q}</button>
+            ))}
+          </div>
         </div>
-        <div className="contact-form-row">
-          <label htmlFor={ids.code}>Code (optional, one file)</label>
-          <textarea id={ids.code} rows={8} maxLength={MAX_CODE} value={code} onChange={(e) => setCode(e.target.value)}
+        <details className="contact-form-row" open={code.length > 0}>
+          <summary>Add code to check (optional, one file)</summary>
+          <textarea id={ids.code} aria-label="Code to check" rows={8} maxLength={MAX_CODE} value={code} onChange={(e) => setCode(e.target.value)}
             placeholder="Paste a contract, a script or a package.json / Cargo.toml" spellCheck={false} style={{ fontFamily: 'var(--font-mono, monospace)' }} />
           <div className="contact-form-meta">{code.length.toLocaleString()} / {MAX_CODE.toLocaleString()}</div>
-        </div>
+        </details>
         {code.trim() && (
           <div className="contact-form-row">
             <label htmlFor={ids.file}>File name (helps detect the language)</label>

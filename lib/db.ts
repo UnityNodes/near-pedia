@@ -3,7 +3,6 @@ import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 import * as sqliteVec from 'sqlite-vec';
-import { registerCipCitesFn } from './cip-mention-patterns';
 import { initNearSchema } from './near-schema';
 import { DIMENSIONS } from './embedding-dims';
 
@@ -11,8 +10,8 @@ import { DIMENSIONS } from './embedding-dims';
 // process.cwd(). A cwd-relative default means code from one checkout silently
 // opens another checkout's database: a sync script that resolves both its DB
 // and its child scripts from cwd, run with cwd set to a sibling checkout,
-// opened that checkout's cips.db and spawned its sync-all.ts - which injected
-// 6 foreign whitepapers and four foreign sync_log sources.
+// opened that checkout's database and spawned its sync-all.ts - which
+// injected foreign rows and four foreign sync_log sources.
 // Walking up to the package that owns this file pins nearpedia code to
 // nearpedia's data no matter where it was invoked from.
 //
@@ -41,7 +40,7 @@ function ownRepoRoot(): string {
 
 const DB_PATH = process.env.DB_PATH === ':memory:'
   ? ':memory:'
-  : (process.env.DB_PATH && process.env.DB_PATH !== ':memory:' ? process.env.DB_PATH : path.join(ownRepoRoot(), 'data', 'cips.db'));
+  : (process.env.DB_PATH && process.env.DB_PATH !== ':memory:' ? process.env.DB_PATH : path.join(ownRepoRoot(), 'data', 'nearpedia.db'));
 
 let _db: Database.Database | null = null;
 
@@ -70,10 +69,6 @@ export function getDb(): Database.Database {
     // Without a busy timeout, a write collision throws SQLITE_BUSY immediately
     // (a sync or request fails). Wait up to 5s for the writer lock instead.
     _db.pragma('busy_timeout = 5000');
-    // Citation lookups need an anchored id match, which LIKE cannot express.
-    // Registered per connection because a SQLite user function lives on the
-    // handle, not on the file.
-    registerCipCitesFn(_db);
     initSchema(_db);
   } catch (err) {
     _db = null;
@@ -95,25 +90,6 @@ export function resetDb(): void {
 
 export function initSchema(db: Database.Database = getDb()): void {
   db.exec(`
-    CREATE TABLE IF NOT EXISTS cips (
-      id TEXT PRIMARY KEY,
-      cip_number INTEGER,
-      title TEXT,
-      author TEXT,
-      status TEXT,
-      type TEXT,
-      created_date TEXT,
-      approved_date TEXT,
-      license TEXT,
-      requires TEXT,
-      content_md TEXT,
-      synced_at TEXT
-    );
-
-    CREATE INDEX IF NOT EXISTS idx_cips_status ON cips(status);
-    CREATE INDEX IF NOT EXISTS idx_cips_type ON cips(type);
-    CREATE INDEX IF NOT EXISTS idx_cips_author ON cips(author);
-
     CREATE TABLE IF NOT EXISTS forum_topics (
       id INTEGER PRIMARY KEY,
       title TEXT,
@@ -142,14 +118,6 @@ export function initSchema(db: Database.Database = getDb()): void {
       synced_at TEXT
     );
 
-    CREATE VIRTUAL TABLE IF NOT EXISTS cips_fts USING fts5(
-      title,
-      author,
-      content_md,
-      content='cips',
-      content_rowid='rowid'
-    );
-
     CREATE VIRTUAL TABLE IF NOT EXISTS forum_fts USING fts5(
       title,
       content='forum_topics',
@@ -168,25 +136,6 @@ export function initSchema(db: Database.Database = getDb()): void {
     );
 
     CREATE INDEX IF NOT EXISTS idx_forum_posts_topic ON forum_posts(topic_id, post_number);
-
-    CREATE TABLE IF NOT EXISTS whitepapers (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      slug TEXT UNIQUE NOT NULL,
-      title TEXT NOT NULL,
-      description TEXT,
-      tag TEXT,
-      pdf_url TEXT NOT NULL,
-      content_text TEXT,
-      pages INTEGER,
-      synced_at TEXT
-    );
-
-    CREATE VIRTUAL TABLE IF NOT EXISTS whitepapers_fts USING fts5(
-      title,
-      content_text,
-      content='whitepapers',
-      content_rowid='id'
-    );
 
     CREATE TABLE IF NOT EXISTS sync_log (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -279,34 +228,7 @@ export function initSchema(db: Database.Database = getDb()): void {
       content_rowid='rowid',
       tokenize='porter unicode61'
     );
-
-    CREATE TABLE IF NOT EXISTS cip_attachments (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      cip_id TEXT NOT NULL REFERENCES cips(id),
-      filename TEXT NOT NULL,
-      github_url TEXT NOT NULL UNIQUE,
-      raw_url TEXT NOT NULL,
-      content_text TEXT,
-      pages INTEGER,
-      synced_at TEXT
-    );
-    CREATE INDEX IF NOT EXISTS idx_cip_attachments_cip ON cip_attachments(cip_id);
-
-    CREATE VIRTUAL TABLE IF NOT EXISTS cip_attachments_fts USING fts5(
-      filename,
-      content_text,
-      content='cip_attachments',
-      content_rowid='id'
-    );
   `);
-
-  const cipCols = (db.pragma('table_info(cips)') as { name: string }[]).map(c => c.name);
-  if (!cipCols.includes('pr_number')) {
-    db.exec('ALTER TABLE cips ADD COLUMN pr_number INTEGER');
-  }
-  if (!cipCols.includes('pr_url')) {
-    db.exec('ALTER TABLE cips ADD COLUMN pr_url TEXT');
-  }
 
   const docCols = (db.pragma('table_info(doc_pages)') as { name: string }[]).map(c => c.name);
   if (!docCols.includes('content_html')) {
@@ -373,17 +295,6 @@ export function initSchema(db: Database.Database = getDb()): void {
     }
   } catch { /* table didn't exist yet */ }
 
-  const attachCount = (db.prepare('SELECT COUNT(*) as c FROM cip_attachments').get() as { c: number }).c;
-  const ftsCount = (db.prepare('SELECT COUNT(*) as c FROM cip_attachments_fts').get() as { c: number }).c;
-  if (attachCount > 0 && ftsCount === 0) {
-    db.exec("INSERT INTO cip_attachments_fts(cip_attachments_fts) VALUES('rebuild')");
-  }
-
-  const cipIndexes = (db.pragma('index_list(cips)') as { name: string }[]).map(i => i.name);
-  if (!cipIndexes.includes('idx_cips_unique_number')) {
-    db.exec('CREATE UNIQUE INDEX idx_cips_unique_number ON cips(cip_number) WHERE cip_number IS NOT NULL');
-  }
-
   db.prepare(`
     CREATE TABLE IF NOT EXISTS embedding_chunks (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -446,17 +357,6 @@ export function initSchema(db: Database.Database = getDb()): void {
       INSERT INTO embedding_chunks_fts(rowid, chunk_text) VALUES (new.id, new.chunk_text);
     END;
   `);
-
-  // De-dup ledger for CIP Discord alerts. One row per (cip_id, event) that has
-  // already been announced, so we alert on a new CIP / approval exactly once -
-  // independent of cip_status_history (which can carry duplicate rows). Seeded
-  // from current state on first run so enabling alerts doesn't replay history.
-  db.prepare(`CREATE TABLE IF NOT EXISTS cip_alert_sent (
-    cip_id TEXT NOT NULL,
-    event TEXT NOT NULL,
-    sent_at TEXT NOT NULL,
-    PRIMARY KEY (cip_id, event)
-  )`).run();
 
   db.exec(`
     CREATE TABLE IF NOT EXISTS failure_events (
@@ -527,39 +427,12 @@ function runMigrations(db: Database.Database): void {
   db.prepare("CREATE INDEX IF NOT EXISTS idx_releases_repo ON github_releases(repo, published_at DESC)").run();
   db.prepare("CREATE INDEX IF NOT EXISTS idx_releases_published ON github_releases(published_at DESC)").run();
 
-  // trending_snapshot table
-  db.prepare(`CREATE TABLE IF NOT EXISTS trending_snapshot (id INTEGER PRIMARY KEY DEFAULT 1, payload TEXT NOT NULL, updated_at TEXT NOT NULL)`).run();
   // Migration: add board_status column to github_items if missing (for DBs created before 2026-05-09)
   const cols = db.prepare("PRAGMA table_info(github_items)").all() as Array<{ name: string }>;
   if (cols.length > 0 && !cols.some(c => c.name === 'board_status')) {
     db.prepare("ALTER TABLE github_items ADD COLUMN board_status TEXT").run();
     db.prepare("CREATE INDEX IF NOT EXISTS idx_github_items_board_status ON github_items(board_status)").run();
   }
-  // weekly_digests table
-  db.prepare(`CREATE TABLE IF NOT EXISTS weekly_digests (
-    week TEXT PRIMARY KEY,
-    payload TEXT NOT NULL,
-    generated_at TEXT NOT NULL
-  )`).run();
-
-  // cip_status_history table
-  db.prepare(`CREATE TABLE IF NOT EXISTS cip_status_history (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    cip_id TEXT NOT NULL,
-    from_status TEXT,
-    to_status TEXT NOT NULL,
-    changed_at TEXT NOT NULL
-  )`).run();
-  db.prepare("CREATE INDEX IF NOT EXISTS idx_csh_cip ON cip_status_history(cip_id, changed_at DESC)").run();
-  db.prepare("CREATE INDEX IF NOT EXISTS idx_csh_at ON cip_status_history(changed_at DESC)").run();
-
-  // Migration: add tldr columns to cips
-  const cipCols2 = db.prepare("PRAGMA table_info(cips)").all() as Array<{ name: string }>;
-  if (cipCols2.length > 0 && !cipCols2.some(c => c.name === 'tldr')) {
-    db.prepare("ALTER TABLE cips ADD COLUMN tldr TEXT").run();
-    db.prepare("ALTER TABLE cips ADD COLUMN tldr_generated_at TEXT").run();
-  }
-
   // Backfill FTS index if it's empty but chunks exist (existing DB upgrade path)
   try {
     const ftsCount = db.prepare("SELECT COUNT(*) as c FROM embedding_chunks_fts").get() as { c: number };
@@ -679,10 +552,6 @@ function runMigrations(db: Database.Database): void {
   db.prepare("CREATE INDEX IF NOT EXISTS idx_youtube_videos_published ON youtube_videos(published_at DESC)").run();
   db.prepare("CREATE INDEX IF NOT EXISTS idx_youtube_videos_channel ON youtube_videos(channel_name, published_at DESC)").run();
 
-  // cips: 'latest CIP' lookups sort by cip_number DESC repeatedly.
-  db.prepare("CREATE INDEX IF NOT EXISTS idx_cips_number ON cips(cip_number DESC)").run();
-  db.prepare("CREATE INDEX IF NOT EXISTS idx_cips_tldr_age ON cips(tldr_generated_at) WHERE tldr IS NOT NULL").run();
-
   // sync_log: the freshness readers GROUP by source and take MAX(ran_at).
   db.prepare("CREATE INDEX IF NOT EXISTS idx_sync_log_source_ran ON sync_log(source, ran_at DESC)").run();
 
@@ -729,54 +598,6 @@ function runMigrations(db: Database.Database): void {
   )`).run();
   db.prepare("CREATE INDEX IF NOT EXISTS idx_contact_ts ON contact_submissions(timestamp DESC)").run();
   db.prepare("CREATE INDEX IF NOT EXISTS idx_contact_ip_ts ON contact_submissions(ip, timestamp DESC)").run();
-
-  // Foundation Curated KB - daily sync of your-org/build-on-yourchain-mcp
-  // knowledge-base.json. Indexes 8 categories (DEPRECATED, FAQ, CONCEPTS,
-  // TOOLS, DOCS, NETWORKS, VERSIONS, COMMUNITY) into one table
-  // with FTS5 + vector embeddings via build-embeddings.ts. Content hash
-  // enables diff-only re-embedding. linked_doc_page_id cross-references
-  // overlap with our doc_pages corpus. Attribution preserved in source
-  // comments + per-tool descriptions.
-  db.prepare(`CREATE TABLE IF NOT EXISTS foundation_kb (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    category TEXT NOT NULL,
-    key TEXT,
-    title TEXT NOT NULL,
-    content TEXT NOT NULL,
-    url TEXT,
-    replaced_by TEXT,
-    tags TEXT,
-    metadata TEXT,
-    url_status INTEGER,
-    url_last_checked_at TEXT,
-    linked_doc_page_id INTEGER REFERENCES doc_pages(id),
-    content_hash TEXT NOT NULL,
-    kb_version TEXT,
-    synced_at TEXT NOT NULL,
-    UNIQUE(category, key)
-  )`).run();
-  db.prepare("CREATE INDEX IF NOT EXISTS idx_foundation_kb_category ON foundation_kb(category)").run();
-  db.prepare("CREATE INDEX IF NOT EXISTS idx_foundation_kb_url_status ON foundation_kb(url_status)").run();
-  db.prepare(`CREATE VIRTUAL TABLE IF NOT EXISTS foundation_kb_fts USING fts5(
-    title, content, tags,
-    content='foundation_kb',
-    content_rowid='id',
-    tokenize='porter unicode61'
-  )`).run();
-  db.prepare(`CREATE TRIGGER IF NOT EXISTS foundation_kb_ai AFTER INSERT ON foundation_kb BEGIN
-    INSERT INTO foundation_kb_fts(rowid, title, content, tags)
-    VALUES (new.id, new.title, new.content, new.tags);
-  END`).run();
-  db.prepare(`CREATE TRIGGER IF NOT EXISTS foundation_kb_ad AFTER DELETE ON foundation_kb BEGIN
-    INSERT INTO foundation_kb_fts(foundation_kb_fts, rowid, title, content, tags)
-    VALUES('delete', old.id, old.title, old.content, old.tags);
-  END`).run();
-  db.prepare(`CREATE TRIGGER IF NOT EXISTS foundation_kb_au AFTER UPDATE ON foundation_kb BEGIN
-    INSERT INTO foundation_kb_fts(foundation_kb_fts, rowid, title, content, tags)
-    VALUES('delete', old.id, old.title, old.content, old.tags);
-    INSERT INTO foundation_kb_fts(rowid, title, content, tags)
-    VALUES (new.id, new.title, new.content, new.tags);
-  END`).run();
 
   // First-boot ANALYZE: SQLite's query planner needs sqlite_stat1 to
   // pick the new composite indexes over the older single-column ones.

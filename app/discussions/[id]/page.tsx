@@ -1,12 +1,10 @@
 import { notFound } from 'next/navigation';
-import Link from 'next/link';
 import { ArrowLeft, ExternalLink } from 'lucide-react';
 import { getTopicWithPosts } from '@/lib/forum';
 import { sanitizeDiscourseHtml } from '@/lib/sanitize';
 import { formatRelativeTime } from '@/lib/utils';
 import { CodeCopy } from '@/components/code-copy';
 import { HeartIcon } from '@/components/topic-row';
-import { extractCipReferences } from '@/lib/cip-autolink';
 import type { Metadata } from 'next';
 import { JsonLd } from '@/components/json-ld';
 import { AsideCard, BackLink, KeyValues, MetaLine, ReaderHead, ReaderPage } from '@/components/reader-shell';
@@ -39,20 +37,6 @@ export default async function TopicPage({ params }: PageProps) {
   const topic = await getTopicWithPosts(parseInt(id, 10));
 
   if (!topic) notFound();
-
-  // Collect every CIP-N referenced in the topic title or any post body.
-  // Strip HTML tags before extracting so 'href="/cips/0042"' inside an
-  // anchor doesn't double-count.
-  const cipChips: string[] = (() => {
-    const collected = new Set<string>();
-    const stripHtml = (s: string) => s.replace(/<[^>]+>/g, ' ');
-    for (const ref of extractCipReferences(topic.title)) collected.add(ref);
-    for (const p of topic.posts) {
-      const text = stripHtml(p.cooked ?? '');
-      for (const ref of extractCipReferences(text)) collected.add(ref);
-    }
-    return Array.from(collected).sort();
-  })();
 
   const schema = {
     '@context': 'https://schema.org',
@@ -105,13 +89,6 @@ export default async function TopicPage({ params }: PageProps) {
             </a>
           }
         />
-
-        {cipChips.length > 0 && (
-          <div className="rd-chips">
-            <span className="rd-chips-label">CIPs mentioned</span>
-            {cipChips.map(num => <Link key={num} href={`/cips/${num}`} className="rd-chip">CIP-{num}</Link>)}
-          </div>
-        )}
 
         {topic.posts.length === 0 ? (
           <div className="rd-empty">

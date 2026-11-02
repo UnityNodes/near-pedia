@@ -24,7 +24,7 @@ sudo -n crontab -l -u root
 30 4 * * 1     /srv/nearpedia/deploy/sync-tick.sh weekly >> /var/log/nearpedia-sync.log 2>&1
 
 # DB backup
-30 4 * * *     PEDIA_DB=/srv/nearpedia/data/cips.db PEDIA_BACKUP_DIR=/srv/nearpedia/data/backups /srv/nearpedia/scripts/backup-db.sh >> /var/log/nearpedia-sync.log 2>&1
+30 4 * * *     PEDIA_DB=/srv/nearpedia/data/nearpedia.db PEDIA_BACKUP_DIR=/srv/nearpedia/data/backups /srv/nearpedia/scripts/backup-db.sh >> /var/log/nearpedia-sync.log 2>&1
 
 # staleness watchdog — hits the live site, not the DB directly
 17 * * * *     BASE_URL=http://127.0.0.1:3130 FAIL_ON_STALE=0 /srv/nearpedia/scripts/check-sync-staleness.sh >> /var/log/nearpedia-staleness.log 2>&1
@@ -88,7 +88,7 @@ table it writes to instead:
 ```bash
 export PATH=/root/.nvm/versions/node/v22.18.0/bin:$PATH
 cd /srv/nearpedia
-sqlite3 data/cips.db \
+sqlite3 data/nearpedia.db \
   "SELECT source, status, items_synced, ran_at FROM sync_log ORDER BY id DESC LIMIT 15;"
 ```
 

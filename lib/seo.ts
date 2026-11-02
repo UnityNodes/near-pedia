@@ -27,7 +27,7 @@ export const DEFAULT_TWITTER_IMAGE = {
 interface PageMetaInput {
   title: string;
   description: string;
-  path: string;                          // e.g. '/stats', '/cips/0042'
+  path: string;                          // e.g. '/stats', '/docs/42'
   ogType?: 'website' | 'article';        // default: 'website'
   extraOpenGraph?: Record<string, unknown>;
   extraTwitter?: Record<string, unknown>;

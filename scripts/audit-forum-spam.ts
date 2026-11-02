@@ -8,11 +8,11 @@ import { getDb } from '../lib/db';
 // so it will never show up here - this script only ever sees what the hard
 // rule let through.
 //
-// WHY THE SIGNALS BELOW ARE STRUCTURAL, NOT KEYWORD-BASED. forum.yourchain.example
+// WHY THE SIGNALS BELOW ARE STRUCTURAL, NOT KEYWORD-BASED. gov.near.org
 // has no low-moderation category that spam tends to land in (the same absence
 // scripts/refresh-radar.ts already documents), and a full scan of every quiet,
 // one-shot topic in this corpus (255 topics, 2026-09) found nothing that
-// looked like spam: validator announcements, CIP drafts, category-intro
+// looked like spam: validator announcements, proposal drafts, category-intro
 // posts, no promotional content anywhere in the sample. A keyword list
 // applied to a community it was never tuned against risks exactly what
 // already happened once with a boilerplate-opener guess (documented

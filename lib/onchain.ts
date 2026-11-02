@@ -4,7 +4,7 @@
  * Sources (all public, no key):
  *   - Explorer mainnet indexer  https://api.explorer.example/v1/head
  *       → block height, validators, NEAR supply, cumulative data size, txs, accounts, contracts
- *   - CoinGecko simple price     https://api.coingecko.com/api/v3/simple/price?ids=yourchain
+ *   - CoinGecko simple price     https://api.coingecko.com/api/v3/simple/price?ids=near
  *       → NEAR price, market cap, 24h change
  *
  * Fetched live at call time with a short in-process cache, so the MCP/REST layer
@@ -15,7 +15,7 @@
 const EXPLORER_HEAD = 'https://api.explorer.example/v1/head';
 const EXPLORER_VALIDATORS = 'https://api.explorer.example/v1/validators';
 const COINGECKO_TKN =
-  'https://api.coingecko.com/api/v3/simple/price?ids=yourchain&vs_currencies=usd&include_market_cap=true&include_24hr_change=true';
+  'https://api.coingecko.com/api/v3/simple/price?ids=near&vs_currencies=usd&include_market_cap=true&include_24hr_change=true';
 
 const TTL_MS = 60_000;
 const TIMEOUT_MS = 6_000;
@@ -82,7 +82,7 @@ export async function getOnchainSnapshot(force = false): Promise<OnchainSnapshot
 
   let market: OnchainSnapshot['market'] = null;
   if (mktRes.status === 'fulfilled') {
-    const m = (mktRes.value as { yourchain?: Record<string, unknown> })?.yourchain;
+    const m = (mktRes.value as { near?: Record<string, unknown> })?.near;
     if (m) {
       market = {
         priceUsd: num(m.usd),
@@ -90,7 +90,7 @@ export async function getOnchainSnapshot(force = false): Promise<OnchainSnapshot
         change24hPct: num(m.usd_24h_change),
       };
     } else {
-      errors.push('CoinGecko returned no yourchain entry');
+      errors.push('CoinGecko returned no near entry');
     }
   } else {
     errors.push(`CoinGecko fetch failed: ${mktRes.reason?.message ?? mktRes.reason}`);

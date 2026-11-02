@@ -1,10 +1,7 @@
 import { getDb } from './db';
 
 const COUNT_SQL: Record<string, string> = {
-  '/cips': 'SELECT COUNT(*) c FROM cips WHERE cip_number IS NOT NULL',
-  '/proposals': 'SELECT COUNT(*) c FROM cips WHERE cip_number IS NULL',
   '/docs': 'SELECT COUNT(*) c FROM doc_pages',
-  '/whitepapers': 'SELECT COUNT(*) c FROM whitepapers',
   '/releases': 'SELECT COUNT(*) c FROM github_releases',
   '/videos': 'SELECT COUNT(*) c FROM youtube_videos',
   '/blog': 'SELECT COUNT(*) c FROM blog_posts',

@@ -27,7 +27,7 @@
 import { getDb } from '../lib/db';
 import { logRun } from '../lib/sync-log';
 import { isEntrypoint } from '../lib/is-entrypoint';
-import { latestStableByLine, type ReleaseRow } from '../lib/yourchain-versions';
+import { latestStableByLine, type ReleaseRow } from '../lib/release-lines';
 
 function main(): void {
   const db = getDb();

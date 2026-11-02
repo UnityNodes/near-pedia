@@ -27,6 +27,7 @@ export const SITE = {
   host: HOST,
   twitter: PUBLISHER.twitter,
   publisher: PUBLISHER,
+  repo: 'https://github.com/UnityNodes/nearpedia',
   logo: {
     light: '/logo-light.png',
     dark: '/logo-dark.png',

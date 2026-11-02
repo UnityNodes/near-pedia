@@ -4,11 +4,10 @@
  * TOKENIZABLE + WHOLE questions only. A third question - whether a doc_pages
  * row still carries the publisher's own site chrome (nav widgets, feedback
  * footers) - is deliberately not asked here: answering it needs a chrome
- * stripper built by studying the actual docs-site markup of
- * docs.yourchain.example, which is real, separate investigation. A chrome
- * detector written blind would either match nothing (false confidence) or
- * flag prose it doesn't understand. Left for a follow-up that reads real
- * docs.yourchain.example pages first.
+ * stripper built by studying the actual docs-site markup, which is real,
+ * separate investigation. A chrome detector written blind would either match
+ * nothing (false confidence) or flag prose it doesn't understand.
+ * check-doc-chrome.ts asks it.
  *
  * WHY THE OTHER TWO STILL MATTER. The existing checks cannot see either
  * defect, and it is worth being precise about why:
@@ -54,15 +53,11 @@ interface Problem {
 
 /** Text columns an agent can be served, and how to name a row of each. */
 const SURFACES: { table: string; id: string; column: string; label: string }[] = [
-  { table: 'whitepapers', id: 'slug', column: 'content_text', label: 'slug' },
-  { table: 'cip_attachments', id: 'filename', column: 'content_text', label: 'filename' },
-  { table: 'cips', id: 'id', column: 'content_md', label: 'id' },
   { table: 'doc_pages', id: 'url', column: 'content_text', label: 'url' },
   { table: 'blog_posts', id: 'id', column: 'content_text', label: 'id' },
   { table: 'forum_posts', id: 'id', column: 'cooked', label: 'id' },
   { table: 'youtube_videos', id: 'id', column: 'transcript_text', label: 'id' },
   { table: 'github_items', id: 'id', column: 'body', label: 'id' },
-  { table: 'foundation_kb', id: 'id', column: 'content', label: 'id' },
 ];
 
 /** Rows sharing one exact length before it is read as a cap rather than chance. */

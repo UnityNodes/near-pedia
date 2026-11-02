@@ -12,6 +12,7 @@ const COLUMNS: { title: string; links: { href: string; label: string; external?:
       { href: '/deprecations', label: 'Deprecations' },
       { href: '/radar', label: 'Radar' },
       { href: '/protocol', label: 'Protocol' },
+      { href: '/governance', label: 'Governance' },
       { href: '/ask', label: 'Ask' },
       { href: '/docs', label: 'Docs' },
       { href: '/releases', label: 'Releases' },

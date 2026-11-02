@@ -45,9 +45,7 @@ export async function getSourceInventory(): Promise<SourceInventory> {
   const db = getDb();
 
   const map: { type: string; table: string; synced: string }[] = [
-    { type: 'cip',               table: 'cips',                synced: 'synced_at' },
     { type: 'doc',               table: 'doc_pages',           synced: 'synced_at' },
-    { type: 'whitepaper',        table: 'whitepapers',         synced: 'synced_at' },
     { type: 'blog_post',         table: 'blog_posts',          synced: 'synced_at' },
     { type: 'forum_topic',       table: 'forum_topics',        synced: 'synced_at' },
     { type: 'youtube_video',     table: 'youtube_videos',      synced: 'synced_at' },

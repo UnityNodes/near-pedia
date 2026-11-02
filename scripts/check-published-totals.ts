@@ -1,17 +1,13 @@
 /**
  * The number a tool prints must be the number it names.
  *
- * Writing it found the exact defect it exists to catch: `list_cips`, `list_ecosystem_projects` and
- * `list_github_discussions` printed `${rows.length} X:` with no "of M" at
+ * Writing it found the exact defect it exists to catch: `list_ecosystem_projects`
+ * and `list_github_discussions` printed `${rows.length} X:` with no "of M" at
  * all - a bare page size standing in for a total, silently, on every
  * unfiltered call, because each corpus already exceeds its tool's default
- * limit (52 CIPs against a default of 20, 86 ecosystem projects against 30,
- * ~96 discussions against 15). Fixed alongside this check to use showingOf(),
- * the same helper get_radar/get_trending/list_videos already call.
- *
- * The PUBLISHED list holds six tools:
- * list_cips, list_ecosystem_projects, list_github_discussions, list_videos,
- * get_radar and get_trending.
+ * limit (86 ecosystem projects against 30, ~96 discussions against 15).
+ * Fixed alongside this check to use showingOf(), the same helper
+ * get_radar/list_videos already call.
  *
  * Needs the MCP server. If it is unreachable the run is UNVERIFIED, never a
  * pass: an unreported gap in a check reads exactly like a clean one.

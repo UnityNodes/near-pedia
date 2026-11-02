@@ -9,7 +9,7 @@ interface HealthResponse {
   uptime_s: number;
   db: {
     ok: boolean;
-    cips: number;
+    docs: number;
     last_sync: string | null;
     embeddings: number;
   };
@@ -38,7 +38,7 @@ export async function GET(req: Request) {
   const response: HealthResponse = {
     status: 'ok',
     uptime_s: Math.floor((Date.now() - START) / 1000),
-    db: { ok: false, cips: 0, last_sync: null, embeddings: 0 },
+    db: { ok: false, docs: 0, last_sync: null, embeddings: 0 },
     build_time: process.env.BUILD_TIME,
     // package.json's version isn't maintained (CLAUDE.md says so), so this
     // reported 0.1.0 forever and answered nothing. The commit the bundle was
@@ -63,7 +63,7 @@ export async function GET(req: Request) {
   try {
     const db = timed('db_open', () => getDb());
     response.db.ok = true;
-    response.db.cips = timed('cips', () => (db.prepare('SELECT COUNT(*) as c FROM cips').get() as { c: number }).c);
+    response.db.docs = timed('docs', () => (db.prepare('SELECT COUNT(*) as c FROM doc_pages').get() as { c: number }).c);
     response.db.embeddings = timed('embeddings', () => (db.prepare('SELECT COUNT(*) as c FROM embedding_chunks').get() as { c: number }).c);
     const lastSync = timed('last_sync', () => db.prepare("SELECT MAX(ran_at) as t FROM sync_log WHERE status = 'success'").get() as { t: string | null });
     response.db.last_sync = lastSync.t;

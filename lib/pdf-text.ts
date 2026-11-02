@@ -1,9 +1,7 @@
 /**
  * Detecting text whose word boundaries were lost.
  *
- * This app does not parse PDF bodies: sync-papers.ts stores only
- * title+abstract (never the PDF body), and cip_attachments holds diagrams
- * (svg/png) with content_text always NULL. Only the text heuristic lives here.
+ * This app does not parse PDF bodies. Only the text heuristic lives here.
  *
  * gluedRuns/looksGlued are general text heuristics, not PDF-specific: any
  * source that lost its whitespace - a bad decode, a scrape that dropped

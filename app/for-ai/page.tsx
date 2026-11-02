@@ -1,4 +1,4 @@
-import { Activity, BookOpen, Boxes, ChevronRight, Code2, FileText, MessagesSquare, Search } from 'lucide-react';
+import { Activity, Boxes, ChevronRight, Code2 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { pageMetadata } from '@/lib/seo';
 import { getDb } from '@/lib/db';
@@ -16,13 +16,13 @@ import './design.css';
 import { SITE } from '@/lib/site.config';
 
 interface ForAiContent {
-  cips: number;
+  deprecations: number;
   docs: number;
+  releases: number;
+  packages: number;
+  issues: number;
   forum: number;
-  videos: number;
-  whitepapers: number;
-  blogPosts: number;
-  discussions: number;
+  proposals: number;
   embeddingChunks: number;
 }
 
@@ -32,13 +32,13 @@ function getForAiContent(): ForAiContent {
     try { return (db.prepare(q).get() as { c: number }).c; } catch { return 0; }
   };
   return {
-    cips: n('SELECT COUNT(*) as c FROM cips'),
+    deprecations: n('SELECT COUNT(*) as c FROM deprecations'),
     docs: n('SELECT COUNT(*) as c FROM doc_pages'),
+    releases: n('SELECT COUNT(*) as c FROM github_releases'),
+    packages: n('SELECT COUNT(*) as c FROM packages'),
+    issues: n("SELECT COUNT(*) as c FROM github_items WHERE state = 'open'"),
     forum: n('SELECT COUNT(*) as c FROM forum_topics'),
-    videos: n('SELECT COUNT(*) as c FROM youtube_videos'),
-    whitepapers: n('SELECT COUNT(*) as c FROM whitepapers'),
-    blogPosts: n('SELECT COUNT(*) as c FROM blog_posts'),
-    discussions: n('SELECT COUNT(*) as c FROM github_discussions'),
+    proposals: n('SELECT COUNT(*) as c FROM hos_proposals'),
     embeddingChunks: n('SELECT COUNT(*) as c FROM embedding_chunks'),
   };
 }
@@ -52,12 +52,8 @@ export const metadata = pageMetadata({
 });
 
 const GROUP_ICONS: Record<string, LucideIcon> = {
-  governance: FileText,
-  search: Search,
-  network: Activity,
-  community: MessagesSquare,
-  learn: BookOpen,
-  build: Code2,
+  code: Code2,
+  ecosystem: Activity,
   other: Boxes,
 };
 
@@ -80,14 +76,14 @@ export default async function ForAiPage() {
   const groups = groupTools(toolList);
 
   const indexed: { k: string; v: number }[] = [
-    { k: 'CIPs', v: content.cips },
-    { k: 'Docs', v: content.docs },
-    { k: 'Forum', v: content.forum },
-    { k: 'Videos', v: content.videos },
-    { k: 'Whitepapers', v: content.whitepapers },
-    { k: 'Blog', v: content.blogPosts },
-    { k: 'Discussions', v: content.discussions },
-    { k: 'Embeddings', v: content.embeddingChunks },
+    { k: 'Deprecations', v: content.deprecations },
+    { k: 'Docs pages', v: content.docs },
+    { k: 'Releases', v: content.releases },
+    { k: 'Packages', v: content.packages },
+    { k: 'Open issues and PRs', v: content.issues },
+    { k: 'Forum threads', v: content.forum },
+    { k: 'HoS proposals', v: content.proposals },
+    { k: 'Search chunks', v: content.embeddingChunks },
   ];
 
   return (
@@ -97,9 +93,9 @@ export default async function ForAiPage() {
       kicker={`BUILD · ${SITE.name} FOR AI AGENTS`}
       description={(
         <>
-          Machine-readable access to the NEAR knowledge base. {SITE.name} exposes all content via{' '}
-          <span className="fa-em">MCP</span> (Model Context Protocol) and a <span className="fa-em">REST API</span>.
-          No authentication required.
+          Give your agent what NEAR looks like today: is this API still alive, what replaced it, what changed this week.
+          {' '}{SITE.name} serves it over <span className="fa-em">MCP</span> and a <span className="fa-em">REST API</span>,
+          with a source and a date on every answer. No authentication required.
         </>
       )}
       stat={{ value: toolList.length, unit: toolList.length === 1 ? 'MCP tool' : 'MCP tools' }}

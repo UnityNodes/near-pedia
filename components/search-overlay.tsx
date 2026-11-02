@@ -45,11 +45,9 @@ function saveRecent(query: string): void {
 }
 
 const TYPE_LABEL: Record<string, string> = {
-  cip: 'CIP',
   doc: 'DOC',
   discussion: 'FORUM',
   mail: 'MAIL',
-  whitepaper: 'PAPER',
   proposal: 'PROPOSAL',
   blog: 'BLOG',
   youtube: 'VIDEO',
@@ -64,19 +62,19 @@ export function SearchOverlay({ onClose }: Props) {
   const [loading, setLoading] = useState(false);
   const [focusIdx, setFocusIdx] = useState(-1);
   const [recent, setRecent] = useState<string[]>([]);
-  const [trending, setTrending] = useState<string[]>([]);
+  const [popular, setPopular] = useState<string[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     inputRef.current?.focus();
     setRecent(loadRecent());
-    // Fetch trending searches (last 7 days, top 6) - best-effort,
+    // Fetch popular searches (last 7 days, top 6) - best-effort,
     // silently falls through if the endpoint isn't available yet.
     const ctrl = new AbortController();
     fetch('/api/v1/searches/popular?window=7&limit=6', { signal: ctrl.signal })
       .then(r => r.ok ? r.json() : null)
       .then((data: { items?: { query: string }[] } | null) => {
-        if (data?.items) setTrending(data.items.map(i => i.query));
+        if (data?.items) setPopular(data.items.map(i => i.query));
       })
       .catch(() => { /* offline, blocked, 404 - show static SUGGESTIONS instead */ });
     return () => ctrl.abort();
@@ -271,17 +269,17 @@ export function SearchOverlay({ onClose }: Props) {
             </div>
           )}
 
-          {!q && trending.length > 0 && (
+          {!q && popular.length > 0 && (
             <div style={{ padding: '8px 18px 0' }}>
               <span style={{
                 fontFamily: 'var(--mono)', fontSize: 'var(--text-2xs)', fontWeight: 700,
                 textTransform: 'uppercase', letterSpacing: '0.12em',
                 color: 'var(--fg-mute-text)', display: 'block', marginBottom: 6,
               }}>
-                Trending · last 7 days
+                Popular · last 7 days
               </span>
-              <div className="search-suggest-row" role="list" aria-label="Trending searches">
-                {trending.map(s => (
+              <div className="search-suggest-row" role="list" aria-label="Popular searches">
+                {popular.map(s => (
                   <button
                     key={`tr-${s}`}
                     className="search-chip"

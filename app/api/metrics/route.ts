@@ -75,11 +75,9 @@ export async function GET(req: Request) {
   const lines: string[] = [];
 
   // Content counts (gauges)
-  lines.push(fmt('nearpedia_cips_total', safeCount('SELECT COUNT(*) as c FROM cips'), 'Indexed CIPs'));
   lines.push(fmt('nearpedia_forum_topics_total', safeCount('SELECT COUNT(*) as c FROM forum_topics'), 'Forum topics indexed'));
   lines.push(fmt('nearpedia_forum_posts_total', safeCount('SELECT COUNT(*) as c FROM forum_posts'), 'Forum posts indexed'));
   lines.push(fmt('nearpedia_docs_total', safeCount('SELECT COUNT(*) as c FROM doc_pages'), 'Documentation pages indexed'));
-  lines.push(fmt('nearpedia_whitepapers_total', safeCount('SELECT COUNT(*) as c FROM whitepapers'), 'Whitepapers indexed'));
   lines.push(fmt('nearpedia_blog_posts_total', safeCount('SELECT COUNT(*) as c FROM blog_posts'), 'Blog posts indexed'));
   lines.push(fmt('nearpedia_videos_total', safeCount('SELECT COUNT(*) as c FROM youtube_videos'), 'YouTube videos indexed'));
   lines.push(fmt('nearpedia_github_items_total', safeCount('SELECT COUNT(*) as c FROM github_items'), 'GitHub issues and PRs indexed'));
@@ -99,15 +97,6 @@ export async function GET(req: Request) {
   lines.push(fmt('nearpedia_mcp_calls_total', safeCount('SELECT COUNT(*) as c FROM mcp_calls') + rollup('mcp_calls', 'total'), 'MCP requests served since logging began', 'counter'));
   lines.push(fmt('nearpedia_mcp_calls_24h', safeCount("SELECT COUNT(*) as c FROM mcp_calls WHERE ts >= datetime('now','-1 day')"), 'MCP requests in the last 24h'));
   lines.push(fmt('nearpedia_mcp_calls_error_24h', safeCount("SELECT COUNT(*) as c FROM mcp_calls WHERE status IN ('error','tool_error') AND ts >= datetime('now','-1 day')"), 'Failed MCP requests in the last 24h'));
-
-  // TL;DR coverage - how many CIPs have a cached Gemini summary.
-  // Tracks backfill progress and tells us when a refresh might be
-  // worth triggering (coverage_ratio drops as new CIPs land without
-  // tldr_generated_at).
-  const tldrTotal = safeCount('SELECT COUNT(*) as c FROM cips');
-  const tldrCached = safeCount("SELECT COUNT(*) as c FROM cips WHERE tldr IS NOT NULL AND tldr <> ''");
-  lines.push(fmt('nearpedia_cips_with_tldr_total', tldrCached, 'CIPs that currently have a cached TL;DR'));
-  lines.push(fmt('nearpedia_cips_tldr_coverage_ratio', tldrTotal ? +(tldrCached / tldrTotal).toFixed(4) : 0, 'Ratio of CIPs with a cached TL;DR (0-1)'));
 
   // Search analytics.
   lines.push(fmt('nearpedia_search_total', safeCount('SELECT COUNT(*) as c FROM search_log') + rollup('search_log', 'total'), 'Total /search renders logged since launch', 'counter'));

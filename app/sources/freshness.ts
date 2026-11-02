@@ -7,9 +7,7 @@ interface SourceMeta {
 }
 
 export const SOURCE_META: Record<string, SourceMeta> = {
-  cip:               { name: 'CIPs',         href: '/cips',        script: 'sync-cips' },
   doc:               { name: 'Docs',         href: '/docs',        script: 'sync-docs' },
-  whitepaper:        { name: 'Whitepapers',  href: '/whitepapers', script: 'sync-papers' },
   blog_post:         { name: 'Blog',         href: '/blog',        script: 'sync-blog' },
   forum_topic:       { name: 'Forum',        href: '/discussions', script: 'sync-forum' },
   youtube_video:     { name: 'Videos',       href: '/videos',      script: 'sync-youtube' },
@@ -29,7 +27,6 @@ export const BUCKET_CADENCE: Record<string, string> = {
   slow: '6 h',
   daily: '24 h',
   weekly: '7 d',
-  cf: '30 min',
 };
 
 const EXCLUDED_TYPES = new Set(['embedding_chunk']);

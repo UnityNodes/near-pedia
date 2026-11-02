@@ -214,6 +214,8 @@ export const RATE_LIMITS: RateLimit[] = [
   { route: '/api/v1/*', limit: '120 req / 15 min per IP' },
 ];
 
-export const REST_EXAMPLES = `curl ${API_BASE_URL}/search?q=governance&limit=5
-curl ${API_BASE_URL}/cips/0042
-curl ${API_BASE_URL}/trending`;
+export const REST_EXAMPLES = `curl -X POST ${API_BASE_URL}/check-code -H 'Content-Type: application/json' \\
+  -d '{"filename":"contract.ts","code":"import { near } from \\"near-sdk-js\\";"}'
+curl '${API_BASE_URL}/deprecations?q=near-lake'
+curl '${API_BASE_URL}/protocol?network=mainnet'
+curl '${API_BASE_URL}/search?q=meta+transactions&limit=5'`;

@@ -8,36 +8,36 @@ function entry(type: string, count: number, last_synced: string | null): SourceE
 }
 
 const SCHEDULE = new Map([
-  ['sync-cips', { bucket: 'slow' }],
-  ['sync-forum', { bucket: 'cf' }],
+  ['sync-docs', { bucket: 'slow' }],
+  ['sync-forum', { bucket: 'daily' }],
   ['sync-github-releases', { bucket: 'medium' }],
 ]);
 
 describe('freshnessRows', () => {
   test('excludes embedding chunks from the table', () => {
-    const rows = freshnessRows([entry('cip', 12, null), entry('embedding_chunk', 900, null)], SCHEDULE);
-    expect(rows.map((r) => r.type)).toEqual(['cip']);
+    const rows = freshnessRows([entry('doc', 12, null), entry('embedding_chunk', 900, null)], SCHEDULE);
+    expect(rows.map((r) => r.type)).toEqual(['doc']);
   });
 
   test('orders rows by record count, then by name', () => {
     const rows = freshnessRows(
-      [entry('doc', 10, null), entry('cip', 12, null), entry('blog_post', 10, null)],
+      [entry('doc', 10, null), entry('forum_topic', 12, null), entry('blog_post', 10, null)],
       SCHEDULE,
     );
-    expect(rows.map((r) => r.type)).toEqual(['cip', 'blog_post', 'doc']);
+    expect(rows.map((r) => r.type)).toEqual(['forum_topic', 'blog_post', 'doc']);
   });
 
   test('takes the cadence from the schedule bucket of the sync script', () => {
     const rows = freshnessRows(
-      [entry('cip', 1, null), entry('forum_topic', 1, null), entry('github_release', 1, null)],
+      [entry('doc', 1, null), entry('forum_topic', 1, null), entry('github_release', 1, null)],
       SCHEDULE,
     );
     const byType = Object.fromEntries(rows.map((r) => [r.type, r.cadence]));
-    expect(byType).toEqual({ cip: '6 h', forum_topic: '30 min', github_release: '15 min' });
+    expect(byType).toEqual({ doc: '6 h', forum_topic: '24 h', github_release: '15 min' });
   });
 
   test('leaves the cadence empty when the schedule does not list the script', () => {
-    const rows = freshnessRows([entry('doc', 1, null)], SCHEDULE);
+    const rows = freshnessRows([entry('blog_post', 1, null)], SCHEDULE);
     expect(rows[0].cadence).toBeNull();
   });
 
@@ -50,7 +50,7 @@ describe('freshnessRows', () => {
 describe('latestSync', () => {
   test('returns the newest timestamp across sources', () => {
     const newest = latestSync([
-      entry('cip', 1, '2026-10-28T10:00:00.000Z'),
+      entry('forum_topic', 1, '2026-10-28T10:00:00.000Z'),
       entry('doc', 1, '2026-10-29T08:30:00.000Z'),
       entry('blog_post', 1, null),
     ]);
@@ -58,13 +58,13 @@ describe('latestSync', () => {
   });
 
   test('returns null when no source has a sync time', () => {
-    expect(latestSync([entry('cip', 1, null)])).toBeNull();
+    expect(latestSync([entry('forum_topic', 1, null)])).toBeNull();
   });
 });
 
 describe('ragChunkCount', () => {
   test('sums only the embedding chunk entries', () => {
-    expect(ragChunkCount([entry('cip', 5, null), entry('embedding_chunk', 900, null)])).toBe(900);
+    expect(ragChunkCount([entry('forum_topic', 5, null), entry('embedding_chunk', 900, null)])).toBe(900);
   });
 });
 

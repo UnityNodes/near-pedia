@@ -3,8 +3,8 @@ import { pathToFileURL } from 'node:url';
 /**
  * True only when this module is the file node was told to run.
  *
- * WHY IT IS SHARED. scripts/alert-cip-discord.ts, push-radar-tg.ts and
- * alert-kb-drift.ts all called guardSync(...) at top level, so merely IMPORTING
+ * WHY IT IS SHARED. scripts/push-radar-tg.ts and the other alert scripts
+ * all called guardSync(...) at top level, so merely IMPORTING
  * one of them posted to Discord, Telegram or Slack. A test that wanted to
  * exercise a pure helper out of any of those files could not do it without
  * sending a real message. responder-post.ts had already solved this, inline, and

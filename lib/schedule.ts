@@ -55,7 +55,7 @@ export interface Scheduled { bucket: string; guard: string | null }
  * Which bucket each `run <name>` (or the bare `embed` call) sits in.
  *
  * deploy/sync-tick.sh's case arms are one line each — `fast)   run
- * refresh-trending ;;` — not a label-then-indented-block shape, so this reads the whole arm body after `label)` up to
+ * check-failures ;;` — not a label-then-indented-block shape, so this reads the whole arm body after `label)` up to
  * `;;` and pulls every `run NAME` out of it, rather than walking line by
  * line.
  */

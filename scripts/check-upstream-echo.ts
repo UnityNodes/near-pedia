@@ -35,6 +35,7 @@ import path from 'node:path';
 import { getDb } from '../lib/db';
 import { logRun } from '../lib/sync-log';
 import { isoNowSql } from '../lib/formats';
+import { DOCS_ORIGIN } from '../lib/near-docs';
 
 /**
  * Does this sync report a number it read back out of the table we compare it to?
@@ -102,14 +103,6 @@ interface Echo {
  */
 const ECHOES: Echo[] = [
   {
-    sync: 'cip-assets', table: 'cip_attachments', semantics: 'full-set',
-    why: 'walks the full repo tree every run and refuses to write on an empty fetch',
-  },
-  {
-    sync: 'cips', table: 'cips', semantics: 'full-set',
-    why: 'walks the full repo tree every run and refuses to write on zero matched CIP files',
-  },
-  {
     sync: 'docs', table: 'doc_pages', semantics: 'full-set',
     // source='docs' alone is NOT this sync's scope - sync-docs.ts's own prune
     // logic says so explicitly: github.com/yoursdk/docs/... rows and hand-seeded
@@ -118,12 +111,8 @@ const ECHOES: Echo[] = [
     // sync's own slice (its prune-eligibility filter) held 71, matching
     // items_synced exactly. A bare source='docs' scope would have manufactured
     // a permanent 35-row false mismatch.
-    scopeWhere: "source = 'docs' AND url LIKE 'https://docs.yourchain.example/%' AND url NOT LIKE '%.md'",
+    scopeWhere: `source = 'docs' AND url LIKE '${DOCS_ORIGIN}/%' AND url NOT LIKE '%.md'`,
     why: 'fetches one full llms-full.txt dump of the whole docs corpus every run and refuses to write if nothing parsed',
-  },
-  {
-    sync: 'foundation', table: 'foundation_kb', semantics: 'full-set',
-    why: 'single-file source, trivially walked to completion every run; refuses to write on 0 people parsed',
   },
   {
     sync: 'github-releases', table: 'github_releases', semantics: 'full-set',
@@ -149,10 +138,6 @@ const ECHOES: Echo[] = [
   {
     sync: 'youtube', table: 'youtube_videos', semantics: 'delta',
     why: 'reports (when it reports at all) new videos found this run, not the channel total; 0 new videos is the normal answer once a channel is caught up',
-  },
-  {
-    sync: 'papers', table: 'whitepapers', semantics: 'delta',
-    why: 'counts only newly-inserted papers via INSERT OR IGNORE .changes; a re-seen paper contributes 0, and arXiv paging is capped well short of exhaustive',
   },
   {
     sync: 'github-items', table: 'github_items', semantics: 'delta',

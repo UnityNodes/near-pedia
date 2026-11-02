@@ -6,7 +6,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: SITE_TITLE,
     short_name: SITE.name,
     description:
-      'CIPs, docs, discussions and whitepapers for the NEAR ecosystem - indexed, searchable, always current.',
+      'NEAR deprecations, docs, releases, governance and discussions - indexed, searchable, always current.',
     start_url: '/',
     scope: '/',
     display: 'standalone',
@@ -30,10 +30,10 @@ export default function manifest(): MetadataRoute.Manifest {
     ],
     shortcuts: [
       {
-        name: 'Browse CIPs',
-        short_name: 'CIPs',
-        description: 'Chain Improvement Proposals',
-        url: '/cips',
+        name: 'Deprecations',
+        short_name: 'Deprecations',
+        description: 'What NEAR removed, deprecated or replaced',
+        url: '/deprecations',
       },
       {
         name: 'Live Sources',

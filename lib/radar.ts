@@ -3,9 +3,8 @@
  *
  * This file exists because of the pattern that ran through the whole audit:
  * a rule gets written into one surface and its siblings never learn it.
- * `/radar` and `/validators` both render the deadline chip, `/api/feed/radar`
- * puts it in a summary line, and get_radar returns it over MCP. Four places,
- * one rule.
+ * `/radar` renders the deadline chip, `/api/feed/radar` puts it in a
+ * summary line, and get_radar returns it over MCP. Three places, one rule.
  */
 
 /**

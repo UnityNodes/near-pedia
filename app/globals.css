@@ -140,12 +140,11 @@ body {
 a { color: inherit; text-decoration: none; cursor: pointer; }
 button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
 ::selection { background: var(--accent); color: var(--on-accent); }
-/* Long unbroken text (CIP titles, search snippets, blog cards) must
+/* Long unbroken text (titles, search snippets, blog cards) must
    wrap inside its container instead of pushing the page wider. */
 .res-title,
 .res-excerpt,
-.res-meta,
-.cip-mailing-snippet {
+.res-meta {
   overflow-wrap: anywhere;
   word-break: break-word;
   min-width: 0;
@@ -596,10 +595,8 @@ code { overflow-wrap: anywhere; }
   background: var(--fg); color: var(--bg);
   white-space: nowrap;
 }
-.kind-pill.cip        { background: var(--accent); color: var(--on-accent); }
 .kind-pill.discussion { background: var(--fg); color: var(--bg); }
 .kind-pill.doc        { background: var(--fg); color: var(--bg); }
-.kind-pill.whitepaper { background: var(--fg); color: var(--bg); }
 .kind-pill.youtube    { background: var(--fg); color: var(--bg); }
 .kind-pill.github     { background: var(--fg); color: var(--bg); }
 .kind-pill.blog       { background: var(--fg); color: var(--bg); }
@@ -717,7 +714,7 @@ code { overflow-wrap: anywhere; }
 
 /* ══ Shared list-page template ══
    Filters, facets, toolbar, sort control, card shell: one reusable
-   vocabulary every list page (CIPs, discussions, code, whitepapers)
+   vocabulary every list page (discussions, code, docs, releases)
    uses instead of each reinventing its own filter row and table
    chrome inline. Rounded/soft-shadow, not this site's other hard-edge
    idiom. */
@@ -829,67 +826,6 @@ code { overflow-wrap: anywhere; }
 .list-empty { padding: 64px 24px; text-align: center; color: var(--fg-mute); font-family: var(--mono); font-size: 13px; }
 .list-empty-clear { display: inline-block; margin-top: 10px; color: var(--accent-text); }
 
-.cip-col-full { }
-.cip-changes-wrap { max-width: 860px; margin: 0 auto; }
-.cip-change-list { list-style: none; margin: 0; padding: 8px 4px; }
-.cip-change-row { display: flex; gap: 14px; align-items: flex-start; padding: 13px 16px; border-bottom: 1px solid var(--rule-soft); }
-.cip-change-row:last-child { border-bottom: 0; }
-.cip-change-date { flex-shrink: 0; width: 80px; padding-top: 2px; font-family: var(--mono); font-size: 11px; color: var(--fg-mute); }
-.cip-change-body { flex: 1; min-width: 0; }
-.cip-change-top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.cip-change-num { flex-shrink: 0; font-family: var(--mono); font-size: 11px; font-weight: 700; color: var(--accent-text); text-decoration: none; white-space: nowrap; }
-.cip-change-num:hover { text-decoration: underline; }
-.cip-change-title { font-size: 13px; color: var(--fg); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; min-width: 0; }
-.cip-change-transition { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
-.cip-change-arrow { color: var(--fg-mute); font-size: 12px; }
-.cip-change-na { font-family: var(--mono); font-size: var(--text-2xs); color: var(--fg-mute); }
-
-/* ── CIP Table ────────────────────────────────────────────────── */
-.cip-table { font-family: var(--mono); font-size: 12.5px; }
-.cip-header,
-.cip-row {
-  display: grid;
-  grid-template-columns: 76px 1fr 100px 108px 108px 88px 88px;
-  gap: 0;
-  border-bottom: 1px solid var(--rule-soft);
-  align-items: center;
-}
-.cip-header {
-  background: var(--bg-2); color: var(--fg-mute);
-  font-family: var(--display);
-  font-size: 11px; font-weight: 600;
-  text-transform: none; letter-spacing: 0;
-  border-bottom: 1px solid var(--rule);
-}
-.cip-header > div { padding: 13px 18px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center; }
-.cip-row > div { text-align: center; min-width: 0; overflow-wrap: anywhere; }
-/* The number column shares the same 18px side padding as every other
-   column, but at 58px wide that left only ~22px for text - "CIP #"
-   truncated to "CI…" in the header, and overflow-wrap:anywhere above wrapped
-   a 4-digit "#0052" across three lines in the row. Mobile already gives this
-   column its own tighter padding; desktop never did. Widen the track and
-   match that tighter padding here too. */
-.cip-header > div:first-child,
-.cip-row > div:first-child { padding-left: 10px; padding-right: 10px; }
-.cip-row > div:nth-child(2) { text-align: left; }
-.cip-row > div:nth-child(3) { display: flex; justify-content: center; align-items: center; }
-
-.cip-row {
-  cursor: pointer;
-  transition: background 0.1s, color 0.1s;
-  background: var(--bg);
-}
-.cip-row > div { padding: 15px 18px; }
-/* Subtle theme-aware row highlight — keeps all text readable. */
-.cip-row:hover,
-.cip-row:nth-child(even):hover { background: color-mix(in srgb, var(--accent) 12%, var(--bg-card)); }
-.cip-row a { color: inherit; display: block; }
-.cip-row .cip-num { font-weight: 700; color: var(--accent-text); white-space: nowrap; }
-.cip-row .cip-author,
-.cip-row .cip-type { color: var(--fg-soft); font-size: 12px; }
-.cip-row .cip-date { color: var(--fg-soft); font-size: 12px; white-space: nowrap; }
-.cip-row:nth-child(even) { background: var(--bg-card); }
-[data-theme="dark"] .cip-row:nth-child(even) { background: var(--bg-2); }
 
 /* ── Topic cards ──────────────────────────────────────────────── */
 .topic-grid {
@@ -941,23 +877,6 @@ code { overflow-wrap: anywhere; }
 main p a, main li a { overflow-wrap: anywhere; }
 .list-filters-zone--col { max-width: var(--col); margin-inline: auto; }
 .list-filters-zone--col { padding-inline: 16px; }
-
-/* Search input bar */
-
-.cip-select {
-  font-family: var(--mono);
-  font-size: 11px; font-weight: 700;
-  text-transform: uppercase; letter-spacing: 0.08em;
-  padding: 6px 12px;
-  border: 2px solid var(--rule);
-  background: var(--bg); color: var(--fg);
-  outline: none; cursor: pointer;
-  flex-shrink: 0;
-}
-
-@media (max-width: 640px) {
-  .cip-select { font-size: var(--text-2xs); padding: 5px 6px; letter-spacing: 0; }
-}
 
 /* Source tabs */
 .source-tabs { display: flex; flex-wrap: wrap; border-top: 2px solid var(--rule); }
@@ -1173,71 +1092,6 @@ main p a, main li a { overflow-wrap: anywhere; }
   .code-col-num { display: none; }
 }
 
-/* ── CIP mailing-list discussion block ─────────────────────────── */
-.cip-mailing-block {
-  margin-top: 40px; padding-top: 24px;
-  border-top: 2px solid var(--rule);
-}
-.cip-mailing-head {
-  display: flex; align-items: baseline; justify-content: space-between;
-  gap: 12px; margin-bottom: 16px;
-}
-.cip-mailing-head h2 {
-  font-size: 18px; font-weight: 700; margin: 0;
-  font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.08em;
-}
-.cip-mailing-count {
-  font-size: 11px; color: var(--fg-mute-text);
-  font-family: var(--mono); letter-spacing: 0.06em; text-transform: uppercase;
-}
-.cip-mailing-thread {
-  border: 1px solid var(--rule-soft); background: var(--bg-card);
-  padding: 14px 16px; margin-bottom: 14px;
-}
-.cip-mailing-thread-head {
-  display: flex; flex-direction: column; gap: 4px;
-  padding-bottom: 10px; margin-bottom: 10px;
-  border-bottom: 1px dashed var(--rule-soft);
-}
-.cip-mailing-thread-title {
-  font-size: 14px; font-weight: 600; color: var(--fg); text-decoration: none;
-  line-height: 1.4;
-}
-.cip-mailing-thread-title:hover { color: var(--accent-text); text-decoration: underline; }
-.cip-mailing-thread-meta {
-  font-size: 11px; color: var(--fg-mute-text);
-  font-family: var(--mono); letter-spacing: 0.04em;
-}
-.cip-mailing-group {
-  background: var(--bg-2); padding: 1px 6px;
-  font-size: var(--text-2xs); text-transform: uppercase; letter-spacing: 0.08em;
-}
-.cip-mailing-msgs {
-  list-style: none; padding: 0; margin: 0 0 10px 0;
-  display: flex; flex-direction: column; gap: 10px;
-}
-.cip-mailing-msg {
-  padding: 8px 10px; background: var(--bg-2);
-  border-left: 2px solid var(--rule);
-}
-.cip-mailing-msg-head {
-  display: flex; gap: 10px; align-items: baseline;
-  font-size: 11px; margin-bottom: 4px;
-  font-family: var(--mono);
-}
-.cip-mailing-author { font-weight: 600; color: var(--fg); }
-.cip-mailing-date { color: var(--fg-mute); }
-.cip-mailing-snippet {
-  margin: 0; font-size: 13px; line-height: 1.5; color: var(--fg-soft);
-}
-.cip-mailing-actions {
-  display: flex; gap: 16px; flex-wrap: wrap;
-  font-size: 11px; font-family: var(--mono);
-  text-transform: uppercase; letter-spacing: 0.08em;
-}
-.cip-mailing-action { color: var(--accent-text); text-decoration: none; }
-.cip-mailing-action:hover { text-decoration: underline; }
-.cip-mailing-action-external { color: var(--fg-mute); }
 
 /* ── Mailing list listing + thread page ────────────────────────── */
 .discussions-toolbar {
@@ -1540,10 +1394,6 @@ mark.search-hl {
   border-radius: 2px;
   font-style: normal;
 }
-[data-theme="dark"] mark.search-hl {
-  background: var(--yourchain-yellow);
-  color: var(--yourchain-black);
-}
 
 /* ── Proposal sidebar info ────────────────────────────────────── */
 .proposal-info-row {
@@ -1586,16 +1436,7 @@ mark.search-hl {
   
   
   .topic-grid { grid-template-columns: repeat(2, 1fr); }
-  .cip-header, .cip-row { grid-template-columns: 52px 1fr 100px; }
-  .cip-row .cip-author, .cip-row .cip-type, .cip-row .cip-date { display: none; }
-  .cip-header > div:nth-child(n+4) { display: none; }
-  .cip-header > div,
-  .cip-row > div { padding: 10px 12px; }
-  .cip-header > div:first-child,
-  .cip-row > div:first-child { text-align: center; padding-left: 6px; padding-right: 6px; }
-  .cip-row > div:nth-child(3) { display: flex; justify-content: center; align-items: center; }
-  .cip-col-full { display: none; }
-  .nav-list { display: none; }
+                .nav-list { display: none; }
   .hamburger-btn { display: inline-flex; }
   .search-trigger { min-width: 140px; }
 }
@@ -1807,13 +1648,9 @@ mark.search-hl {
   .rsrc-card, .rsrc-path, .rsrc-chip, .rsrc-arrow { transition: none; }
   .rsrc-card:hover, .rsrc-card:focus-visible, .rsrc-path:hover, .rsrc-path:focus-visible { transform: none; }
 }
-.cip-change-row .pill { font-size: 11px; }
-.cip-change-na { font-size: 11px; }
-.cip-changes-wrap { max-width: 908px; margin: 0; }
 @media (max-width: 640px) {
   .rsrc-tile-label, .rsrc-kind, .rsrc-host, .rsrc-path-count, .rsrc-live { font-size: 11px; }
-  .cip-change-na { font-size: 11px; }
-}
+  }
 .succ-anim { width: 72px; height: 72px; margin: 0 0 8px; }
 .succ-anim svg { display: block; }
 .glsx { display: flex; flex-direction: column; gap: 14px; }

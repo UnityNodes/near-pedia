@@ -17,16 +17,12 @@ type DbLike = { prepare: (sql: string) => { get: (...a: any[]) => unknown } };
 
 /**
  * Only unicode61-tokenized indexes. The porter-stemmed ones
- * (blog_posts_fts, youtube_videos_fts, embedding_chunks_fts,
- * foundation_kb_fts) store STEMS, so their df for a surface form is wrong
+ * (blog_posts_fts, youtube_videos_fts, embedding_chunks_fts) store STEMS, so their df for a surface form is wrong
  * and would inflate idf.
  */
 export const VOCAB_SOURCES = [
-  { vocab: 'v_cips_fts', fts: 'cips_fts', base: 'cips' },
   { vocab: 'v_forum_fts', fts: 'forum_fts', base: 'forum_topics' },
   { vocab: 'v_docs_fts', fts: 'docs_fts', base: 'doc_pages' },
-  { vocab: 'v_whitepapers_fts', fts: 'whitepapers_fts', base: 'whitepapers' },
-  { vocab: 'v_cip_attachments_fts', fts: 'cip_attachments_fts', base: 'cip_attachments' },
 ] as const;
 
 // Mirror FTS5's unicode61 tokenizer, which splits on '.', '_' and '-'. A
@@ -157,10 +153,9 @@ export function scoreResult(
   identity?: string | null,
 ): number {
   if (queryTokens.length === 0) return 0;
-  // `identity` carries the id/meta (e.g. a CIP's "0001"). Without it a query
-  // like "CIP-0001" scored the actual CIP at zero - its title is
-  // "Chain Improvement Proposal Process and Guidelines", which contains
-  // neither "cip" nor "0001" - and lost to any row with "CIP" in the title.
+  // `identity` carries the id/meta (e.g. a NEP's "141"). Without it a query
+  // like "NEP-141" scored the actual standard at zero when its title names
+  // neither "nep" nor "141", and lost to any row with "NEP" in the title.
   const titleToks = new Set([...tokenize(title), ...tokenize(identity)]);
   const bodyToks = new Set(tokenize(excerpt));
 

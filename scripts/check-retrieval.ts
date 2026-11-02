@@ -8,13 +8,10 @@
  * leave every structural check green and make the product useless.
  *
  * Only SOURCES and FTS_INDEXES are app-specific, and both are built from this
- * app's own lib/search.ts: SOURCES picks 5 representative
- * tables `search` reads (this app's search covers 12 result-producing
- * blocks across FTS and LIKE), and FTS_INDEXES is exactly the 7 external-content FTS5
+ * app's own lib/search.ts: SOURCES picks 4 representative
+ * tables `search` reads, and FTS_INDEXES is exactly the external-content FTS5
  * indexes `search` actually ranks through - confirmed by reading
- * lib/search.ts's unifiedSearch() block by block, not assumed. foundation_kb
- * has its own FTS index (check-fts-freshness's 9) but is not read by `search`
- * at all, so it is deliberately absent from both lists here.
+ * lib/search.ts's unifiedSearch() block by block, not assumed.
  *
  * GROUND TRUTH WITHOUT SELF-REFERENCE. The trap this codebase keeps falling
  * into is comparing a number against itself, so the target is chosen by one
@@ -36,7 +33,6 @@ const BASE = process.env.MCP_URL ?? 'http://127.0.0.1:3131/mcp';
 
 /** Text columns the cross-corpus search reads, and how to name a row. */
 const SOURCES = [
-  { table: 'cips', key: 'id', text: 'title' },
   { table: 'forum_topics', key: 'id', text: 'title' },
   { table: 'doc_pages', key: 'id', text: 'title' },
   { table: 'blog_posts', key: 'id', text: 'title' },
@@ -163,8 +159,7 @@ function corpusHits(db: ReturnType<typeof getDb>, phrase: string): number {
  * through.
  */
 const FTS_INDEXES = [
-  'cips_fts', 'forum_fts', 'docs_fts', 'cip_attachments_fts',
-  'youtube_videos_fts', 'blog_posts_fts', 'whitepapers_fts',
+  'forum_fts', 'docs_fts', 'youtube_videos_fts', 'blog_posts_fts',
 ];
 
 function ftsUnique(db: ReturnType<typeof getDb>, phrase: string): boolean {

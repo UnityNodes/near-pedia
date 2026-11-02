@@ -30,13 +30,6 @@ export function loadAllDocs(): SourceDoc[] {
   const db = getDb();
   const docs: SourceDoc[] = [];
 
-  const cips = db.prepare(
-    'SELECT id, title, content_md FROM cips WHERE content_md IS NOT NULL'
-  ).all() as { id: string; title: string; content_md: string }[];
-  for (const c of cips) {
-    docs.push({ sourceType: 'cip', sourceId: c.id, text: `${c.title}\n\n${c.content_md}` });
-  }
-
   const topics = db.prepare(
     `SELECT t.id, t.title, GROUP_CONCAT(p.cooked, ' ') as posts
      FROM forum_topics t LEFT JOIN forum_posts p ON p.topic_id = t.id
@@ -78,17 +71,6 @@ export function loadAllDocs(): SourceDoc[] {
     }
   } catch {
     console.warn('doc_pages table not available, skipping');
-  }
-
-  try {
-    const whitepapers = db.prepare(
-      'SELECT id, title, content_text FROM whitepapers WHERE content_text IS NOT NULL'
-    ).all() as { id: number; title: string; content_text: string }[];
-    for (const w of whitepapers) {
-      docs.push({ sourceType: 'whitepaper', sourceId: String(w.id), text: `${w.title}\n\n${w.content_text}` });
-    }
-  } catch {
-    console.warn('whitepapers table not available, skipping');
   }
 
   // YouTube videos (title + description, transcript if available)
@@ -153,19 +135,6 @@ export function loadAllDocs(): SourceDoc[] {
     }
   } catch {
     console.warn('github_discussions table not available, skipping');
-  }
-
-  // Foundation Curated KB (your-org/build-on-yourchain-mcp, attribution preserved)
-  try {
-    const fkb = db.prepare(
-      'SELECT id, category, title, content FROM foundation_kb WHERE content IS NOT NULL'
-    ).all() as { id: number; category: string; title: string; content: string }[];
-    for (const r of fkb) {
-      const text = `[${r.category}] ${r.title}\n\n${r.content}`;
-      docs.push({ sourceType: 'foundation_kb', sourceId: String(r.id), text });
-    }
-  } catch {
-    console.warn('foundation_kb table not available, skipping');
   }
 
   // Radar items (ecosystem signals / advisories)

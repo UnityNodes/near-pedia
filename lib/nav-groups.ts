@@ -1,6 +1,6 @@
 import {
-  Activity, BookOpen, BookText, Boxes, Code2, Database, Gauge, MessageCircleQuestion,
-  MessagesSquare, PenLine, Plug, Radar, ShieldAlert, Tag,
+  Activity, BookOpen, Boxes, Code2, Database, Gauge, MessageCircleQuestion,
+  Landmark, MessagesSquare, PenLine, Plug, Radar, ShieldAlert, Tag,
   type LucideIcon,
 } from 'lucide-react';
 import { TRANSLATIONS } from './i18n';
@@ -37,6 +37,7 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { href: '/radar', label: t.nav_radar, hint: 'What is changing, until it resolves', Icon: Radar },
       { href: '/protocol', label: 'Protocol', hint: 'Versions and the validator vote', Icon: Gauge },
+      { href: '/governance', label: 'Governance', hint: 'House of Stake proposals and votes', Icon: Landmark },
       { href: '/feed', label: t.nav_feed, hint: 'Everything as it happens', Icon: Activity },
       { href: '/sources', label: t.nav_sources, hint: 'What is indexed, and how fresh', Icon: Database },
     ],
@@ -47,7 +48,6 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { href: '/docs', label: t.nav_docs, hint: 'docs.near.org and partner docs', Icon: BookOpen },
       { href: '/releases', label: t.nav_releases, hint: 'What shipped and when', Icon: Tag },
-      { href: '/glossary', label: t.nav_glossary, hint: 'Terms, explained', Icon: BookText },
     ],
   },
   {

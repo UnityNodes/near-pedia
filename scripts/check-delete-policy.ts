@@ -19,7 +19,7 @@
  *   covered      a completeness check compares this source set against upstream
  *                and a surplus would show, so a stale row cannot hide
  *   permanent    upstream does not retract; the record stands even when a
- *                status changes (a CIP is withdrawn, a GitHub item closes)
+ *                status changes (a NEP is finalised, a GitHub item closes)
  *   not-a-writer meta-runner or file copier, owns no table
  *   owned        another sync owns the delete for this table
  *   accumulating the table is a log of versions seen, never a mirror of a set
@@ -36,25 +36,21 @@ type Reason = 'covered' | 'permanent' | 'not-a-writer' | 'owned' | 'accumulating
 
 const POLICY: Record<string, { reason: Reason; why: string; sweeps?: boolean }> = {
 
-  // check-completeness.ts names these two as its covered scope explicitly
-  // (cips: git tree, ecosystem_projects: data file) - a surplus in either
-  // would show there, so a delete path here would be a second, redundant
-  // lifecycle mechanism.
-  'sync-cips': { reason: 'covered', why: 'check-completeness compares the CIP set against the your-org/CIPs git tree exactly; a stale row would show as surplus' },
+  // check-completeness.ts names ecosystem_projects as covered scope
+  // explicitly - a surplus would show there, so a delete path here would be
+  // a second, redundant lifecycle mechanism.
   'sync-ecosystem': { reason: 'covered', why: 'check-completeness compares ecosystem_projects against the same NEAR Catalog project list sync-ecosystem.ts reads' },
   'sync-neps': { reason: 'permanent', why: 'a NEP is a published standard: one retired upstream moves to a final status or to neps/archive/, it is not erased, and the tree listing is read whole on every run' },
   'sync-incidents': { reason: 'permanent', why: 'a security incident is a historical record: DefiLlama edits amounts and recovered funds in place (ON CONFLICT DO UPDATE), and a hack does not stop having happened' },
 
-  // check-completeness.ts explicitly excludes these two from its scope (see
+  // check-completeness.ts explicitly excludes this one from its scope (see
   // that file's own SCOPE comment) for reasons of fetch complexity or the
   // absence of a meaningful upstream total - not because the underlying
-  // record is disposable. Each is permanent in its own right regardless of
+  // record is disposable. It is permanent in its own right regardless of
   // whether completeness-checking ever reaches it.
-  'sync-foundation': { reason: 'permanent', why: 'foundation_kb is curated from the yourchain.example About page; content gets edited in place (ON CONFLICT DO UPDATE), never removed - there is no upstream "this entry no longer exists" signal to prune against' },
   'sync-packages': { reason: 'permanent', why: 'a published npm or crates.io version is not retracted upstream (crates.io only yanks; npm unpublish is limited to 72 hours and leaves a tombstone); packages and package_versions keep the last-known state, and deprecation or a yank is a status change written in place' },
-  'sync-papers': { reason: 'permanent', why: 'arXiv and IACR ePrint papers (whitepapers table) are permanent published records; check-completeness excludes this source only because no upstream total means the same thing as our row count' },
 
-  // The direct analogue of sync-cips' own reasoning: a github_items row is a
+  // The same reasoning as sync-neps: a github_items row is a
   // permanent record, and closing/merging is a status change (open -> closed
   // via UPDATE), not a removal. Confirmed by reading the sync: it reconciles
   // open items no longer returned by the API to state='closed' rather than

@@ -4,13 +4,11 @@
  * Before this check existed, this app's serving layer had the exact bug
  * class it catches: get_doc cut doc_pages.content_text at a bare `.slice(0,40000)` with no
  * marker - doc id 205 is 99434 chars, so the tool (whose own description
- * says "Read the FULL text") served 40% of it silently. get_whitepaper had
- * the same shape (bare .slice(0,50000)), dormant today (longest
- * content_text is 2023 chars) but unmarked regardless. Both fixed alongside
+ * says "Read the FULL text") served 40% of it silently. Fixed alongside
  * this check via lib/truncate.ts's cutForAnswer, which already existed and
  * was already used correctly by three other tools here
- * (get_issue_status/get_latest_release/get_sdk_changelog) - the gap was two
- * call sites that never adopted it, not a missing mechanism.
+ * (get_issue_status/get_latest_release/get_sdk_changelog) - the gap was a
+ * call site that never adopted it, not a missing mechanism.
  *
  * THE CLASS. The damage is not the missing text. It is that the agent
  * cannot tell a document that does not discuss X from a prefix that does
@@ -63,16 +61,6 @@ const one = <T>(db: Database.Database, sql: string): T | undefined => {
 };
 
 const SITES: Site[] = [
-  {
-    where: 'get_whitepaper whitepapers.content_text',
-    tool: 'get_whitepaper',
-    cut: 50_000,
-    dormant: 'no whitepaper content_text exceeds 50000 chars today (longest is 2023 - most rows hold only title+abstract, not full PDF text); the marker fires the day one does',
-    longest: (db) => {
-      const r = one<{ slug: string; n: number }>(db, 'SELECT slug, length(content_text) n FROM whitepapers ORDER BY n DESC LIMIT 1');
-      return r ? { args: { slug: r.slug }, len: r.n } : null;
-    },
-  },
   {
     where: 'get_doc doc_pages.content_text',
     tool: 'get_doc',
@@ -130,7 +118,7 @@ const SITES: Site[] = [
       // repos interleave plain numbered tags (v0.31.4) with network-suffixed
       // ones (v0.32.1-testnet, v0.32.1-devnet) that are frequently NEWER by
       // published_at but never stable-tagged - a naive "newest published"
-      // query provoked yourchain-node with a -testnet release the tool would
+      // query provoked a node repo with a -testnet release the tool would
       // never actually serve, reporting a false "silent cut" against a body
       // (16662 chars) the tool cannot reach; the real served body (v0.31.4,
       // 589 chars total) was never cut at all. Falls back to the newest
@@ -167,7 +155,6 @@ const SITES: Site[] = [
  */
 const NOT_A_BODY: Array<{ n: number; why: string }> = [
   { n: 20_000, why: 'REST /api/v1/docs/:id, mirrored by the MCP get_doc site above' },
-  { n: 50_000, why: 'REST /api/v1/whitepapers/:slug, mirrored by the MCP get_whitepaper site above' },
   { n: 2_000, why: 'REST /api/v1/discussions/:id post text, mirrored by get_discussion' },
 ];
 

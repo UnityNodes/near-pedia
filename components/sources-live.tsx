@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import {
   ArrowRight, Boxes, CirclePlay, FileText, GitBranch, GitPullRequest, BookOpen, MessageCircle,
-  MessagesSquare, Package, PenLine, Plug, Radar, ScrollText, Tag, Zap,
+  MessagesSquare, Package, PenLine, Plug, Radar, Tag, Zap,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -24,9 +24,8 @@ const TYPE_MAP: Record<string, { name: string; Icon: LucideIcon; group: GroupKey
   github_item:       { name: 'GitHub issues', Icon: GitPullRequest, group: 'code',      href: '/code' },
   doc:               { name: 'Docs',         Icon: BookOpen,       group: 'learn',      href: '/docs' },
   blog_post:         { name: 'Blog',         Icon: PenLine,        group: 'learn',      href: '/blog' },
-  whitepaper:        { name: 'Papers',       Icon: ScrollText,     group: 'learn',      href: '/whitepapers' },
   youtube_video:     { name: 'Videos',       Icon: CirclePlay,     group: 'learn',      href: '/videos' },
-  hos_proposal:      { name: 'House of Stake', Icon: FileText,     group: 'governance', href: '/radar' },
+  hos_proposal:      { name: 'House of Stake', Icon: FileText,     group: 'governance', href: '/governance' },
   forum_topic:       { name: 'gov.near.org', Icon: MessagesSquare, group: 'governance', href: '/discussions' },
   github_discussion: { name: 'Discussions',  Icon: MessageCircle,  group: 'governance', href: '/discussions' },
   ecosystem_project: { name: 'NEAR Catalog', Icon: Boxes,          group: 'ecosystem',  href: '/ecosystem' },
@@ -202,9 +201,9 @@ export function SourcesLive({
           <Link href="/for-ai" className="kp-sticker kp-sticker--cy">
             <Plug size={14} aria-hidden="true" />MCP · no key
           </Link>
-          <Link href="/api/v1/reference" className="kp-sticker kp-sticker--acc">
+          <a href="/api/v1/reference" className="kp-sticker kp-sticker--acc">
             <Zap size={14} aria-hidden="true" />REST API · open
-          </Link>
+          </a>
         </>
       )}
       <div className="kp">

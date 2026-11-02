@@ -8,7 +8,7 @@
  *
  * SYNC_LOG HAS NO RETENTION AT ALL, AND FOUR SCRIPTS WRITE IT WITH RAW SQL.
  * lib/sync-log.ts's recordSync()/withSyncLog() never trim anything - there is
- * no cap to bypass, but check-scheduled.ts, sync-docs.ts, sync-cips.ts and
+ * no cap to bypass, but check-scheduled.ts, sync-docs.ts and
  * sync-github-releases.ts all also do `INSERT INTO sync_log` directly. The
  * lesson: a rule that lives on the write path only binds the writers that go
  * through it.

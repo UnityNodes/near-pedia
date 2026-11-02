@@ -2,10 +2,9 @@
  * Is anything in the corpus written to steer a model rather than inform a
  * reader — and is it on the fenced side of the trust boundary if so?
  *
- * lib/doc-trust.ts decides trust by URL and fences everything else; lib/cip-id.ts
- * does the same for CIPs by whether the id is an open PR draft. What neither can
- * say is whether those boundaries are in the right place TODAY, because the only
- * evidence either cites is the reasoning that put them there. This runs the
+ * lib/doc-trust.ts decides trust by URL and fences everything else. What it
+ * cannot say is whether that boundary is in the right place TODAY, because the
+ * only evidence it cites is the reasoning that put it there. This runs the
  * question against the corpus actually held.
  *
  * The other half of check-fencing, which every project built from this template
@@ -31,7 +30,6 @@
 import { getDb } from '../lib/db';
 import { logRun } from '../lib/sync-log';
 import { isFirstPartyDoc } from '../lib/doc-trust';
-import { isOpenPrDraft } from '../lib/cip-id';
 
 const PATTERNS: ReadonlyArray<readonly [string, RegExp]> = [
   ['"Agent Instructions" block', /#+\s*Agent Instructions/i],
@@ -54,21 +52,16 @@ const PATTERNS: ReadonlyArray<readonly [string, RegExp]> = [
 
 /**
  * `key` is whatever the fencing decision is made from, so it is the url for a
- * doc page and the id for a CIP. It doubles as what a finding is reported by.
+ * doc page. It doubles as what a finding is reported by.
  */
-interface Corpus { label: string; sql: string; fenced: 'yes' | 'no' | 'by-url' | 'by-cip-draft' }
+interface Corpus { label: string; sql: string; fenced: 'yes' | 'no' | 'by-url' }
 
 const CORPORA: Corpus[] = [
   // Trust per ROW, which is the whole point of deriving it from the publisher
   // rather than from the table.
   { label: 'doc_pages', sql: 'SELECT url AS key, content_text AS t FROM doc_pages', fenced: 'by-url' },
-  // Two populations under one name: a merged CIP was reviewed into the
-  // governance repo, a PR-#### row is an open pull request anyone can file.
-  { label: 'cips', sql: 'SELECT id AS key, content_md AS t FROM cips', fenced: 'by-cip-draft' },
 
   // Served as first-party. A hit here is a failure.
-  { label: 'foundation_kb', sql: 'SELECT url AS key, content AS t FROM foundation_kb', fenced: 'no' },
-  { label: 'whitepapers', sql: 'SELECT pdf_url AS key, content_text AS t FROM whitepapers', fenced: 'no' },
   { label: 'github_releases', sql: 'SELECT url AS key, body AS t FROM github_releases', fenced: 'no' },
 
   // Fenced on the way out. A hit is reported so the boundary can be re-judged.
@@ -108,7 +101,6 @@ for (const c of CORPORA) {
       const isFenced =
         c.fenced === 'yes' ? true
         : c.fenced === 'by-url' ? !isFirstPartyDoc(r.key)
-        : c.fenced === 'by-cip-draft' ? isOpenPrDraft(r.key)
         : false;
       (isFenced ? fencedHits : unfencedHits).push(`${name} in ${r.key || '(no key)'}`);
     }

@@ -1,11 +1,9 @@
 import type { Metadata } from 'next';
 import type { JSX } from 'react';
-import Link from 'next/link';
 import { ArrowLeft, ExternalLink } from 'lucide-react';
 import { notFound } from 'next/navigation';
 import { getDb } from '@/lib/db';
 import { formatDate } from '@/lib/utils';
-import { extractCipReferences } from '@/lib/cip-autolink';
 import { SITE } from '@/lib/site.config';
 import type { Tone } from '@/lib/status';
 import { BackLink, MetaLine, ReaderHead, ReaderPage } from '@/components/reader-shell';
@@ -71,8 +69,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 // STATE_CONFIG only supplies the label string now — color/background come
-// from .pill[data-status] in globals.css, the same mechanism CIP status
-// pills use, so a PR/issue badge looks like every other status badge on
+// from .pill[data-status] in globals.css, the same mechanism every status
+// pill uses, so a PR/issue badge looks like every other status badge on
 // the site instead of its own one-off hex-coded variant.
 const STATE_LABEL: Record<string, string> = {
   open: 'Open',
@@ -196,12 +194,6 @@ export default async function ProposalDetailPage({ params }: PageProps) {
   const stateLabel = STATE_LABEL[item.state] ?? item.state;
   const bodyNodes = item.body ? renderBody(item.body) : null;
 
-  // CIP-N references in title + body - clickable chips above the body.
-  const cipChips = Array.from(new Set([
-    ...extractCipReferences(item.title),
-    ...extractCipReferences(item.body ?? ''),
-  ])).sort();
-
   return (
     <ReaderPage
       crumbs={[
@@ -235,13 +227,6 @@ export default async function ProposalDetailPage({ params }: PageProps) {
           </a>
         }
       />
-
-      {cipChips.length > 0 && (
-        <div className="rd-chips">
-          <span className="rd-chips-label">References</span>
-          {cipChips.map(num => <Link key={num} href={`/cips/${num}`} className="rd-chip">CIP-{num}</Link>)}
-        </div>
-      )}
 
       {bodyNodes && bodyNodes.length > 0 ? (
         <div className="rd-prose">

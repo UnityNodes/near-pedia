@@ -71,103 +71,6 @@ export interface ChangeEventsRow {
   dedupe_key: string;
 }
 
-export interface CipAlertSentRow {
-  cip_id: string;
-  event: string;
-  sent_at: string;
-}
-
-export interface CipAttachmentsRow {
-  id: number;
-  cip_id: string;
-  filename: string;
-  github_url: string;
-  raw_url: string;
-  content_text: string | null;
-  pages: number | null;
-  synced_at: string | null;
-}
-
-export interface CipAttachmentsFtsRow {
-  filename: unknown | null;
-  content_text: unknown | null;
-}
-
-export interface CipAttachmentsFtsConfigRow {
-  k: unknown;
-  v: unknown | null;
-}
-
-export interface CipAttachmentsFtsDataRow {
-  id: number;
-  block: Buffer | null;
-}
-
-export interface CipAttachmentsFtsDocsizeRow {
-  id: number;
-  sz: Buffer | null;
-}
-
-export interface CipAttachmentsFtsIdxRow {
-  segid: unknown;
-  term: unknown;
-  pgno: unknown | null;
-}
-
-export interface CipStatusHistoryRow {
-  id: number;
-  cip_id: string;
-  from_status: string | null;
-  to_status: string;
-  changed_at: string;
-}
-
-export interface CipsRow {
-  id: string;
-  cip_number: number | null;
-  title: string | null;
-  author: string | null;
-  status: string | null;
-  type: string | null;
-  created_date: string | null;
-  approved_date: string | null;
-  license: string | null;
-  requires: string | null;
-  content_md: string | null;
-  synced_at: string | null;
-  pr_number: number | null;
-  pr_url: string | null;
-  tldr: string | null;
-  tldr_generated_at: string | null;
-}
-
-export interface CipsFtsRow {
-  title: unknown | null;
-  author: unknown | null;
-  content_md: unknown | null;
-}
-
-export interface CipsFtsConfigRow {
-  k: unknown;
-  v: unknown | null;
-}
-
-export interface CipsFtsDataRow {
-  id: number;
-  block: Buffer | null;
-}
-
-export interface CipsFtsDocsizeRow {
-  id: number;
-  sz: Buffer | null;
-}
-
-export interface CipsFtsIdxRow {
-  segid: unknown;
-  term: unknown;
-  pgno: unknown | null;
-}
-
 export interface ContactSubmissionsRow {
   id: number;
   timestamp: number;
@@ -418,51 +321,6 @@ export interface ForumTopicsRow {
   posts_synced_at: string | null;
 }
 
-export interface FoundationKbRow {
-  id: number;
-  category: string;
-  key: string | null;
-  title: string;
-  content: string;
-  url: string | null;
-  replaced_by: string | null;
-  tags: string | null;
-  metadata: string | null;
-  url_status: number | null;
-  url_last_checked_at: string | null;
-  linked_doc_page_id: number | null;
-  content_hash: string;
-  kb_version: string | null;
-  synced_at: string;
-}
-
-export interface FoundationKbFtsRow {
-  title: unknown | null;
-  content: unknown | null;
-  tags: unknown | null;
-}
-
-export interface FoundationKbFtsConfigRow {
-  k: unknown;
-  v: unknown | null;
-}
-
-export interface FoundationKbFtsDataRow {
-  id: number;
-  block: Buffer | null;
-}
-
-export interface FoundationKbFtsDocsizeRow {
-  id: number;
-  sz: Buffer | null;
-}
-
-export interface FoundationKbFtsIdxRow {
-  segid: unknown;
-  term: unknown;
-  pgno: unknown | null;
-}
-
 export interface GithubDiscussionsRow {
   id: string;
   repo: string;
@@ -647,9 +505,6 @@ export interface NepStandardsRow {
 export interface NetworkStatsRow {
   id: number;
   snapshot_at: string;
-  cips: number;
-  cips_in_review: number;
-  cips_final: number;
   forum_topics: number;
   forum_posts: number;
   github_items_open: number | null;
@@ -745,24 +600,6 @@ export interface SyncStateRow {
   updated_at: string;
 }
 
-export interface TrendingSnapshotRow {
-  id: number;
-  payload: string;
-  updated_at: string;
-}
-
-export interface VCipAttachmentsFtsRow {
-  term: unknown | null;
-  doc: unknown | null;
-  cnt: unknown | null;
-}
-
-export interface VCipsFtsRow {
-  term: unknown | null;
-  doc: unknown | null;
-  cnt: unknown | null;
-}
-
 export interface VDocsFtsRow {
   term: unknown | null;
   doc: unknown | null;
@@ -770,12 +607,6 @@ export interface VDocsFtsRow {
 }
 
 export interface VForumFtsRow {
-  term: unknown | null;
-  doc: unknown | null;
-  cnt: unknown | null;
-}
-
-export interface VWhitepapersFtsRow {
   term: unknown | null;
   doc: unknown | null;
   cnt: unknown | null;
@@ -796,50 +627,6 @@ export interface ValidatorVotesRow {
   voted_version: number;
   block_height: number;
   block_time: string;
-}
-
-export interface WeeklyDigestsRow {
-  week: string;
-  payload: string;
-  generated_at: string;
-}
-
-export interface WhitepapersRow {
-  id: number;
-  slug: string;
-  title: string;
-  description: string | null;
-  tag: string | null;
-  pdf_url: string;
-  content_text: string | null;
-  pages: number | null;
-  synced_at: string | null;
-}
-
-export interface WhitepapersFtsRow {
-  title: unknown | null;
-  content_text: unknown | null;
-}
-
-export interface WhitepapersFtsConfigRow {
-  k: unknown;
-  v: unknown | null;
-}
-
-export interface WhitepapersFtsDataRow {
-  id: number;
-  block: Buffer | null;
-}
-
-export interface WhitepapersFtsDocsizeRow {
-  id: number;
-  sz: Buffer | null;
-}
-
-export interface WhitepapersFtsIdxRow {
-  segid: unknown;
-  term: unknown;
-  pgno: unknown | null;
 }
 
 export interface YoutubeVideosRow {
@@ -908,20 +695,6 @@ export interface DbRowByTable {
   "blog_posts_fts_idx": BlogPostsFtsIdxRow;
   "categories": CategoriesRow;
   "change_events": ChangeEventsRow;
-  "cip_alert_sent": CipAlertSentRow;
-  "cip_attachments": CipAttachmentsRow;
-  "cip_attachments_fts": CipAttachmentsFtsRow;
-  "cip_attachments_fts_config": CipAttachmentsFtsConfigRow;
-  "cip_attachments_fts_data": CipAttachmentsFtsDataRow;
-  "cip_attachments_fts_docsize": CipAttachmentsFtsDocsizeRow;
-  "cip_attachments_fts_idx": CipAttachmentsFtsIdxRow;
-  "cip_status_history": CipStatusHistoryRow;
-  "cips": CipsRow;
-  "cips_fts": CipsFtsRow;
-  "cips_fts_config": CipsFtsConfigRow;
-  "cips_fts_data": CipsFtsDataRow;
-  "cips_fts_docsize": CipsFtsDocsizeRow;
-  "cips_fts_idx": CipsFtsIdxRow;
   "contact_submissions": ContactSubmissionsRow;
   "csp_violation_log": CspViolationLogRow;
   "deprecation_evidence": DeprecationEvidenceRow;
@@ -952,12 +725,6 @@ export interface DbRowByTable {
   "forum_fts_idx": ForumFtsIdxRow;
   "forum_posts": ForumPostsRow;
   "forum_topics": ForumTopicsRow;
-  "foundation_kb": FoundationKbRow;
-  "foundation_kb_fts": FoundationKbFtsRow;
-  "foundation_kb_fts_config": FoundationKbFtsConfigRow;
-  "foundation_kb_fts_data": FoundationKbFtsDataRow;
-  "foundation_kb_fts_docsize": FoundationKbFtsDocsizeRow;
-  "foundation_kb_fts_idx": FoundationKbFtsIdxRow;
   "github_discussions": GithubDiscussionsRow;
   "github_items": GithubItemsRow;
   "github_releases": GithubReleasesRow;
@@ -975,21 +742,10 @@ export interface DbRowByTable {
   "search_log": SearchLogRow;
   "sync_log": SyncLogRow;
   "sync_state": SyncStateRow;
-  "trending_snapshot": TrendingSnapshotRow;
-  "v_cip_attachments_fts": VCipAttachmentsFtsRow;
-  "v_cips_fts": VCipsFtsRow;
   "v_docs_fts": VDocsFtsRow;
   "v_forum_fts": VForumFtsRow;
-  "v_whitepapers_fts": VWhitepapersFtsRow;
   "validator_stakes": ValidatorStakesRow;
   "validator_votes": ValidatorVotesRow;
-  "weekly_digests": WeeklyDigestsRow;
-  "whitepapers": WhitepapersRow;
-  "whitepapers_fts": WhitepapersFtsRow;
-  "whitepapers_fts_config": WhitepapersFtsConfigRow;
-  "whitepapers_fts_data": WhitepapersFtsDataRow;
-  "whitepapers_fts_docsize": WhitepapersFtsDocsizeRow;
-  "whitepapers_fts_idx": WhitepapersFtsIdxRow;
   "youtube_videos": YoutubeVideosRow;
   "youtube_videos_fts": YoutubeVideosFtsRow;
   "youtube_videos_fts_config": YoutubeVideosFtsConfigRow;

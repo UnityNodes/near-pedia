@@ -44,7 +44,7 @@ const SAMPLE = 5;
  * not a refusal at all and belongs in NOT_A_REFUSAL below with the reason.
  */
 const INGEST_DIR = 'scripts';
-const INGEST_FILE_RE = /^(sync-.*|refresh-radar|refresh-trending|import-pdf-local)\.ts$/;
+const INGEST_FILE_RE = /^(sync-.*|refresh-radar)\.ts$/;
 
 /**
  * Module-scope names in ingest files that a drop decision consults and that
@@ -53,12 +53,6 @@ const INGEST_FILE_RE = /^(sync-.*|refresh-radar|refresh-trending|import-pdf-loca
  * appearing under a name nobody has classified is loud.
  */
 const NOT_A_REFUSAL: Record<string, string> = {
-  'sync-papers.ts:RELEVANT':
-    "the arXiv topic filter. It IS a refusal - registered below as 'whitepaper-arxiv-relevance', restated rather than imported per this file's header (importing would make the ingest side and the check side one source)",
-  'sync-cips.ts:CIP_FILE_RE':
-    'the shape a repo tree path must match to be considered a CIP file at all (requires digits between cip- and .md). Upstream-path state, never stored - cips.id holds only the derived number, not the path it came from',
-  'sync-cips.ts:CIP_TEMPLATE_RE':
-    'meant to exclude cip-template.md, but CIP_FILE_RE already requires digits in the filename and "template" has none, so this is unreachable dead code, not an active drop decision',
   'sync-docs.ts:isoOrNull':
     "normalises the feed's Last-Modified header to ISO or null; it drops nothing, every page is written whatever the header says",
   'refresh-radar.ts:PRODUCED':

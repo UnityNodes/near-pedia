@@ -3,8 +3,8 @@ import { cleanDocText, docPageNumbers, docSortsFor, docSourceKind, docTrail, kin
 
 describe('docSourceKind', () => {
   it('calls only the publishers we can name official, code what lives in repositories, and the rest ecosystem', () => {
-    expect(docSourceKind('yourchain-node')).toBe('official');
-    expect(docSourceKind('yourchain-app')).toBe('official');
+    expect(docSourceKind('docs')).toBe('official');
+    expect(docSourceKind('nomicon')).toBe('official');
     expect(docSourceKind('github-code')).toBe('code');
     expect(docSourceKind('npm-package')).toBe('code');
     expect(docSourceKind('partner-docs')).toBe('ecosystem');
@@ -12,7 +12,7 @@ describe('docSourceKind', () => {
   });
 
   it('turns a kind into the sources to keep or drop, and the three kinds cover every source once', () => {
-    const sources = ['yourchain-node', 'github-code', 'partner-docs', 'yourchain-app', 'npm-package', 'tiny-site'];
+    const sources = ['docs', 'github-code', 'partner-docs', 'nomicon', 'npm-package', 'tiny-site'];
     const pick = (k: 'official' | 'ecosystem' | 'code') => {
       const f = kindSources(k)!;
       return sources.filter(s => (f.include ? f.include.includes(s) : true) && !(f.exclude ?? []).includes(s));
@@ -23,7 +23,7 @@ describe('docSourceKind', () => {
 
   it('sums pages per kind', () => {
     expect(kindCounts([
-      { source: 'yourchain-node', count: 10, url: null },
+      { source: 'docs', count: 10, url: null },
       { source: 'github-code', count: 3, url: null },
       { source: 'partner-docs', count: 2, url: null },
     ])).toEqual({ official: 10, ecosystem: 2, code: 3 });
@@ -48,13 +48,13 @@ describe('docTrail', () => {
 
 describe('sources and sorting', () => {
   const sources = [
-    { source: 'yourchain-node', count: 1469, url: null },
+    { source: 'docs', count: 1469, url: null },
     { source: 'partner-docs', count: 172, url: null },
     { source: 'tiny-site', count: 1, url: null },
   ];
 
   it('shows the sources with 20 pages or more, and the one in use even when it is small', () => {
-    expect(splitSources(sources).main.map(s => s.source)).toEqual(['yourchain-node', 'partner-docs']);
+    expect(splitSources(sources).main.map(s => s.source)).toEqual(['docs', 'partner-docs']);
     expect(splitSources(sources).more.map(s => s.source)).toEqual(['tiny-site']);
     expect(splitSources(sources, 'tiny-site').more).toEqual([]);
   });

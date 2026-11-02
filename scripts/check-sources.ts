@@ -49,7 +49,6 @@ const NOT_A_SOURCE: Record<string, string> = {
   search_log: 'our own search log',
   csp_violation_log: 'our own CSP report log',
   contact_submissions: 'contact-form audit log',
-  cip_alert_sent: 'de-duplication ledger for outbound Discord alerts',
   failure_events: 'our own failure log (failed syncs, degraded fallbacks, rejected calls) that check-failures pages from',
   alert_state: 'paging state of check-failures: what is open, which messages were sent, the last digest day',
 
@@ -62,7 +61,6 @@ const NOT_A_SOURCE: Record<string, string> = {
 
   // Rows that belong to a source already counted, and would double-count it.
   forum_posts: 'post bodies inside forum_topics, which is the browsable unit',
-  cip_status_history: 'status transitions of cips, already counted',
   categories: 'forum category metadata, not a standalone content source',
 
   // Time series, not documents. Served through its own endpoint

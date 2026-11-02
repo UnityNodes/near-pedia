@@ -46,8 +46,6 @@ const PROBES: Probe[] = [
   { tool: 'search', args: { query: 'validator' }, why: 'mixed sources, the widest url surface there is' },
   { tool: 'search', args: { query: 'node' }, why: 'wide match across every tier' },
   { tool: 'get_recent_changes', args: { days: 7 }, why: 'by construction the freshest rows, where an id is likeliest to be missing' },
-  { tool: 'get_trending', args: {}, why: 'mixed source urls' },
-  { tool: 'list_cips', args: { limit: 5 }, why: 'site-hosted detail pages' },
   { tool: 'list_ecosystem_projects', args: { limit: 5 }, why: 'third-party project urls' },
   { tool: 'list_github_discussions', args: { limit: 5 }, why: 'github_discussion urls' },
   { tool: 'find_similar_projects', args: { description: 'an application built on NEAR' }, why: 'ecosystem urls via a different query path than list_ecosystem_projects' },
@@ -72,7 +70,7 @@ function structuralFault(u: string): string | null {
 
   // The empty-segment and trailing-slash rules below assume WE built the
   // path by interpolating our own id into it, which is only true for our
-  // own host. blog.yourchain.example's Ghost URLs legitimately end every post
+  // own host. A Ghost blog's URLs legitimately end every post
   // with a trailing slash (e.g. /a-blockspace-odyssey/) - that convention
   // is theirs to keep, not evidence of our interpolation dropping an id.
   // check-citations caught this as a false positive on a real

@@ -8,9 +8,9 @@
  * that names it as data.
  *
  * WHAT MAKES IT MECHANICAL is the table list, and that list is a judgement
- * nothing in the schema can make. A CIP title was written by a community
- * member and is not fenced, because a CIP is a document that was reviewed
- * and merged; a forum title was written by a community member and is
+ * nothing in the schema can make. A release note was written by a
+ * maintainer and is not fenced, because it went through the repository's
+ * review; a forum title was written by a community member and is
  * fenced, because nothing stands between the keyboard and the corpus. The
  * difference is editorial control, not authorship, and it has to be stated.
  *
@@ -35,8 +35,8 @@ const UNTRUSTED_TABLES = [
 ];
 
 /**
- * doc_pages spans multiple sources (docs.yourchain.example, plus repo docs pulled
- * in via enrich-docs.ts) and its trust is decided per ROW by publisher
+ * doc_pages spans multiple sources (docs.near.org, plus partner docs) and
+ * its trust is decided per ROW by publisher
  * (lib/doc-trust.ts), so the table-level UNTRUSTED_TABLES list cannot
  * express it. Every tool whose body reads doc_pages must route its text
  * through a doc-trust helper - serveDocText for the body, docField for the
@@ -46,18 +46,6 @@ const UNTRUSTED_TABLES = [
 const DOC_READ_EXEMPT: Record<string, string> = {};
 const docHandlesTrust = (b: string): boolean =>
   /serveDocText\(|docField\(|isFirstPartyDoc\(/.test(b);
-
-/**
- * cips holds two trust populations under one name: merged CIPs (reviewed
- * into the governance repo, trusted) and PR-#### rows (open pull requests
- * anyone can file, lib/cip-id.ts::isOpenPrDraft). Every tool that renders a
- * cips row's own text must fence the draft case with the draft-aware helper
- * cipField (which fences when isOpenPrDraft, passes a merged CIP through).
- */
-const CIP_READ_EXEMPT: Record<string, string> = {};
-
-const cipHandlesDraft = (b: string): boolean =>
-  /cipField\(/.test(b) || (/isOpenPrDraft\(/.test(b) && FENCE_CALL.test(b));
 
 /** Tools that read an untrusted table and render none of its text. */
 const AGGREGATE_ONLY: Record<string, string> = {
@@ -173,21 +161,6 @@ function main(): void {
     }
   }
 
-  let cipFenced = 0, cipExempt = 0;
-  for (const block of blocks) {
-    if (!/FROM\s+cips\b|JOIN\s+cips\b/.test(block)) continue;
-    const name = nameOf(block);
-    if (cipHandlesDraft(block)) { cipFenced++; continue; }
-    if (name in CIP_READ_EXEMPT) { cipExempt++; continue; }
-    problems.push(`${name}: reads the cips table and neither fences the PR-#### draft case (cipField, or isOpenPrDraft + a fence) nor is listed in CIP_READ_EXEMPT; an open PR draft's attacker-authored title/status would be served unfenced`);
-  }
-  for (const n of Object.keys(CIP_READ_EXEMPT)) {
-    const block = blocks.find(b => nameOf(b) === n);
-    if (!block || !/FROM\s+cips\b|JOIN\s+cips\b/.test(block)) {
-      staleExemptions.push(`CIP_READ_EXEMPT names ${n}, which no longer reads the cips table (stale exemption)`);
-    }
-  }
-
   for (const block of blocks) {
     const name = nameOf(block);
     seen.add(name);
@@ -219,10 +192,6 @@ function main(): void {
   console.log(
     `[check-fencing] ${blocks.length} tools: ${fenced} fence untrusted content, ` +
     `${exempt} read it without rendering it, ${untouched} read none, ${problems.length} unfenced`,
-  );
-  console.log(
-    `[check-fencing] cips draft-trust: ${cipFenced} fence the PR-#### draft case, ` +
-    `${cipExempt} exempt (cannot surface draft text)`,
   );
   console.log(
     `[check-fencing] doc publisher-trust: ${docFenced} route doc_pages text through doc-trust, ` +

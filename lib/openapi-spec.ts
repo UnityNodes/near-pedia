@@ -9,13 +9,11 @@
  * Schemas are deliberately loose ({type: 'object'}) for endpoints
  * whose response shape is documented inline in the description and
  * isn't worth duplicating. The few endpoints where downstream
- * agents lean on structure (cips/batch, cips/tldrs, changes,
- * sources, csp-violations) get explicit schemas.
+ * agents lean on structure (changes, sources, csp-violations) get
+ * explicit schemas.
  */
 
 import { SITE } from './site.config';
-
-const ID_PATTERN = '^(\\d{1,4}|CIP-\\d{1,4}|cip-\\d{1,4}|PR-\\d+)$';
 
 const COMMON_400 = {
   description: 'Bad request - invalid path / query param',
@@ -33,8 +31,8 @@ export const OPENAPI_SPEC = {
     version: '1.0.0',
     summary: 'NEAR knowledge base - machine-readable access',
     description:
-      `Public, unauthenticated REST API over the ${SITE.name} corpus: CIPs, ` +
-      'documentation, forum threads, whitepapers, blog ' +
+      `Public, unauthenticated REST API over the ${SITE.name} corpus: ` +
+      'deprecations, documentation, forum threads, blog ' +
       'posts, videos, ecosystem projects, GitHub items, releases, ' +
       'on-chain network state, market data, and the RAG embedding ' +
       'index. Same data the website renders; same search engine the ' +
@@ -48,10 +46,9 @@ export const OPENAPI_SPEC = {
     url: `${SITE.url}/for-ai`,
   },
   tags: [
-    { name: 'CIPs',          description: 'Chain Improvement Proposals' },
     { name: 'Search',        description: 'Full-text + fuzzy search across all sources' },
     { name: 'Discussions',   description: 'Forum, GitHub Discussions' },
-    { name: 'Documentation', description: 'docs.yourchain.example pages, whitepapers' },
+    { name: 'Documentation', description: 'docs.near.org and partner docs pages' },
     { name: 'GitHub',        description: 'Issues, PRs, releases, repos' },
     { name: 'Network',       description: 'On-chain state, market data, stats' },
     { name: 'Discovery',     description: 'Activity stream, sources catalog' },
@@ -64,84 +61,12 @@ export const OPENAPI_SPEC = {
     '/api/v1/reference': { get: { tags: ['Meta'], summary: 'Interactive API reference (Scalar, HTML)', responses: { '200': { description: 'HTML documentation page', content: { 'text/html': {} } } } } },
     '/health': { get: { tags: ['Meta'], summary: 'Liveness probe + registered MCP tool count', responses: { '200': { description: 'Service status' } } } },
 
-    '/api/v1/cips': {
-      get: {
-        tags: ['CIPs'], summary: 'List CIPs with optional filters',
-        parameters: [
-          { name: 'status', in: 'query', schema: { type: 'string', enum: ['Draft','Review','Final','Withdrawn','Rejected','Superseded'] } },
-          { name: 'type',   in: 'query', schema: { type: 'string' } },
-          { name: 'limit',  in: 'query', schema: { type: 'integer', minimum: 1, maximum: 100, default: 20 } },
-          { name: 'offset', in: 'query', schema: { type: 'integer', minimum: 0, default: 0 } },
-        ],
-        responses: { '200': { description: 'Paginated CIP list' } },
-      },
-    },
-    '/api/v1/cips/{id}': {
-      get: {
-        tags: ['CIPs'], summary: 'Single CIP with full content',
-        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string', pattern: ID_PATTERN } }],
-        responses: { '200': { description: 'CIP row + url' }, '400': COMMON_400, '404': COMMON_404 },
-      },
-    },
-    '/api/v1/cips/{id}/history': {
-      get: {
-        tags: ['CIPs'], summary: 'Status transition history for a CIP',
-        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string', pattern: ID_PATTERN } }],
-        responses: { '200': { description: 'Status change events sorted DESC' }, '400': COMMON_400, '404': COMMON_404 },
-      },
-    },
-    '/api/v1/cips/{id}/attachments': {
-      get: {
-        tags: ['CIPs'], summary: 'File attachments (PDFs, signed votes)',
-        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string', pattern: ID_PATTERN } }],
-        responses: { '200': { description: 'Attachment list' }, '400': COMMON_400, '404': COMMON_404 },
-      },
-    },
-    '/api/v1/cips/{id}/tldr': {
-      get: {
-        tags: ['CIPs'], summary: 'Cached 2-3 sentence TL;DR (no LLM cost)',
-        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string', pattern: ID_PATTERN } }],
-        responses: {
-          '200': {
-            description: 'TLDR (may be null if not yet generated)',
-            content: { 'application/json': { schema: { $ref: '#/components/schemas/CipTldr' } } },
-          },
-          '400': COMMON_400, '404': COMMON_404,
-        },
-      },
-    },
-    '/api/v1/cips/{id}/mentions': {
-      get: {
-        tags: ['CIPs'], summary: 'Backlinks: forum, blog, sibling CIPs',
-        parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string', pattern: ID_PATTERN } }],
-        responses: { '200': { description: 'Mention aggregates with counts subobject' }, '400': COMMON_400, '404': COMMON_404 },
-      },
-    },
-    '/api/v1/cips/tldrs': {
-      get: {
-        tags: ['CIPs'], summary: 'Batch cached TL;DRs (up to 50 ids)',
-        parameters: [{ name: 'ids', in: 'query', required: true, schema: { type: 'string' }, description: 'Comma-separated id list, max 50' }],
-        responses: { '200': { description: 'Items in input order with nulls for misses' }, '400': COMMON_400 },
-      },
-    },
-    '/api/v1/cips/batch': {
-      post: {
-        tags: ['CIPs'], summary: 'Bulk CIP lookup (up to 50 ids)',
-        requestBody: {
-          required: true,
-          content: { 'application/json': { schema: { type: 'object', required: ['ids'], properties: { ids: { type: 'array', items: { type: 'string' }, maxItems: 50 } } } } },
-        },
-        responses: { '200': { description: 'Items in input order' }, '400': COMMON_400 },
-      },
-    },
-    '/api/v1/cips/graph': { get: { tags: ['CIPs'], summary: 'requires-dependency graph (nodes + edges)', responses: { '200': { description: 'Graph payload' } } } },
-
     '/api/v1/search': {
       get: {
         tags: ['Search'], summary: 'Unified search (FTS5 + fuzzy fallback)',
         parameters: [
           { name: 'q', in: 'query', required: true, schema: { type: 'string' } },
-          { name: 'type', in: 'query', schema: { type: 'string', enum: ['all','cip','doc','discussion','whitepaper','blog','youtube','github'], default: 'all' } },
+          { name: 'type', in: 'query', schema: { type: 'string', enum: ['all','doc','discussion','blog','youtube','github'], default: 'all' } },
           { name: 'limit', in: 'query', schema: { type: 'integer', minimum: 1, maximum: 50, default: 10 } },
         ],
         responses: { '200': { description: 'Ranked result list' }, '400': COMMON_400 },
@@ -150,15 +75,12 @@ export const OPENAPI_SPEC = {
 
     '/api/v1/discussions':         { get: { tags: ['Discussions'], summary: 'Forum topics', parameters: [{ name: 'limit', in: 'query', schema: { type: 'integer', default: 20 } }, { name: 'offset', in: 'query', schema: { type: 'integer', default: 0 } }, { name: 'category', in: 'query', schema: { type: 'string' } }], responses: { '200': { description: 'Topic list' } } } },
     '/api/v1/discussions/{id}':    { get: { tags: ['Discussions'], summary: 'Forum topic with posts', parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }], responses: { '200': { description: 'Topic + posts' }, '404': COMMON_404 } } },
-    '/api/v1/github-discussions':  { get: { tags: ['Discussions'], summary: 'GitHub Discussions (your-org/docs)', parameters: [{ name: 'repo', in: 'query', schema: { type: 'string' } }, { name: 'category', in: 'query', schema: { type: 'string' } }, { name: 'limit', in: 'query', schema: { type: 'integer' } }], responses: { '200': { description: 'Discussion list' } } } },
+    '/api/v1/github-discussions':  { get: { tags: ['Discussions'], summary: 'GitHub Discussions (near/docs and other NEAR repos)', parameters: [{ name: 'repo', in: 'query', schema: { type: 'string' } }, { name: 'category', in: 'query', schema: { type: 'string' } }, { name: 'limit', in: 'query', schema: { type: 'integer' } }], responses: { '200': { description: 'Discussion list' } } } },
     '/api/v1/github-discussions/{id}': { get: { tags: ['Discussions'], summary: 'Single GitHub Discussion with comments', parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }], responses: { '200': { description: 'Discussion + comments' }, '404': COMMON_404 } } },
 
     '/api/v1/docs':                { get: { tags: ['Documentation'], summary: 'Documentation page list', parameters: [{ name: 'source', in: 'query', schema: { type: 'string' } }, { name: 'limit', in: 'query', schema: { type: 'integer' } }, { name: 'offset', in: 'query', schema: { type: 'integer' } }], responses: { '200': { description: 'Doc page list' } } } },
     '/api/v1/docs/{id}':           { get: { tags: ['Documentation'], summary: 'Full doc page content', parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }], responses: { '200': { description: 'Doc page' }, '404': COMMON_404 } } },
-    '/api/v1/whitepapers':         { get: { tags: ['Documentation'], summary: 'All whitepapers', responses: { '200': { description: 'Whitepaper list' } } } },
-    '/api/v1/whitepapers/{slug}':  { get: { tags: ['Documentation'], summary: 'Whitepaper with extracted text', parameters: [{ name: 'slug', in: 'path', required: true, schema: { type: 'string' } }], responses: { '200': { description: 'Whitepaper detail' }, '404': COMMON_404 } } },
 
-    '/api/v1/trending':            { get: { tags: ['Discovery'], summary: 'Trending content this week', responses: { '200': { description: 'Trending list' } } } },
     '/api/v1/proposals':           { get: { tags: ['Discovery'], summary: 'House of Stake proposals (vote.dao) with vote standing and forum thread', parameters: [{ name: 'status', in: 'query', schema: { type: 'string' } }, { name: 'q', in: 'query', schema: { type: 'string' } }, { name: 'limit', in: 'query', schema: { type: 'integer', default: 20, maximum: 100 } }], responses: { '200': { description: 'Proposals, newest first, without their text' } } } },
     '/api/v1/proposals/{ref}':     { get: { tags: ['Discovery'], summary: 'One House of Stake proposal by on-chain id or HSP number', parameters: [{ name: 'ref', in: 'path', required: true, schema: { type: 'string' } }], responses: { '200': { description: 'The proposal with its text' }, '404': { description: 'No such proposal' } } } },
     '/api/v1/projects':            { get: { tags: ['Discovery'], summary: 'NEAR Catalog projects with TVL on NEAR; without q, the top projects by TVL', parameters: [{ name: 'q', in: 'query', schema: { type: 'string' } }, { name: 'category', in: 'query', schema: { type: 'string' } }, { name: 'limit', in: 'query', schema: { type: 'integer', default: 20, maximum: 100 } }], responses: { '200': { description: 'Projects' }, '503': { description: 'The catalog sync has not run yet' } } } },
@@ -224,17 +146,6 @@ export const OPENAPI_SPEC = {
   },
   components: {
     schemas: {
-      CipTldr: {
-        type: 'object',
-        properties: {
-          id: { type: 'string', example: '0042' },
-          title: { type: 'string' },
-          tldr: { type: ['string', 'null'] },
-          cached: { type: 'boolean' },
-          generated_at: { type: ['string', 'null'], format: 'date-time' },
-          url: { type: 'string', format: 'uri' },
-        },
-      },
       SourcesResponse: {
         type: 'object',
         properties: {
@@ -262,8 +173,6 @@ export const OPENAPI_SPEC = {
           counts: {
             type: 'object',
             properties: {
-              cip_status_change: { type: 'integer' },
-              new_cip: { type: 'integer' },
               new_forum_topic: { type: 'integer' },
               new_blog_post: { type: 'integer' },
               new_release: { type: 'integer' },

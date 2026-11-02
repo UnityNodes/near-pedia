@@ -17,10 +17,8 @@ interface PageProps {
 
 const FILTER_OPTIONS: { value: string; label: string }[] = [
   { value: '', label: 'All' },
-  { value: 'cip', label: 'CIPs' },
   { value: 'discussion', label: 'Forum' },
   { value: 'doc', label: 'Docs' },
-  { value: 'whitepaper', label: 'Papers' },
   { value: 'blog', label: 'Blog/News' },
   { value: 'youtube', label: 'Videos' },
   { value: 'github', label: 'GitHub' },
@@ -30,16 +28,14 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
   const { q } = await searchParams;
   return {
     title: q ? `"${q}", Search` : 'Search',
-    description: 'Search across CIPs, discussions, documentation, blog posts, videos and GitHub issues.',
+    description: 'Search across discussions, documentation, blog posts, videos and GitHub issues.',
     robots: { index: false, follow: true },
   };
 }
 
 const TYPE_CONFIG: Record<SearchResultType, { label: string; tone: Tone; href?: (r: SearchResult) => string }> = {
-  cip:        { label: 'CIP',        tone: 'lime' },
   discussion: { label: 'Discussion', tone: 'info' },
   doc:        { label: 'Doc',        tone: 'ok' },
-  whitepaper: { label: 'Whitepaper', tone: 'mute' },
   youtube:    { label: 'Video',      tone: 'info', href: (r) => `/videos/${r.id}` },
   github:     { label: 'GitHub',     tone: 'mute' },
   blog:       { label: 'Blog',       tone: 'mute' },
@@ -105,7 +101,7 @@ export default async function SearchPage({ searchParams }: PageProps) {
     return acc;
   }, {});
 
-  const order: SearchResultType[] = ['cip', 'discussion', 'doc', 'whitepaper', 'blog', 'youtube', 'github'];
+  const order: SearchResultType[] = ['discussion', 'doc', 'blog', 'youtube', 'github'];
 
   const buildUrl = (typeValue: string): string => {
     const sp = new URLSearchParams();
@@ -129,7 +125,7 @@ export default async function SearchPage({ searchParams }: PageProps) {
               <span className="pg-kicker">SEARCH · EVERY SOURCE</span>
             </div>
             <h1 className="pg-h1">Search</h1>
-            <p className="pg-desc">One query across proposals, docs, discussions, papers, posts, videos and code.</p>
+            <p className="pg-desc">One query across docs, discussions, posts, videos and code.</p>
           </div>
         </header>
 
@@ -138,7 +134,7 @@ export default async function SearchPage({ searchParams }: PageProps) {
           <input
             name="q"
             defaultValue={query}
-            placeholder="Search CIPs, discussions, docs, videos, GitHub..."
+            placeholder="Search discussions, docs, videos, GitHub..."
             aria-label="Search the index"
             autoFocus
           />
@@ -177,7 +173,7 @@ export default async function SearchPage({ searchParams }: PageProps) {
 
         {query && total === 0 && (
           <div className="pg-list">
-            <div className="pg-empty">No results for &ldquo;{query}&rdquo;. Try a CIP number, a term or a source name.</div>
+            <div className="pg-empty">No results for &ldquo;{query}&rdquo;. Try a package name, a term or a source name.</div>
           </div>
         )}
 

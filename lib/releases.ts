@@ -1,8 +1,8 @@
 import type Database from 'better-sqlite3';
 import { marked } from 'marked';
 import { getDb } from './db';
-import { isStableRelease, latestStableByLine } from './yourchain-versions';
-import type { ReleaseRow } from './yourchain-versions';
+import { isStableRelease, latestStableByLine } from './release-lines';
+import type { ReleaseRow } from './release-lines';
 import { RELEASE_PRODUCT_SPECS, RELEASE_REPOS, versionFromTag } from './release-sources';
 import { notesHtml, releaseSummary } from './release-text';
 import { compareVersions, releaseLine } from './release-version';

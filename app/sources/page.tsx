@@ -21,7 +21,7 @@ export async function generateMetadata(): Promise<Metadata> {
     openGraph: {
       title: `${SITE.name} · ${source_count} live NEAR knowledge sources`,
       description:
-        'Forum, docs, CIPs, GitHub, YouTube, ecosystem projects and more - all indexed, all searchable, all current.',
+        'Docs, GitHub, npm and crates.io, the forum, House of Stake, blogs, videos and the NEAR Catalog: indexed, searchable and current.',
       url: `${SITE.url}/sources`,
     },
   };
@@ -123,14 +123,14 @@ export default async function SourcesPage() {
         <div className="src-info">
           <h3>Why one corpus matters</h3>
           <p>
-            Cross-source queries (<em>“which CIP introduced this forum breakage?”</em>) only work when forum, docs,
-            CIPs, GitHub and proposals share a single semantic index.
+            Cross-source questions (<em>“which release removed this method, and is anyone on the forum hitting it?”</em>)
+            only work when docs, releases, GitHub, the forum and proposals share a single semantic index.
           </p>
         </div>
         <div className="src-info">
           <h3>Verify the numbers</h3>
           <p>
-            The widget calls <Link href="/api/v1/sources">/api/v1/sources</Link>. Same endpoint anyone can hit - no
+            The widget calls <a href="/api/v1/sources">/api/v1/sources</a>. Same endpoint anyone can hit - no
             caching, no embellishment.
           </p>
         </div>
