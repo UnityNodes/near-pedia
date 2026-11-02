@@ -770,7 +770,8 @@ server.tool('semantic_search',
       const blocks = reranked.map((c) => {
         const { title, url, meta, as_of, untrusted, excerptOnly } = chunkSource(db, c);
         if (untrusted) sawUntrustedChunk = true;
-        const label = [meta || c.sourceType.replace(/_/g, ' '), as_of ? as_of.slice(0, 10) : null].filter(Boolean).join(' · ');
+        const day = as_of?.slice(0, 10) ?? null;
+        const label = [meta || c.sourceType.replace(/_/g, ' '), day && !meta.includes(day) ? day : null].filter(Boolean).join(' · ');
         const link = url ? `\n${url}` : '';
         const chunk = excerptOnly ? shortLine(null, c.chunkText, BLOG_EXCERPT_CHARS) : c.chunkText.trim();
         if (untrusted) {

@@ -52,8 +52,8 @@ function lookup(db: Database.Database, c: Chunk, now: Date): Row | null {
       } : null;
     }
     case 'github_item': {
-      const r = db.prepare('SELECT title, url, repo, type, synced_at FROM github_items WHERE id=?').get(c.sourceId) as { title: string; url: string; repo: string; type: string; synced_at: string | null } | undefined;
-      return r ? { title: r.title, url: r.url, meta: `${r.repo} ${r.type}`, as_of: r.synced_at } : null;
+      const r = db.prepare('SELECT title, url, repo, type, created_at FROM github_items WHERE id=?').get(c.sourceId) as { title: string; url: string; repo: string; type: string; created_at: string | null } | undefined;
+      return r ? { title: r.title, url: r.url, meta: `${r.repo} ${r.type}`, as_of: r.created_at } : null;
     }
     case 'blog_post': {
       const r = db.prepare(`SELECT title, url, published_at, ${KIND_SQL} AS kind FROM blog_posts WHERE id=?`).get(c.sourceId) as { title: string; url: string; published_at: string | null; kind: string } | undefined;
