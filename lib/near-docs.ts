@@ -101,6 +101,26 @@ export function parseLlmsFull(text: string, origin: string = DOCS_ORIGIN): NearD
   return pages;
 }
 
+/**
+ * A feed that is one document rather than a set of pages (an llms.txt with
+ * its own content and no `Source:` headers): one page at the feed's URL,
+ * titled by its first heading.
+ */
+export function singleDocPage(text: string, url: string): NearDocPage | null {
+  const heading = text.match(/^#\s+(.+)$/m);
+  const content_text = (heading ? text.slice(0, heading.index) + text.slice(heading.index! + heading[0].length) : text).trim();
+  if (!content_text) return null;
+  const canonical = canonicalDocUrl(url);
+  return {
+    url: canonical,
+    title: heading?.[1].trim() || titleFromUrl(canonical),
+    breadcrumb: breadcrumbFromUrl(canonical),
+    excerpt: excerptOf(content_text),
+    content_text,
+    content_hash: contentHash(content_text),
+  };
+}
+
 /** Every page URL llms-full.txt announces, including any with an empty body. */
 export function announcedUrls(text: string, origin: string = DOCS_ORIGIN): string[] {
   return [...new Set([...text.matchAll(headerRe(origin))].map((m) => canonicalDocUrl(m[2])))];

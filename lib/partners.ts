@@ -7,9 +7,11 @@
  *
  * `docs_feed` is set where the partner ships a Mintlify llms-full.txt (a
  * `# Title` / `Source: <url>` header per page), which sync-partner-docs
- * reads into doc_pages. OutLayer ships one 300 KB document without page
- * sources, Rhea's GitBook feed is paginated without page sources, and HOT
- * ships an index only: those are linked, not ingested.
+ * reads into doc_pages, or, with `single`, one llms.txt that is the whole
+ * reference (the Intents Agent API, 28 KB on 2026-11-02), read as one page.
+ * OutLayer ships one 300 KB document without page sources, Rhea's GitBook
+ * feed is paginated without page sources, and HOT ships an index only:
+ * those are linked, not ingested.
  */
 
 export interface PartnerContract { account: string; role: string }
@@ -21,7 +23,7 @@ export interface Partner {
   website: string;
   docs: string;
   llms_txt: string | null;
-  docs_feed: { url: string; origin: string } | null;
+  docs_feed: { url: string; origin: string; single?: boolean } | null;
   github: string[];
   contracts: PartnerContract[];
   /** NEAR Catalog slugs, the first one the partner's own entry. */
@@ -40,6 +42,18 @@ export const PARTNERS: readonly Partner[] = [
     github: ['near/intents', 'defuse-protocol'],
     contracts: [{ account: 'intents.near', role: 'Verifier: holds balances and settles signed intents' }],
     catalog_slugs: ['near-intents'],
+  },
+  {
+    id: 'intents-agent-api',
+    name: 'NEAR Intents Agent API',
+    summary: 'Agent Connect: gives an AI agent its own NEAR Intents account that swaps, transfers and withdraws only within a policy its owner signs once with their wallet. Plain JSON over HTTPS, called from the partner backend.',
+    website: 'https://nearbuilders.org/build#agent-connect',
+    docs: 'https://api.agentsonintents.com/llms.txt',
+    llms_txt: 'https://api.agentsonintents.com/llms.txt',
+    docs_feed: { url: 'https://api.agentsonintents.com/llms.txt', origin: 'https://api.agentsonintents.com', single: true },
+    github: ['NEAR-Intents-Agent-API'],
+    contracts: [{ account: 'intents.near', role: 'NEAR Intents Verifier that holds the agent accounts\' balances' }],
+    catalog_slugs: [],
   },
   {
     id: 'outlayer',

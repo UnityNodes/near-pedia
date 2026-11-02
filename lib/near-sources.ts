@@ -18,6 +18,7 @@ export const GITHUB_ORGS = [
   'houseofstake',
   'fastnear',
   'aurora-is-near',
+  'NEAR-Intents-Agent-API',
 ] as const;
 
 export const NPM_PACKAGES = [
@@ -31,7 +32,7 @@ export const NPM_PACKAGES = [
 ] as const;
 
 /** Scopes whose every package is tracked; discovered through npm search. */
-export const NPM_SCOPES = ['@near-js', '@near-wallet-selector', '@defuse-protocol'] as const;
+export const NPM_SCOPES = ['@near-js', '@near-wallet-selector', '@defuse-protocol', '@near-intents-agent-api'] as const;
 
 export const CRATES = [
   'near-sdk',
