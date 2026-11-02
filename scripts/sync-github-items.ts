@@ -30,29 +30,33 @@ export interface SourceConfig {
 // org/repo/state list this sync reads, rather than a second, hand-typed copy
 // that can drift from it.
 export const SOURCES: SourceConfig[] = [
-  // NEAR core stack - open items only (active discussion / WIP), capped pages
+  // Open issues and PRs only: what is broken or in flight now. find_known_issues
+  // answers "is anyone else hitting this?" from them.
   {
-    org: 'your-org',
+    org: 'near',
     state: 'open',
-    maxPages: 20,
+    maxPages: 10,
     repos: [
-      'yourchain-node',
-      'yourchain-app',
-      'yourchain-core',
-      'CIPs',
+      'nearcore',
+      'near-sdk-rs',
+      'near-api-js',
+      'near-api-rs',
+      'near-cli-rs',
+      'cargo-near',
+      'create-near-app',
+      'near-workspaces-rs',
+      'near-workspaces-js',
+      'near-sdk-js',
       'docs',
-      'yourchain-openrpc',
-      'yourchain-specs',
-      'networks',
+      'NEPs',
+      'mpc',
+      'intents',
+      'agent-skills',
     ],
   },
-  // YourSDK
-  {
-    org: 'yoursdk',
-    state: 'open',
-    maxPages: 20,
-    repos: ['yoursdk'],
-  },
+  { org: 'nearai', state: 'open', maxPages: 3, repos: ['ironclaw', 'near-mcp'] },
+  { org: 'defuse-protocol', state: 'open', maxPages: 3, repos: ['sdk-monorepo'] },
+  { org: 'Near-One', state: 'open', maxPages: 3, repos: ['omni-bridge'] },
 ];
 
 interface GhIssue {

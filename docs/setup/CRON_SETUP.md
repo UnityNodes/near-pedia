@@ -23,10 +23,6 @@ sudo -n crontab -l -u root
 15 3 * * *     /srv/nearpedia/deploy/sync-tick.sh daily  >> /var/log/nearpedia-sync.log 2>&1
 30 4 * * 1     /srv/nearpedia/deploy/sync-tick.sh weekly >> /var/log/nearpedia-sync.log 2>&1
 
-# Cloudflare-gated sources (forum, blog) — need a real headful Chrome via xvfb,
-# so they run separately from the plain-fetch buckets above
-*/30 * * * *   /srv/nearpedia/deploy/sync-cf.sh >> /var/log/nearpedia-sync.log 2>&1
-
 # DB backup
 30 4 * * *     PEDIA_DB=/srv/nearpedia/data/cips.db PEDIA_BACKUP_DIR=/srv/nearpedia/data/backups /srv/nearpedia/scripts/backup-db.sh >> /var/log/nearpedia-sync.log 2>&1
 
@@ -60,11 +56,6 @@ for the current, authoritative list — this is a summary, not a mirror:
 Each bucket takes an exclusive lock (see below), so overlapping runs of the
 *same* bucket skip rather than stack; different buckets run concurrently.
 
-`deploy/sync-cf.sh` is separate because `sync-forum` and `sync-blog` need a
-real headful Chrome (Cloudflare's bot check rejects a plain fetch), so it
-launches under `xvfb-run` on its own 30-minute cadence, then runs
-`build-embeddings` itself afterward.
-
 Every sync script is invoked as `npx tsx scripts/<name>.ts` — there is no
 build step for any of this; editing a script under `scripts/` changes cron's
 next run, live, with no restart.
@@ -72,7 +63,7 @@ next run, live, with no restart.
 ## Logs
 
 ```bash
-tail -f /var/log/nearpedia-sync.log        # sync-tick.sh + sync-cf.sh output
+tail -f /var/log/nearpedia-sync.log        # sync-tick.sh output
 tail -f /var/log/nearpedia-staleness.log   # check-sync-staleness.sh output
 ```
 
@@ -124,8 +115,7 @@ ls -la /run/nearpedia-sync-*.lock
 A run that "should have happened" but didn't touch `sync_log` or the log file
 usually means the *previous* run of that same bucket was still holding the
 lock (a slow upstream fetch, a hung network call) — `sync-tick.sh` logs
-`previous run still going, skip` in that case rather than queuing. `sync-cf.sh`
-has its own separate lock, `/run/nearpedia-sync-cf.lock`. These are `/run`
+`previous run still going, skip` in that case rather than queuing. The locks are `/run`
 (tmpfs), so they don't survive a reboot — that's intentional, a fresh boot
 should never start up already "locked".
 

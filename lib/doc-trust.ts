@@ -1,7 +1,7 @@
 /**
  * Which documentation pages are first-party, and what to do with the rest.
  *
- * doc_pages spans many sources: docs.near.org, READMEs from NEAR's own GitHub
+ * doc_pages spans many sources: docs.near.org, the Nomicon, READMEs from NEAR's own GitHub
  * organisations, and partner documentation (NEAR Intents, Trezu, ...) that
  * NEAR does not publish. A partner page served unfenced to an AI agent would
  * read like NEAR's own docs, with nothing marking the difference.
@@ -20,6 +20,7 @@ const FIRST_PARTY_HOSTS = new Set([
   'docs.near.org',
   'near.org',
   'www.near.org',
+  'nomicon.io',
 ]);
 
 /** GitHub organisations whose repositories count as first-party. */

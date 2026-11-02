@@ -1,5 +1,6 @@
 /**
- * Reranking: Cloudflare Workers AI bge-reranker-base when CLOUDFLARE_ACCOUNT_ID
+ * Reranking: NEAR AI Cloud Qwen3-Reranker-0.6B when NEARAI_API_KEY is set,
+ * otherwise Cloudflare Workers AI bge-reranker-base when CLOUDFLARE_ACCOUNT_ID
  * and CLOUDFLARE_AI_TOKEN are set, otherwise Cohere rerank-v3.5 when
  * COHERE_API_KEY is set.
  *
@@ -25,6 +26,7 @@
  */
 
 import { CohereClient } from 'cohere-ai';
+import { NEARAI_BASE_URL } from './near-ai';
 
 /**
  * Deadline for the whole rerank call. ~5x the observed p90, so a normal slow
@@ -34,12 +36,13 @@ import { CohereClient } from 'cohere-ai';
 const RERANK_TIMEOUT_MS = 3000;
 
 const CLOUDFLARE_MODEL = '@cf/baai/bge-reranker-base';
+export const DEFAULT_NEARAI_RERANK_MODEL = 'Qwen/Qwen3-Reranker-0.6B';
 
 type RerankCandidate = {
   chunkText: string;
 };
 
-export type RerankProvider = 'cloudflare' | 'cohere';
+export type RerankProvider = 'nearai' | 'cloudflare' | 'cohere';
 
 interface CloudflareConfig {
   account: string;
@@ -66,6 +69,35 @@ function cohereClient(): CohereClient | null {
   if (!key) return null;
   if (!cachedClient) cachedClient = new CohereClient({ token: key });
   return cachedClient;
+}
+
+interface NearAiRerankReply {
+  results?: Array<{ index: number; relevance_score: number }>;
+  error?: { message?: string } | string;
+}
+
+export async function nearAiOrder<T extends RerankCandidate>(apiKey: string, query: string, candidates: T[]): Promise<T[]> {
+  const res = await fetch(`${NEARAI_BASE_URL}/rerank`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: process.env.NEARAI_RERANK_MODEL?.trim() || DEFAULT_NEARAI_RERANK_MODEL,
+      query,
+      documents: candidates.map((c) => c.chunkText),
+    }),
+    signal: AbortSignal.timeout(RERANK_TIMEOUT_MS),
+  });
+  const body = (await res.json().catch(() => ({}))) as NearAiRerankReply;
+  if (!res.ok || !Array.isArray(body.results)) {
+    const why = typeof body.error === 'string' ? body.error : body.error?.message;
+    throw new Error(`NEAR AI HTTP ${res.status}${why ? `: ${why}` : ''}`);
+  }
+  const order = [...body.results]
+    .sort((a, b) => b.relevance_score - a.relevance_score)
+    .map((r) => r.index)
+    .filter((id, i, all) => Number.isInteger(id) && id >= 0 && id < candidates.length && all.indexOf(id) === i);
+  const picked = new Set(order);
+  return [...order.map((id) => candidates[id]), ...candidates.filter((_, i) => !picked.has(i))];
 }
 
 async function cloudflareOrder<T extends RerankCandidate>(cfg: CloudflareConfig, query: string, candidates: T[]): Promise<T[]> {
@@ -113,6 +145,8 @@ type ActiveReranker = {
 };
 
 function activeReranker(): ActiveReranker | null {
+  const nearai = process.env.NEARAI_API_KEY?.trim();
+  if (nearai) return { provider: 'nearai', order: (query, candidates) => nearAiOrder(nearai, query, candidates) };
   const cf = cloudflareConfig();
   if (cf) return { provider: 'cloudflare', order: (query, candidates) => cloudflareOrder(cf, query, candidates) };
   const cohere = cohereClient();
@@ -182,7 +216,7 @@ export async function rerank<T extends RerankCandidate>(
   const active = activeReranker();
   if (!active) {
     if (!hasWarnedNoKey) {
-      console.info('[reranker] no reranker configured (CLOUDFLARE_ACCOUNT_ID + CLOUDFLARE_AI_TOKEN, or COHERE_API_KEY) - using boost-only ordering');
+      console.info('[reranker] no reranker configured (NEARAI_API_KEY, CLOUDFLARE_ACCOUNT_ID + CLOUDFLARE_AI_TOKEN, or COHERE_API_KEY) - using boost-only ordering');
       hasWarnedNoKey = true;
     }
     return candidates.slice(0, limit);

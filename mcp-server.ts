@@ -2307,7 +2307,7 @@ server.tool('get_incident',
 );
 
 server.tool('get_partner',
-  `What an agent needs to build on a NEAR partner: what it is, its mainnet contract accounts, GitHub, docs and llms.txt, how much of its docs search_docs covers, its NEAR Catalog entry with TVL, and its security incidents. Partners: ${PARTNERS.map((p) => `${p.id} (${p.name})`).join(', ')}. Also takes a contract account ("intents.near") or a catalog slug.`,
+  `What an agent needs to build on a NEAR partner: what it is, its mainnet contract accounts, GitHub, docs and llms.txt, how much of its docs search and semantic_search cover, its NEAR Catalog entry with TVL, and its security incidents. Partners: ${PARTNERS.map((p) => `${p.id} (${p.name})`).join(', ')}. Also takes a contract account ("intents.near") or a catalog slug.`,
   { partner: z.string().min(2).max(80).describe(`Partner id, name, contract account or catalog slug, e.g. "${PARTNERS[0].id}".`) },
   async ({ partner }) => {
     try {

@@ -22,6 +22,8 @@ describe('rerank', () => {
     delete process.env.CLOUDFLARE_ACCOUNT_ID;
     delete process.env.CLOUDFLARE_AI_TOKEN;
     delete process.env.COHERE_API_KEY;
+    delete process.env.NEARAI_API_KEY;
+    delete process.env.NEARAI_RERANK_MODEL;
     vi.spyOn(console, 'info').mockImplementation(() => {});
     vi.spyOn(console, 'warn').mockImplementation(() => {});
   });
@@ -39,6 +41,36 @@ describe('rerank', () => {
     expect(rerankProvider()).toBe('cohere');
     process.env.CLOUDFLARE_AI_TOKEN = 'cf-test';
     expect(rerankProvider()).toBe('cloudflare');
+  });
+
+  it('prefers NEAR AI Cloud over Cloudflare and Cohere when NEARAI_API_KEY is set', () => {
+    process.env.CLOUDFLARE_ACCOUNT_ID = 'acct';
+    process.env.CLOUDFLARE_AI_TOKEN = 'cf-test';
+    process.env.COHERE_API_KEY = 'cohere-test';
+    process.env.NEARAI_API_KEY = 'near-test';
+    expect(rerankProvider()).toBe('nearai');
+  });
+
+  it('orders candidates by the NEAR AI relevance scores and keeps the ones it left out', async () => {
+    process.env.NEARAI_API_KEY = 'near-test';
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({
+      results: [{ index: 2, relevance_score: 0.9 }, { index: 9, relevance_score: 0.99 }, { index: 0, relevance_score: 0.4 }],
+    }), { status: 200, headers: { 'Content-Type': 'application/json' } }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const out = await rerank('which one', candidates, 3);
+
+    expect(out.map(c => c.chunkText)).toEqual(['charlie', 'alpha', 'bravo']);
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(String(url)).toBe('https://cloud-api.near.ai/v1/rerank');
+    expect(init.headers.Authorization).toBe('Bearer near-test');
+    expect(JSON.parse(init.body)).toEqual({ model: 'Qwen/Qwen3-Reranker-0.6B', query: 'which one', documents: ['alpha', 'bravo', 'charlie'] });
+  });
+
+  it('falls back to the input order when NEAR AI answers with an error', async () => {
+    process.env.NEARAI_API_KEY = 'near-test';
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({ error: { message: 'quota' } }), { status: 429 })));
+    expect((await rerank('q', candidates)).map(c => c.chunkText)).toEqual(['alpha', 'bravo', 'charlie']);
   });
 
   it('returns the input order when no reranker is configured', async () => {

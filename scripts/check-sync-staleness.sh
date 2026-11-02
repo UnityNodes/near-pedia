@@ -45,7 +45,7 @@ QUIET_FILE="${ALERT_QUIET_FILE:-/var/run/nearpedia-quiet}"
 #
 # The deadline now arrives with the reading: /api/metrics publishes
 # nearpedia_sync_tolerance_seconds beside nearpedia_sync_completion_age_seconds,
-# both computed from deploy/sync-tick.sh + sync-cf.sh in lib/schedule.ts, in
+# both computed from deploy/sync-tick.sh in lib/schedule.ts, in
 # one place.
 
 url="$BASE/api/metrics"

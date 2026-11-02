@@ -1,8 +1,22 @@
+/**
+ * Embeddings from NEAR AI Cloud (OpenAI-compatible /v1/embeddings, run inside
+ * a TEE), with the same NEARAI_API_KEY /ask uses. Qwen3-Embedding-0.6B
+ * returns 1024 dimensions and does not support shortening them, so the
+ * vector table is FLOAT[1024]; $0.01 per million tokens on 2026-11-02.
+ *
+ * Qwen3-Embedding is trained with an instruction on the query side only:
+ * passages are embedded as they are, a search query with QUERY_INSTRUCT.
+ */
+
 import OpenAI from 'openai';
 import { withRetry } from './retry';
+import { NEARAI_BASE_URL } from './near-ai';
+import { DIMENSIONS } from './embedding-dims';
 
-const OPENAI_MODEL = 'text-embedding-3-small';
-export const DIMENSIONS = 1536;
+export { DIMENSIONS };
+
+export const DEFAULT_EMBED_MODEL = 'Qwen/Qwen3-Embedding-0.6B';
+const QUERY_INSTRUCT = 'Instruct: Given a question about NEAR Protocol, retrieve passages that answer it\nQuery: ';
 
 // The SDK's own default is a 10 MINUTE timeout with 2 retries - fine for a
 // batch job, unusable for a person waiting on a search box. embedText is
@@ -14,24 +28,29 @@ const INTERACTIVE_TIMEOUT_MS = 5_000;
 const INTERACTIVE_BUDGET_MS = 3 * INTERACTIVE_TIMEOUT_MS + 2_000;
 const BATCH_TIMEOUT_MS = 120_000;
 
-let _openai: OpenAI | null = null;
-function getOpenAI(): OpenAI {
-  if (!_openai) {
-    const apiKey = process.env.OPENAI_API_KEY;
-    if (!apiKey) throw new Error('OPENAI_API_KEY is not set');
-    _openai = new OpenAI({ apiKey });
-  }
-  return _openai;
+let _client: { key: string; client: OpenAI } | null = null;
+function client(): OpenAI {
+  const apiKey = process.env.NEARAI_API_KEY?.trim();
+  if (!apiKey) throw new Error('NEARAI_API_KEY is not set');
+  if (_client?.key !== apiKey) _client = { key: apiKey, client: new OpenAI({ apiKey, baseURL: NEARAI_BASE_URL }) };
+  return _client.client;
 }
 
+const model = () => process.env.NEARAI_EMBED_MODEL?.trim() || DEFAULT_EMBED_MODEL;
+
+const LONE_SURROGATE = /[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/g;
+
+/**
+ * A chunk cut inside an emoji ends in half a surrogate pair. NEAR AI's
+ * gateway rejects the whole batch as invalid JSON for it (OpenAI accepted
+ * it), so each text is made well-formed before it is sent.
+ */
+export const wellFormed = (s: string): string => s.replace(LONE_SURROGATE, '\uFFFD');
 
 export async function embedText(text: string): Promise<number[]> {
   const res = await withRetry(() =>
-    getOpenAI().embeddings.create(
-      {
-        model: OPENAI_MODEL,
-        input: text.trim(),
-      },
+    client().embeddings.create(
+      { model: model(), input: wellFormed(`${QUERY_INSTRUCT}${text.trim()}`) },
       { timeout: INTERACTIVE_TIMEOUT_MS },
     ),
     INTERACTIVE_BUDGET_MS,
@@ -41,23 +60,8 @@ export async function embedText(text: string): Promise<number[]> {
 
 export async function embedBatch(texts: string[]): Promise<number[][]> {
   if (texts.length === 0) return [];
-  const res = await getOpenAI().embeddings.create(
-    {
-      model: OPENAI_MODEL,
-      input: texts,
-    },
-    { timeout: BATCH_TIMEOUT_MS },
-  );
-  return res.data.map(d => d.embedding);
-}
-
-export async function embedTextVoyage(text: string): Promise<number[]> {
-  // Dynamic import to avoid ESM resolution issues at module load time
-  const { VoyageAIClient } = await import('voyageai');
-  const client = new VoyageAIClient({ apiKey: process.env.VOYAGE_API_KEY ?? '' });
-  const result = await client.embed({ input: [text], model: 'voyage-3-lite' });
-  if (!result.data) throw new Error('No embedding data returned');
-  return (result.data[0] as { embedding: number[] }).embedding;
+  const res = await client().embeddings.create({ model: model(), input: texts.map(wellFormed) }, { timeout: BATCH_TIMEOUT_MS });
+  return [...res.data].sort((a, b) => a.index - b.index).map((d) => d.embedding);
 }
 
 export interface EmbeddingProbe {

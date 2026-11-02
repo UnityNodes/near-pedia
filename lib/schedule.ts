@@ -105,7 +105,7 @@ function scheduleFromCfFile(): Map<string, Scheduled> {
   return out;
 }
 
-/** Every writer deploy's two cron entry points (sync-tick.sh + sync-cf.sh) run, with its bucket. */
+/** Every writer deploy/sync-tick.sh runs, with its bucket (and any deploy/sync-cf.sh, which this index no longer has). */
 export function scheduleFromTick(): Map<string, Scheduled> {
   const out = scheduleFromTickFile();
   for (const [script, sched] of scheduleFromCfFile()) {
