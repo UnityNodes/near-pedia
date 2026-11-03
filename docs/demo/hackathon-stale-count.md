@@ -4,7 +4,7 @@ Measured on 3 November 2026, eleven days before the deadline.
 
 **19 of the 67 projects with a public repository use something NEAR deprecated, removed or changed (28%). Among the 40 that use NEAR's JavaScript libraries, it is 16 (40%).**
 
-These are projects started in the last two weeks, by people writing NEAR code today. Each finding is a NEAR change that this code has not caught up with.
+Each finding is a NEAR change that the code has not caught up with.
 
 ## What they use
 
