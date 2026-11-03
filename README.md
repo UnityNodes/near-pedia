@@ -106,6 +106,8 @@ jobs:
 
 No key is needed. On 3 November 2026, [near-examples/coin-flip-examples#37](https://github.com/near-examples/coin-flip-examples/pull/37) added 7 such lines: the `@near-js/*` packages that near-api-js 7 replaced, and dependencies whole breaking lines behind. Inputs, outputs and a way to run it against any public pull request without installing anything are in [`github-action/README.md`](github-action/README.md).
 
+How common this is: on 3 November 2026, 19 of the 67 NEAR Hackathon projects with a public repository used something NEAR deprecated, removed or changed, most often `keyStores` and the `@near-js/*` packages. The method, and a script that reproduces the count without naming anyone, are in [`docs/demo/hackathon-stale-count.md`](docs/demo/hackathon-stale-count.md).
+
 ## Try it against the live API
 
 No install, no key:
