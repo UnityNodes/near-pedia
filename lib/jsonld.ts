@@ -1,6 +1,6 @@
 /**
  * JSON-LD structured data helpers. Emit per-page Schema.org payloads so
- * Google, Bing and AI crawlers correctly classify NEAR-pedia content.
+ * Google, Bing and AI crawlers correctly classify NEARpedia content.
  */
 import { SITE } from './site.config';
 

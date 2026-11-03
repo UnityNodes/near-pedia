@@ -11,22 +11,13 @@ export default function manifest(): MetadataRoute.Manifest {
     scope: '/',
     display: 'standalone',
     orientation: 'portrait',
-    background_color: '#0A0B0F',
-    theme_color: '#0A0B0F',
+    background_color: '#0B0B0C',
+    theme_color: '#0B0B0C',
     categories: ['developer', 'productivity', 'news', 'finance'],
     icons: [
-      {
-        src: '/icon.png',
-        type: 'image/png',
-        sizes: '512x512',
-        purpose: 'any',
-      },
-      {
-        src: '/logo-dark.png',
-        type: 'image/png',
-        sizes: '512x512',
-        purpose: 'maskable',
-      },
+      { src: '/icon-192.png', type: 'image/png', sizes: '192x192', purpose: 'any' },
+      { src: '/icon-512.png', type: 'image/png', sizes: '512x512', purpose: 'any' },
+      { src: '/icon-maskable-512.png', type: 'image/png', sizes: '512x512', purpose: 'maskable' },
     ],
     shortcuts: [
       {

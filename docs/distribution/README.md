@@ -1,6 +1,6 @@
 # Distribution
 
-Where NEAR-pedia is listed so agents find it, and what each listing needs.
+Where NEARpedia is listed so agents find it, and what each listing needs.
 Every step that publishes something is done by the maintainers; the files
 are ready in this repository before then. All of them carry the production
 domain, `near-pedia.xyz`.
@@ -51,7 +51,7 @@ A pull request to nearai/ironclaw adding
 `registry/mcp-servers/nearpedia.json`, the file in
 `docs/distribution/ironclaw-nearpedia.json`, in the same shape as the
 entries already there (`linear.json`, `nearai.json`). Those set
-`"auth": "dcr"`; NEAR-pedia needs no auth, and IronClaw's hosted-MCP code
+`"auth": "dcr"`; NEARpedia needs no auth, and IronClaw's hosted-MCP code
 defaults to `NoAuth`, so the field is left out. Confirm that against their
 registry loader, or ask in the PR, before opening it.
 

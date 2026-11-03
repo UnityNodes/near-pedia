@@ -15,23 +15,24 @@ const ORIGIN = (process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3130').rep
 const HOST = new URL(ORIGIN).hostname;
 
 export const SITE = {
-  name: 'NEAR-pedia',
+  name: 'NEARpedia',
   slug: 'nearpedia',
   tagline: 'Live NEAR knowledge for AI agents',
   subject: 'NEAR',
   description:
     'A live knowledge layer for NEAR: deprecations, breaking changes, protocol upgrades, governance and docs, served over MCP and REST with a source and a date on every answer.',
   disclaimer:
-    'NEAR-pedia is an independent, unofficial project by Unity Nodes. It is not affiliated with or endorsed by the NEAR Foundation.',
+    'NEARpedia is an independent, unofficial project by Unity Nodes. It is not affiliated with or endorsed by the NEAR Foundation.',
   url: ORIGIN,
   host: HOST,
   twitter: PUBLISHER.twitter,
   publisher: PUBLISHER,
   repo: 'https://github.com/UnityNodes/near-pedia',
   logo: {
-    light: '/logo-light.png',
-    dark: '/logo-dark.png',
-    icon: '/icon.png',
+    light: '/brand/logo-horizontal-light.svg',
+    dark: '/brand/logo-horizontal-dark.svg',
+    mark: '/brand/mark-dark.svg',
+    icon: '/icon-512.png',
   },
 } as const;
 

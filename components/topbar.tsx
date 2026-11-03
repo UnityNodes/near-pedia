@@ -173,12 +173,9 @@ export function Topbar() {
       <div className="topbar">
         <div className="topbar-inner">
           <Link href="/" className="brand">
-            <Image src={SITE.logo.light} alt={`${SITE.name} logo`} width={34} height={34} className="brand-logo brand-logo-light" />
-            <Image src={SITE.logo.dark} alt={`${SITE.name} logo`} width={34} height={34} className="brand-logo brand-logo-dark" />
-            <span className="brand-text">
-              <span className="brand-name">{SITE.name}</span>
-              <span className="brand-sub">by {SITE.publisher.name}</span>
-            </span>
+            <Image src={SITE.logo.light} alt={SITE.name} width={136} height={26} className="brand-logo brand-logo-light" priority unoptimized />
+            <Image src={SITE.logo.dark} alt={SITE.name} width={136} height={26} className="brand-logo brand-logo-dark" priority unoptimized />
+            <span className="brand-sub">by {SITE.publisher.name}</span>
           </Link>
 
           <nav className="nav-list">

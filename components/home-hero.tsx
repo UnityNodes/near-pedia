@@ -100,11 +100,11 @@ export function HomeHero({
             What <span className="dp-shine">{headline}</span> looks like today.
           </h1>
           <p className="dp-lede dp-rise" style={{ animationDelay: '.2s' }}>
-            NEAR moves faster than anyone&apos;s memory. NEAR-pedia tracks what it removed, deprecated, changed and
+            NEAR moves faster than anyone&apos;s memory. NEARpedia tracks what it removed, deprecated, changed and
             voted on, for the agents writing NEAR code and the people researching NEAR, with a source and a date on
             every answer.
           </p>
-          <nav className="dp-doors dp-rise" style={{ animationDelay: '.24s' }} aria-label="Choose how you use NEAR-pedia">
+          <nav className="dp-doors dp-rise" style={{ animationDelay: '.24s' }} aria-label="Choose how you use NEARpedia">
             <Link href="/for-ai" className="dp-door">
               <span className="dp-door-k"><Code2 size={14} aria-hidden="true" />I write NEAR code</span>
               <b>Check code before it breaks</b>
