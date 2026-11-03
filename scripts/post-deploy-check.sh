@@ -128,7 +128,7 @@ probe_image() {
   echo "ok ($body_size bytes)"
 }
 
-probe_image "root OG"             "$BASE/opengraph-image"
+probe_image "root OG"             "$BASE/opengraph-image.png"
 
 echo "=== APIs ==="
 check "/api/health"    "$BASE/api/health"                        200 '"status"'
