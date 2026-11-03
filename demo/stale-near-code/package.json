@@ -1,0 +1,10 @@
+{
+  "name": "stale-near-code-demo",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@near-js/transactions": "2.5.1",
+    "near-api-js": "^4.0.4",
+    "near-sdk-js": "^2.0.0"
+  }
+}
