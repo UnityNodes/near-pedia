@@ -34,7 +34,7 @@ Built for the NEAR Hackathon (1–14 November 2026, tracks `open` and `agents`).
 ## How it works
 
 <p align="center">
-  <img src="assets/flow.svg" alt="Four steps. 1, Read: NEAR's own sources, live (docs, GitHub, npm and crates, RPC, House of Stake, the forum, blogs, videos, NEAR Catalog). 2, Index: full-text search and 17,867 meaning chunks, 137 entries of what NEAR deprecated, a radar whose alerts expire. 3, Check: check_code names each line that uses something NEAR removed, with what replaces it. 4, Answer: 27 MCP tools, a REST API, a site and /ask on NEAR AI, each answer with its source and its date." width="100%">
+  <img src="assets/flow.svg" alt="Four steps. 1, Read: NEAR's own sources, live (docs, GitHub, npm and crates, RPC, House of Stake, the forum, blogs, videos, NEAR Catalog). 2, Index: full-text and meaning search over every source, what NEAR deprecated with the evidence, a radar whose alerts expire. 3, Check: check_code names each line that uses something NEAR removed, with what replaces it. 4, Answer: 27 MCP tools, a REST API, a site and /ask on NEAR AI, each answer with its source and its date." width="100%">
 </p>
 
 The deprecation engine is fed by six signals: archived repositories, "deprecated / do not use" in a README, npm and crates.io deprecation or yank flags, removals in release notes, the docs' own deprecation markers and deleted pages, and long-dormant packages with a live successor. Weak signals are reported as "possibly deprecated". The radar keeps only what is true now: every alert ends when its subject resolves.
@@ -151,7 +151,7 @@ curl -s http://127.0.0.1:3131/api/v1/contracts/intents.near | head -c 600
 claude mcp add --transport http nearpedia http://127.0.0.1:3131/mcp
 ```
 
-You see two `check_code` findings (near-sdk-js on line 1, `DelegateV2` on line 2, each with its sources, dated where the source has a date), the mainnet upgrade with its voting dates and the share of stake that has voted, what the `MethodNotFound` error means and how to fix it, and the methods deployed on `intents.near` read live from RPC. `npm run build && npm run start` serves the site on :3130 from the same database.
+You see two `check_code` findings (near-sdk-js on line 1, `DelegateV2` on line 2, each with its sources, dated where the source has a date), the mainnet upgrade with its voting dates and the share of stake that has voted, what the `MethodNotFound` error means and how to fix it, and the methods deployed on `intents.near` read live from RPC. `npm run build && npm run start` serves the site on :3130 from the same database. `npm test` runs 883 tests without network or keys; [`docs/TESTING.md`](docs/TESTING.md) says what each part checks.
 
 **You need**
 
