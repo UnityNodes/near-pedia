@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# NEAR-pedia — post-deploy smoke test.
+# NEARpedia — post-deploy smoke test.
 #
 # Run on the server after a deploy. Exits non-zero on any failure so it can be
 # wired into a deploy script:
@@ -75,7 +75,7 @@ check_redirect() {
 }
 
 echo "=== Pages ==="
-check "home"           "$BASE/"                                  200 "NEAR-pedia"
+check "home"           "$BASE/"                                  200 "NEARpedia"
 check "/discussions"   "$BASE/discussions"                       200
 check "/docs"          "$BASE/docs"                              200
 check "/for-ai"        "$BASE/for-ai"                            200 "MCP"
@@ -98,7 +98,7 @@ check_redirect "/developers" "$BASE/developers"
 check_redirect "/proposals"  "$BASE/proposals"
 
 echo "=== HTML structure ==="
-check "home topbar"      "$BASE/"                                200 'NEAR-pedia'
+check "home topbar"      "$BASE/"                                200 'NEARpedia'
 check "home names NEAR" "$BASE/"                             200 'NEAR'
 check "home FAQ schema"  "$BASE/"                                200 '"@type":"FAQPage"'
 check "Skip link"        "$BASE/"                                200 'Skip to content'

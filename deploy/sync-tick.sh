@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# NEAR-pedia — bucketed sync runner (every source is a plain fetch). Invoked
+# NEARpedia — bucketed sync runner (every source is a plain fetch). Invoked
 # from cron per tier:
 #   fast    — every 5 min  : failure alerts (cheap, in-DB)
 #   medium  — every 15 min : github releases, protocol state + upgrade votes (RPC), gov.near.org forum, House of Stake, radar

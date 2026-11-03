@@ -1,11 +1,11 @@
-# NEAR-pedia
+# NEARpedia
 # https://near-pedia.xyz
 
 > A live NEAR knowledge layer for AI agents. It tells an agent when its NEAR code uses something that has been removed, deprecated or changed, before the code breaks, with a source and a date on every answer.
 
 ## Why it exists
 
-Agents write NEAR code from training data that predates recent changes: near-sdk-js was archived ("DO NOT USE") on 30 October 2026, nearcore 2.14.0 removed the DelegateV2 action and the developer gas rebate, the NEAR Lake tutorials were retired, and the @near-js/* packages stopped at 2.5.1 in favour of near-api-js 7.x. NEAR-pedia syncs NEAR's own sources every few minutes to hours and answers from what they say today.
+Agents write NEAR code from training data that predates recent changes: near-sdk-js was archived ("DO NOT USE") on 30 October 2026, nearcore 2.14.0 removed the DelegateV2 action and the developer gas rebate, the NEAR Lake tutorials were retired, and the @near-js/* packages stopped at 2.5.1 in favour of near-api-js 7.x. NEARpedia syncs NEAR's own sources every few minutes to hours and answers from what they say today.
 
 ## MCP server
 
@@ -56,4 +56,4 @@ docs.near.org (llms-full.txt), npm and crates.io, the GitHub organisations of NE
 
 ## Publisher
 
-NEAR-pedia is built by Unity Nodes for the NEAR Hackathon (November 2026). Source: https://github.com/UnityNodes/near-pedia
+NEARpedia is built by Unity Nodes for the NEAR Hackathon (November 2026). Source: https://github.com/UnityNodes/near-pedia

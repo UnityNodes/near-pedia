@@ -29,7 +29,7 @@ export function statusTone(status: string | null | undefined): Tone {
 }
 
 const LITERAL_BY_TONE: Record<Tone, string> = {
-  lime: '#D4FF00',
+  lime: '#00EC97',
   ok: '#00C853',
   info: '#5B8DEF',
   mute: '#8B93A7',

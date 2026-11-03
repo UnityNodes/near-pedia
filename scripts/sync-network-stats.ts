@@ -1,5 +1,5 @@
 /**
- * Track NEAR-pedia content growth metrics.
+ * Track NEARpedia content growth metrics.
  *
  * A content-count proxy for ecosystem activity (forum, GitHub, docs, videos,
  * blog, radar) - separate from the live NEAR on-chain/NEAR-market stats served

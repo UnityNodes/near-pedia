@@ -7,30 +7,30 @@
 :root {
   color-scheme: light;
 
-  --bg:        #F5F6F8;
+  --bg:        #F2F2EE;
   --bg-sunk:   #FFFFFF;
   --bg-card:   #FFFFFF;
-  --bg-2:      #EEF0F4;
+  --bg-2:      #E9E9E3;
   --bg-hover:  var(--bg-2);
   --on-hover:  var(--fg);
-  --hdr:       rgba(245,246,248,0.82);
+  --hdr:       rgba(242,242,238,0.84);
   --pop:       rgba(255,255,255,0.98);
 
-  --fg:        #0F1218;
-  --fg-soft:   #3A4150;
-  --fg-mute:   #5E6678;
-  --fg-mute-text: #5E6678;
+  --fg:        #0B0B0C;
+  --fg-soft:   #3A3A35;
+  --fg-mute:   #55554F;
+  --fg-mute-text: #55554F;
 
-  --rule:      #E3E6EC;
-  --rule-2:    #D3D8E0;
-  --rule-soft: rgba(15,18,24,0.06);
+  --rule:      #E4E4DE;
+  --rule-2:    #D4D4CD;
+  --rule-soft: rgba(11,11,12,0.06);
 
-  --accent:       #D4FF00;
-  --on-accent:    #0A0B0F;
-  --accent-text:  #4F6500;
-  --accent-line:  #9DBF00;
-  --accent-shine: #A6CF00;
-  --cy:           #2F64D6;
+  --accent:       #00EC97;
+  --on-accent:    #0B0B0C;
+  --accent-text:  #007A4F;
+  --accent-line:  #008F5D;
+  --accent-shine: #00C27C;
+  --cy:           var(--accent-text);
 
   --text-micro: 9px;
   --text-2xs: 10px;
@@ -45,13 +45,13 @@
   --bad:  #aa1318;
 
   --mono:    var(--font-mono, 'JetBrains Mono', ui-monospace, monospace);
-  --display: var(--font-display, 'Geist', system-ui, sans-serif);
+  --display: var(--font-display, 'Space Grotesk', system-ui, sans-serif);
 
   --space-2xs: 2px; --space-xs: 4px; --space-sm: 6px; --space-md: 8px;
   --space-lg: 12px; --space-xl: 16px; --space-2xl: 24px; --space-3xl: 32px; --space-4xl: 40px;
   --radius-xs: 6px; --radius-sm: 8px; --radius-md: 10px; --radius-lg: 14px; --radius-xl: 18px; --radius-full: 999px;
-  --shadow:    0 1px 2px rgba(15,18,24,0.05), 0 8px 24px -10px rgba(15,18,24,0.12);
-  --shadow-lg: 0 2px 6px rgba(15,18,24,0.06), 0 24px 50px -16px rgba(15,18,24,0.2);
+  --shadow:    0 1px 2px rgba(11,11,12,0.05), 0 8px 24px -10px rgba(11,11,12,0.12);
+  --shadow-lg: 0 2px 6px rgba(11,11,12,0.06), 0 24px 50px -16px rgba(11,11,12,0.2);
   --glow:      0 0 0 1px color-mix(in srgb, var(--accent-line) 22%, transparent), 0 12px 40px color-mix(in srgb, var(--accent-line) 10%, transparent);
 
   --page-max: 1320px;
@@ -62,28 +62,28 @@
 [data-theme="dark"] {
   color-scheme: dark;
 
-  --bg:        #0A0B0F;
-  --bg-sunk:   #0E1015;
-  --bg-card:   #12141A;
-  --bg-2:      #1A1D25;
-  --hdr:       rgba(10,11,15,0.78);
-  --pop:       rgba(18,20,26,0.98);
+  --bg:        #0B0B0C;
+  --bg-sunk:   #0F0F10;
+  --bg-card:   #141415;
+  --bg-2:      #1C1C1E;
+  --hdr:       rgba(11,11,12,0.8);
+  --pop:       rgba(20,20,21,0.98);
 
-  --fg:        #F0F2F5;
-  --fg-soft:   #B9BFCC;
-  --fg-mute:   #8B93A7;
-  --fg-mute-text: #8B93A7;
+  --fg:        #F2F2EE;
+  --fg-soft:   #C4C4BE;
+  --fg-mute:   #8A8A85;
+  --fg-mute-text: #8A8A85;
 
-  --rule:      #1E222B;
-  --rule-2:    #2A2F3A;
-  --rule-soft: rgba(240,242,245,0.06);
+  --rule:      #1F1F21;
+  --rule-2:    #2C2C2F;
+  --rule-soft: rgba(242,242,238,0.06);
 
-  --accent:       #D4FF00;
-  --on-accent:    #0A0B0F;
-  --accent-text:  #D4FF00;
-  --accent-line:  #D4FF00;
-  --accent-shine: #F4FFB8;
-  --cy:           #5B8DEF;
+  --accent:       #00EC97;
+  --on-accent:    #0B0B0C;
+  --accent-text:  #00EC97;
+  --accent-line:  #00EC97;
+  --accent-shine: #8FF7CF;
+  --cy:           var(--accent-text);
 
   --ok:   #00C853;
   --warn: #e9c149;
@@ -179,28 +179,19 @@ code { overflow-wrap: anywhere; }
   flex-shrink: 0;
 }
 .brand-logo {
-  width: 34px; height: 34px;
-  border-radius: 22%;
-  object-fit: contain;
+  width: auto; height: 26px;
   flex-shrink: 0;
-  transition: transform 250ms var(--ease);
+  transition: opacity 200ms var(--ease);
 }
-.brand:hover .brand-logo { transform: rotate(-6deg) scale(1.06); }
-.brand-text {
-  display: inline-flex; flex-direction: column;
-  line-height: 1.1;
-}
-.brand-name {
-  font-family: var(--display);
-  font-size: 15px; font-weight: 600; letter-spacing: -0.01em;
-  color: var(--fg);
-}
+.brand:hover .brand-logo { opacity: 0.86; }
 .brand-sub {
   font-family: var(--mono);
   font-size: var(--text-2xs); font-weight: 400;
   letter-spacing: 0.02em;
   color: var(--fg-mute);
-  margin-top: 2px;
+  padding-left: 12px;
+  border-left: 1px solid var(--rule-2);
+  line-height: 1.6;
 }
 .brand-logo-dark { display: none; }
 [data-theme="dark"] .brand-logo-light { display: none; }
@@ -694,7 +685,7 @@ code { overflow-wrap: anywhere; }
 .section-link:hover { background: var(--fg); color: var(--bg); }
 
 /* ── Hero proof strip: three claims that back the headline. Distinct axis
-   from "Why NEAR-pedia exists" (story) and "What's inside" (categories):
+   from "Why NEARpedia exists" (story) and "What's inside" (categories):
    these are the mechanics that make it trustworthy. ── */
 
 /* ── What's inside: content pillars, not source-type counters ── */
@@ -1122,12 +1113,8 @@ main p a, main li a { overflow-wrap: anywhere; }
   padding-top: 40px; border-top: 1px solid var(--rule);
 }
 .footer-brand { display: flex; flex-direction: column; gap: 10px; max-width: 300px; }
-.footer-logo-img {
-  width: 44px; height: 44px; border-radius: 22%; display: block;
-  transition: transform 0.25s;
-}
-.footer-brand:hover .footer-logo-img { transform: rotate(-6deg) scale(1.06); }
-.footer-word { font-weight: 600; color: var(--fg); display: inline-flex; align-items: baseline; gap: 8px; }
+.footer-logo-img { width: auto; height: 34px; display: block; }
+.footer-word { color: var(--fg); display: inline-flex; flex-direction: column; align-items: flex-start; gap: 8px; }
 .footer-word:hover { color: var(--fg); }
 .footer-word span { font-family: var(--mono); font-size: 11px; color: var(--fg-mute); font-weight: 400; }
 .footer-tag { margin: 0; color: var(--fg-mute); font-size: 14px; line-height: 1.5; }
@@ -1525,8 +1512,7 @@ mark.search-hl {
 
 @media (max-width: 400px) {
   .brand { flex-shrink: 1; min-width: 0; }
-  .brand-text { min-width: 0; }
-  .brand-name, .brand-sub { overflow: hidden; text-overflow: ellipsis; }
+  .brand-sub { display: none; }
 }
 
 @media (max-width: 640px) {
@@ -1540,8 +1526,7 @@ mark.search-hl {
   .radar-filter-row .facets { min-width: 0; max-width: 100%; }
   .radar-filter-label { width: auto; }
   .brand { flex-shrink: 1; min-width: 0; }
-  .brand-text { min-width: 0; }
-  .brand-name, .brand-sub { overflow: hidden; text-overflow: ellipsis; }
+  .brand-sub { overflow: hidden; text-overflow: ellipsis; }
 }
 
 .proposal-body-md :is(td, th),

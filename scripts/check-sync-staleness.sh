@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# NEAR-pedia — sync staleness watchdog.
+# NEARpedia — sync staleness watchdog.
 #
 # Reads /api/metrics and exits non-zero (and prints to stderr) when a
 # scheduled source has not COMPLETED inside the deadline its cron bucket
@@ -126,7 +126,7 @@ if [[ ! -f "$QUIET_FILE" ]]; then
   done
 
   if [[ -n "${SLACK_WEBHOOK_URL:-}" ]]; then
-    slack_text="*NEAR-pedia stale sources (${#stale[@]})*\n${stale_body}_(${BASE})_"
+    slack_text="*NEARpedia stale sources (${#stale[@]})*\n${stale_body}_(${BASE})_"
     curl -sS -m 10 -X POST -H 'Content-Type: application/json' \
       --data "$(printf '{"text":"%s"}' "${slack_text//\"/\\\"}")" \
       "$SLACK_WEBHOOK_URL" >/dev/null \
@@ -134,7 +134,7 @@ if [[ ! -f "$QUIET_FILE" ]]; then
   fi
 
   if [[ -n "${TELEGRAM_BOT_TOKEN:-}" && -n "${TELEGRAM_CHAT_ID:-}" ]]; then
-    tg_text="*NEAR-pedia stale sources (${#stale[@]})*\n${stale_body}_${BASE}_"
+    tg_text="*NEARpedia stale sources (${#stale[@]})*\n${stale_body}_${BASE}_"
     curl -sS -m 10 -X POST \
       "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
       --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" \

@@ -58,7 +58,7 @@ export const PARTNERS: readonly Partner[] = [
   {
     id: 'near-ai-cloud',
     name: 'NEAR AI Cloud',
-    summary: 'Private, verifiable inference: OpenAI-compatible chat, embeddings and rerank served from models running in TEEs, each response signed and checkable against the hardware attestation. NEAR-pedia runs /ask, its embeddings and its reranker on it.',
+    summary: 'Private, verifiable inference: OpenAI-compatible chat, embeddings and rerank served from models running in TEEs, each response signed and checkable against the hardware attestation. NEARpedia runs /ask, its embeddings and its reranker on it.',
     website: 'https://cloud.near.ai',
     docs: 'https://docs.near.ai',
     llms_txt: 'https://docs.near.ai/llms.txt',
