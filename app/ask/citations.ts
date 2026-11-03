@@ -26,3 +26,11 @@ export function citedNumbers(text: string): Set<number> {
   });
   return found;
 }
+
+/** The answer as plain text to paste elsewhere: the model's text, then each source it cites with its URL and date. */
+export function copyText(answer: string, sources: ReadonlyArray<{ n: number; title: string; url: string | null; as_of: string | null }>): string {
+  const cited = citedNumbers(answer);
+  const lines = sources.filter((s) => cited.has(s.n))
+    .map((s) => `[${s.n}] ${s.title}${s.url ? ` - ${s.url}` : ''}${s.as_of ? ` (read ${s.as_of.slice(0, 10)})` : ''}`);
+  return lines.length ? `${answer.trim()}\n\nSources:\n${lines.join('\n')}` : answer.trim();
+}

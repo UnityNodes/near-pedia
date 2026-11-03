@@ -1,14 +1,31 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import type { ReactNode } from 'react';
 import Image from 'next/image';
 import ReactMarkdown from 'react-markdown';
 import { Check, Copy, FileCode2, RotateCcw, ShieldCheck } from 'lucide-react';
 import { SITE } from '@/lib/site.config';
 import { isHttp, type Answer, type Source, type Turn } from './types';
-import { citeId, citedNumbers, linkCitations } from './citations';
+import { citeId, citedNumbers, copyText, linkCitations } from './citations';
 
 const COPIED_MS = 1600;
+
+function CiteButton({ target, children }: { target: string; children: ReactNode }) {
+  const show = () => {
+    const card = document.getElementById(target);
+    if (!card) return;
+    card.closest('details')?.setAttribute('open', '');
+    card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    card.focus({ preventScroll: true });
+  };
+  return (
+    <span role="button" tabIndex={0} className="ak-cite" onClick={show} aria-label={`Source ${String(children)}`}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); show(); } }}>
+      <span className="ak-copyonly">[</span>{children}<span className="ak-copyonly">]</span>
+    </span>
+  );
+}
 
 function AnswerText({ turnId, answer }: { turnId: string; answer: Answer }) {
   return (
@@ -17,7 +34,7 @@ function AnswerText({ turnId, answer }: { turnId: string; answer: Answer }) {
         disallowedElements={['img']}
         components={{
           a: ({ href, children }) => {
-            if (href?.startsWith('#ak-src-')) return <a className="ak-cite" href={href}>{children}</a>;
+            if (href?.startsWith('#ak-src-')) return <CiteButton target={href.slice(1)}>{children}</CiteButton>;
             return isHttp(href) ? <a href={href} target="_blank" rel="noopener noreferrer nofollow">{children}</a> : <>{children}</>;
           },
         }}
@@ -40,16 +57,28 @@ function host(url: string | null): string | null {
 
 function SourceCard({ turnId, source }: { turnId: string; source: Source }) {
   const where = host(source.url) ?? 'this index';
+  const sep = <span className="pg-sr" aria-hidden="true"> · </span>;
   const body = (
     <>
-      <span className="ak-card-top"><span className="ak-card-n">{source.n}</span><span className="ak-card-host">{where}</span></span>
-      <span className="ak-card-title">{source.title}</span>
-      <span className="ak-card-meta">{source.kind.replace('_', ' ')}{source.as_of && ` · read ${source.as_of.slice(0, 10)}`}</span>
+      <span className="ak-card-top"><span className="ak-card-n"><span className="pg-sr" aria-hidden="true">[</span>{source.n}<span className="pg-sr" aria-hidden="true">] </span></span><span className="ak-card-host">{where}</span></span>
+      {sep}<span className="ak-card-title">{source.title}</span>
+      {sep}<span className="ak-card-meta">{source.kind.replace('_', ' ')}{source.as_of && ` · read ${source.as_of.slice(0, 10)}`}</span>
     </>
   );
   return isHttp(source.url)
     ? <a id={citeId(turnId, source.n)} className="ak-card" href={source.url} target="_blank" rel="noopener noreferrer">{body}</a>
-    : <div id={citeId(turnId, source.n)} className="ak-card">{body}</div>;
+    : <div id={citeId(turnId, source.n)} className="ak-card" tabIndex={-1}>{body}</div>;
+}
+
+function SearchedLine({ source }: { source: Source }) {
+  const where = host(source.url) ?? 'this index';
+  return (
+    <li>
+      <span className="ak-searched-n">{source.n}</span>
+      {isHttp(source.url) ? <a href={source.url} target="_blank" rel="noopener noreferrer">{source.title}</a> : <span>{source.title}</span>}
+      <span className="ak-searched-meta"> · {where}{source.as_of && ` · ${source.as_of.slice(0, 10)}`}</span>
+    </li>
+  );
 }
 
 function Sources({ turnId, answer }: { turnId: string; answer: Answer }) {
@@ -63,7 +92,7 @@ function Sources({ turnId, answer }: { turnId: string; answer: Answer }) {
       {rest.length > 0 && (
         <details className="ak-more">
           <summary>{used.length > 0 ? `${rest.length} more searched, not cited` : `${rest.length} sources searched`}</summary>
-          <div className="ak-cards">{rest.map((s) => <SourceCard key={s.n} turnId={turnId} source={s} />)}</div>
+          <ol className="ak-searched">{rest.map((s) => <SearchedLine key={s.n} source={s} />)}</ol>
         </details>
       )}
     </div>
@@ -151,7 +180,7 @@ export function AskTurn({ turn, onRetry }: { turn: Turn; onRetry: (turn: Turn) =
               <AnswerText turnId={turn.id} answer={turn.result} />
               <Sources turnId={turn.id} answer={turn.result} />
               <div className="ak-actions">
-                <CopyButton text={turn.result.answer} />
+                <CopyButton text={copyText(turn.result.answer, turn.result.sources)} />
                 <Receipt answer={turn.result} />
               </div>
             </>
