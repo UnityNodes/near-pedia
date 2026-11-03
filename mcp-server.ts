@@ -46,7 +46,7 @@ import { allDeprecations, evidenceOf, findDeprecations, getDeprecation, renderDe
 import { checkCode, MAX_CODE_CHARS, renderCheck } from './lib/check-code.js';
 import { protocolReport, renderProtocol } from './lib/protocol.js';
 import { countProposals, getProposal, hosSynced, listProposals, proposalsForHsp, renderProposal } from './lib/hos-read.js';
-import { MAX_CODE, MAX_QUESTION, askMessages, buildAskContext } from './lib/ask.js';
+import { MAX_CODE, MAX_QUESTION, askMessages, buildAskContext, parseHistory, retrievalQuery } from './lib/ask.js';
 import { relatedPassages } from './lib/ask-related.js';
 import { chunkSource } from './lib/chunk-source.js';
 import { FORUM_ORIGIN, forumTopicRef } from './lib/gov-forum.js';
@@ -1921,7 +1921,7 @@ const searchLimiter = rateLimit({
 app.use('/mcp', mcpLimiter);
 app.use('/api/v1/search', searchLimiter);
 // /ask spends NEAR AI credits on every call: 10 an hour per address.
-app.use('/api/v1/ask', rateLimit({ windowMs: 60 * 60 * 1000, max: 10, standardHeaders: true, legacyHeaders: false, ...rateLimitResponse(10, 60) }));
+app.use('/api/v1/ask', rateLimit({ windowMs: 60 * 60 * 1000, max: 30, standardHeaders: true, legacyHeaders: false, ...rateLimitResponse(30, 60) }));
 app.use('/api/v1', apiLimiter);
 
 // ── MCP usage logging ────────────────────────────────────────────────────────
@@ -2350,10 +2350,12 @@ app.get('/api/v1/protocol', (req, res) => {
 const ASK_DAILY_MAX = Number(process.env.ASK_DAILY_MAX) > 0 ? Number(process.env.ASK_DAILY_MAX) : 300;
 const askDay = { date: '', count: 0 };
 
-// POST /api/v1/ask { question, code?, filename? } - an answer from NEAR AI Cloud, from this index's sources, with a verified receipt.
+// POST /api/v1/ask { question, code?, filename?, history? } - an answer from NEAR AI Cloud, from this index's sources, with a verified receipt.
 app.post('/api/v1/ask', async (req, res) => {
-  const body = req.body as { question?: unknown; code?: unknown; filename?: unknown } | undefined;
-  if (!body || typeof body.question !== 'string' || !body.question.trim()) return res.status(400).json({ error: 'Body must be { question: string, code?: string, filename?: string }' });
+  const body = req.body as { question?: unknown; code?: unknown; filename?: unknown; history?: unknown } | undefined;
+  if (!body || typeof body.question !== 'string' || !body.question.trim()) return res.status(400).json({ error: 'Body must be { question: string, code?: string, filename?: string, history?: [{ question, answer }] }' });
+  const parsedHistory = parseHistory(body.history);
+  if ('error' in parsedHistory) return res.status(400).json({ error: parsedHistory.error });
   if (body.question.length > MAX_QUESTION) return res.status(400).json({ error: `question is ${body.question.length} characters; at most ${MAX_QUESTION}` });
   if (body.code !== undefined && typeof body.code !== 'string') return res.status(400).json({ error: 'code must be a string' });
   if (typeof body.code === 'string' && body.code.length > MAX_CODE) return res.status(400).json({ error: `code is ${body.code.length} characters; at most ${MAX_CODE}, one file` });
@@ -2367,8 +2369,10 @@ app.post('/api/v1/ask', async (req, res) => {
   const question = body.question.trim();
   try {
     const db = getDb();
-    const ctx = buildAskContext(db, question, code, await relatedPassages(db, question));
-    const { text, truncated, receipt } = await verifiedChat(cfg, askMessages(question, ctx, code), { maxTokens: 1200 });
+    const history = parsedHistory.turns;
+    const query = retrievalQuery(question, history);
+    const ctx = buildAskContext(db, query, code, await relatedPassages(db, query));
+    const { text, truncated, receipt } = await verifiedChat(cfg, askMessages(question, ctx, code, history), { maxTokens: 1200 });
     res.json({ answer: text, truncated, sources: ctx.sources, check_code: ctx.check, receipt, db_anchor: latestAnchor(db) });
   } catch (e) {
     const msg = (e as Error).message;
