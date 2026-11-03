@@ -11,6 +11,7 @@
     "build": "next build",
     "start": "next start -p 3130",
     "lint": "eslint",
+    "typecheck:scripts": "tsc --noEmit -p tsconfig.scripts.json",
     "test": "vitest run --passWithNoTests",
     "test:watch": "vitest",
     "sync:forum": "tsx scripts/sync-forum.ts",
