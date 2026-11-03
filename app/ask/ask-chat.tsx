@@ -49,6 +49,13 @@ function saveTurns(turns: Turn[]) {
   }
 }
 
+function errorFor(status: number): string {
+  if (status === 429) return 'You have asked 30 questions this hour from this address. Try again a little later.';
+  if (status === 502 || status === 504 || (status >= 520 && status <= 524)) return 'NEAR AI did not answer this time. Try again in a moment.';
+  if (status === 503) return 'Ask is busy or paused right now. Try again in a minute.';
+  return `Something went wrong (${status}). Try again.`;
+}
+
 async function requestAnswer(draft: Draft, earlier: Turn[]): Promise<{ result?: Answer; error?: string }> {
   const history = earlier.filter((t) => t.status === 'done' && t.result).slice(-HISTORY_TURNS)
     .map((t) => ({ question: t.question, answer: t.result!.answer }));
@@ -59,7 +66,7 @@ async function requestAnswer(draft: Draft, earlier: Turn[]): Promise<{ result?: 
       body: JSON.stringify({ question: draft.question, history, ...(draft.code ? { code: draft.code.text, filename: draft.code.filename } : {}) }),
     });
     const body = await res.json().catch(() => null);
-    if (!res.ok) return { error: body?.error ?? `Request failed (${res.status})` };
+    if (!res.ok) return { error: body?.error ?? errorFor(res.status) };
     return { result: body as Answer };
   } catch {
     return { error: 'Network error. Try again.' };

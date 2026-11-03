@@ -54,6 +54,28 @@ describe('verifiedChat', () => {
     await expect(verifiedChat(cfg, msgs, { maxTokens: 10 }, client({ text: '  ' }))).rejects.toThrow(/empty/);
   });
 
+  it('tries once more after a dropped connection or a gateway 5xx, but not after a 4xx', async () => {
+    const flaky = (first: Error) => {
+      let calls = 0;
+      const c = client({});
+      const create = c.chat.completions.create;
+      c.chat.completions.create = async () => {
+        calls++;
+        if (calls === 1) throw first;
+        return create();
+      };
+      return { c, calls: () => calls };
+    };
+    const dropped = flaky(Object.assign(new Error('Connection error.'), { name: 'APIConnectionError' }));
+    expect((await verifiedChat(cfg, msgs, { maxTokens: 10 }, dropped.c)).text).toBe('answer');
+    expect(dropped.calls()).toBe(2);
+    const gateway = flaky(Object.assign(new Error('bad gateway'), { status: 502 }));
+    expect((await verifiedChat(cfg, msgs, { maxTokens: 10 }, gateway.c)).text).toBe('answer');
+    const refused = flaky(Object.assign(new Error('bad request'), { status: 400 }));
+    await expect(verifiedChat(cfg, msgs, { maxTokens: 10 }, refused.c)).rejects.toThrow(/bad request/);
+    expect(refused.calls()).toBe(1);
+  });
+
   it('says when the answer hit its length limit', async () => {
     expect((await verifiedChat(cfg, msgs, { maxTokens: 10 }, client({ finish: 'length' }))).truncated).toBe(true);
   });
