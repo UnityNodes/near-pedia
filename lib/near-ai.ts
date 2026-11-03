@@ -90,6 +90,8 @@ export const CHAT_TIMEOUT_MS = 90_000;
 const RESPONSE_CACHE_MS = 5 * 60_000;
 export const MAX_CONCURRENT = 4;
 const RETRY_DELAY_MS = 800;
+const VERIFY_TRIES = 4;
+const VERIFY_DELAY_MS = 2500;
 
 function isTransient(e: unknown): boolean {
   const { name, status } = e as { name?: string; status?: unknown };
@@ -124,17 +126,30 @@ let inFlight = 0;
  * relayed these bytes, not that the attested model produced them, and the
  * receipt would claim more than it shows.
  */
+async function verifyWithRetry(client: ChatClient, id: string, tries = VERIFY_TRIES, delayMs = VERIFY_DELAY_MS): Promise<VerifiedCompletionResult> {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      return await client.verifyResponse(id);
+    } catch (e) {
+      const message = (e as Error).message;
+      if (attempt >= tries || !/\b404\b/.test(message)) throw new UnverifiedAnswerError(`NEAR AI answered but the response did not verify: ${message}`);
+      await new Promise((r) => setTimeout(r, delayMs));
+    }
+  }
+}
+
 export async function verifiedChat(
   cfg: NearAiConfig,
   messages: readonly ChatMessage[],
-  opts: { maxTokens: number },
+  opts: { maxTokens: number; timeoutMs?: number; model?: string; extra?: Record<string, unknown> },
   client: ChatClient = clientFor(cfg) as unknown as ChatClient,
 ): Promise<{ text: string; truncated: boolean; receipt: AnswerReceipt }> {
   if (inFlight >= MAX_CONCURRENT) throw new BusyError(`${MAX_CONCURRENT} answers are already being written; try again in a minute`);
   inFlight++;
   try {
-    const signal = AbortSignal.timeout(CHAT_TIMEOUT_MS);
-    const create = () => client.chat.completions.create({ model: cfg.model, messages: [...messages], max_tokens: opts.maxTokens }, { signal });
+    const signal = AbortSignal.timeout(opts.timeoutMs ?? CHAT_TIMEOUT_MS);
+    const model = opts.model ?? cfg.model;
+    const create = () => client.chat.completions.create({ model, messages: [...messages], max_tokens: opts.maxTokens, ...(opts.extra ?? {}) }, { signal });
     const completion = await create().catch(async (e: unknown) => {
       if (!isTransient(e) || signal.aborted) throw e;
       await new Promise((r) => setTimeout(r, RETRY_DELAY_MS));
@@ -142,15 +157,10 @@ export async function verifiedChat(
     });
     const choice = completion.choices[0];
     const text = choice?.message?.content?.trim() ?? '';
-    let verified: VerifiedCompletionResult;
-    try {
-      verified = await client.verifyResponse(completion.id);
-    } catch (e) {
-      throw new UnverifiedAnswerError(`NEAR AI answered but the response did not verify: ${(e as Error).message}`);
-    }
+    const verified = await verifyWithRetry(client, completion.id);
     if (verified.signatureKind !== 'provider_tee') throw new UnverifiedAnswerError(`the response carries a ${verified.signatureKind} signature, not one from the model's TEE`);
     if (!text) throw new UnverifiedAnswerError('NEAR AI returned an empty answer');
-    return { text, truncated: choice?.finish_reason === 'length', receipt: receiptOf(cfg.model, verified, true, new Date()) };
+    return { text, truncated: choice?.finish_reason === 'length', receipt: receiptOf(model, verified, true, new Date()) };
   } finally {
     inFlight--;
   }
