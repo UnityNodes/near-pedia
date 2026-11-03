@@ -9,7 +9,6 @@ function outsideCode(text: string, fn: (prose: string) => string): string {
   return text.split(CODE).map((part, i) => (i % 2 === 1 ? part : fn(part))).join('');
 }
 
-/** Turns the model's [n] into links to source n of this answer, leaving code spans and fences as written. */
 export function linkCitations(text: string, turnId: string, count: number): string {
   return outsideCode(text, (prose) => prose.replace(CITE, (whole, d: string) => {
     const n = Number(d);
@@ -17,7 +16,6 @@ export function linkCitations(text: string, turnId: string, count: number): stri
   }));
 }
 
-/** The source numbers the answer's prose cites. */
 export function citedNumbers(text: string): Set<number> {
   const found = new Set<number>();
   outsideCode(text, (prose) => {
@@ -27,7 +25,6 @@ export function citedNumbers(text: string): Set<number> {
   return found;
 }
 
-/** The answer as plain text to paste elsewhere: the model's text, then each source it cites with its URL and date. */
 export function copyText(answer: string, sources: ReadonlyArray<{ n: number; title: string; url: string | null; as_of: string | null }>): string {
   const cited = citedNumbers(answer);
   const lines = sources.filter((s) => cited.has(s.n))
