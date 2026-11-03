@@ -68,8 +68,8 @@ describe('extractReleaseRemovals', () => {
     ]);
   });
 
-  it('leaves the bullets of a Fixed section alone and keeps a removed feature gate', () => {
-    expect(extractReleaseRemovals(NEAR_SDK_FIXES).map((x) => x.removed)).toEqual([['global-contracts']]);
+  it('leaves the bullets of a Fixed section alone, and reads a removed feature gate as the feature staying, not going', () => {
+    expect(extractReleaseRemovals(NEAR_SDK_FIXES)).toEqual([]);
   });
 
   it('takes the fields after the colon, not the configs they were removed from (nearcore 2.12.0)', () => {
