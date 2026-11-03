@@ -2380,7 +2380,7 @@ app.post('/api/v1/ask', async (req, res) => {
     if (e instanceof BusyError) return res.status(503).json({ error: msg });
     console.error(`[ask] ${e instanceof UnverifiedAnswerError ? 'unverified' : 'failed'}: ${msg.slice(0, 300)}`);
     if (e instanceof UnverifiedAnswerError) return res.status(502).json({ error: 'NEAR AI answered, but the response signature did not verify; no answer is shown', detail: msg.slice(0, 300) });
-    return res.status(502).json({ error: 'NEAR AI Cloud request failed', detail: msg.slice(0, 300) });
+    return res.status(502).json({ error: 'NEAR AI did not answer this time. Try again in a moment.', detail: msg.slice(0, 300) });
   }
 });
 
