@@ -87,6 +87,25 @@ Claude Desktop, VS Code, Windsurf, Cline and Continue each name the fields diffe
 
 </details>
 
+## Check every pull request
+
+A GitHub Action runs `check_code` on the files a pull request changes and leaves one comment: each line that uses something NEAR deprecated, removed or changed, what replaces it, and the source. Add `.github/workflows/nearpedia.yml`:
+
+```yaml
+name: NEARpedia
+on: pull_request
+permissions:
+  contents: read
+  pull-requests: write
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: UnityNodes/near-pedia/github-action@main
+```
+
+No key is needed. On 3 November 2026, [near-examples/coin-flip-examples#37](https://github.com/near-examples/coin-flip-examples/pull/37) added 7 such lines: the `@near-js/*` packages that near-api-js 7 replaced, and dependencies whole breaking lines behind. Inputs, outputs and a way to run it against any public pull request without installing anything are in [`github-action/README.md`](github-action/README.md).
+
 ## Try it against the live API
 
 No install, no key:
@@ -146,6 +165,7 @@ You see two `check_code` findings (near-sdk-js on line 1, `DelegateV2` on line 2
 | Corpus and semantic search | built on 2026-11-02: 17,867 chunks from docs, the forum, blogs, videos, release notes, the catalog and GitHub, embedded with Qwen3-Embedding and reranked with Qwen3-Reranker on NEAR AI Cloud (about $0.07 for the whole index). `scripts/check-completeness.ts` matched all 37 source counts against the upstream totals; the breakdown is under "What the corpus holds" below |
 | Deprecation engine | built: 137 entries on 2026-11-02, 118 from five automatic signals plus a weak dormancy signal, and 19 curated entries whose quotes are re-checked against the synced sources on every build, among them what near-api-js 7 removed or renamed from the v4 API agents remember (key stores, `WalletConnection`, `actionCreators`). `check_deprecation`, `/api/v1/deprecations` |
 | `check_code` | built: one JS/TS, Rust, `Cargo.toml`, `package.json` or JSON file in; the lines that import, depend on, call or configure something stale out, plus yanked pins and dependencies whole breaking lines behind. MCP tool and `POST /api/v1/check-code` |
+| GitHub Action | built: `github-action/` reads a pull request's changed files, runs them through `check_code`, and posts or updates one comment that puts the lines the pull request adds first, with replacement and source; annotations on those lines, an optional `fail-on` gate, and a job-summary fallback on forks. Run against a real pull request on 2026-11-03 (7 findings in near-examples/coin-flip-examples#37) |
 | RPC protocol state and validators | built: mainnet and testnet protocol and nearcore version, epoch progress, the stake-weighted upgrade vote against the threshold from RPC, and the voting schedule from the nearcore release notes, every 15 minutes; protocol-gated deprecations (`DelegateV2`, the gas rebate) say whether they are live on each network. The validator set live from RPC: stake, share, work done this epoch, kickouts, a pool's fee. `get_protocol_status`, `get_validators`, `/api/v1/protocol` |
 | House of Stake and forum | built: every vote.dao proposal with its votes and the contract's own quorum and approval arithmetic, veNEAR totals, and the gov.near.org thread it is discussed in; 2,834 gov.near.org topics in the governance, staking, developer, ecosystem and education categories. `list_proposals`, `get_proposal`, `get_discussion`, `/api/v1/proposals` |
 | Ecosystem, incidents, partners | built: the 340 projects of NEAR Catalog with tokens and TVL on NEAR from DefiLlama, the security incidents of NEAR protocols from DefiLlama's hacks and of catalog projects hacked elsewhere, and six partners (NEAR Intents, the Intents Agent API, OutLayer, Trezu, HOT, Rhea) with their mainnet contracts, GitHub and docs. `find_project`, `list_incidents`, `get_incident`, `get_partner` |
@@ -189,6 +209,7 @@ scripts/        sync-*.ts (one per source), check-*.ts, backfills, anchor-db.ts
 mcp-server.ts   MCP server and REST API v1
 contracts/      db-anchor, the Rust contract that records the daily database hash
 plugin/         Claude Code plugin: the MCP server and the near-current skill
+github-action/  the pull-request check (action.yml, no dependencies)
 deploy/         systemd units, Caddyfile, sync-tick.sh, git hooks
 docs/           setup (cron) and distribution notes
 assets/         the images in this README
@@ -203,7 +224,7 @@ Hackathon rules count work from 19 October 2026; everything earlier is a baselin
 
 **Baseline, not hackathon work.** The engine is a copy of `pedia-template`, the ecosystem-neutral engine we extracted from our earlier knowledge hubs [CCPEDIA](https://ccpedia.xyz) (Canton) and Blobpedia (Celestia). It brings the database layer, search and embeddings, the MCP and REST servers, the web UI, the sync runner and the standing checks. The repository's first commit is that copy, tagged [`pre-hackathon`](https://github.com/UnityNodes/near-pedia/tree/pre-hackathon).
 
-**Hackathon work.** Everything after that tag: the NEAR rebrand, the NEAR sources, the deprecation engine, `check_code`, the RPC, validator and House of Stake readers, the ecosystem, incident and partner data, the radar, the 27-tool MCP surface, the site pages, the NEAR AI Cloud integration, the database hash contract and the distribution files. The full difference is one link (Q-003): [`pre-hackathon...main`](https://github.com/UnityNodes/near-pedia/compare/pre-hackathon...main).
+**Hackathon work.** Everything after that tag: the NEAR rebrand, the NEAR sources, the deprecation engine, `check_code`, the RPC, validator and House of Stake readers, the ecosystem, incident and partner data, the radar, the 27-tool MCP surface, the GitHub Action, the site pages, the NEAR AI Cloud integration, the database hash contract and the distribution files. The full difference is one link (Q-003): [`pre-hackathon...main`](https://github.com/UnityNodes/near-pedia/compare/pre-hackathon...main).
 
 **Code from our other projects.** `lib/retry.ts` and `lib/polite-fetch.ts` are ported from Monpedia, our Monad knowledge hub (October 2026); the port added conditional requests.
 

@@ -1,0 +1,30 @@
+name: NEARpedia check
+description: Comments on a pull request with each line that uses something NEAR deprecated, removed or changed, with its replacement and the source it comes from.
+author: Unity Nodes
+branding:
+  icon: alert-triangle
+  color: green
+inputs:
+  github-token:
+    description: Token used to read the pull request's files and to write the comment.
+    default: ${{ github.token }}
+  api-url:
+    description: The NEARpedia instance whose check-code API is used.
+    default: https://near-pedia.xyz
+  fail-on:
+    description: Fail the job when lines this pull request adds have findings of this severity or worse. One of never, warning, error.
+    default: never
+  comment:
+    description: Post or update one comment on the pull request. With false, the report goes to the job summary and annotations only.
+    default: 'true'
+  max-files:
+    description: The most changed files to check in one run.
+    default: '40'
+outputs:
+  findings:
+    description: Findings in the changed files.
+  new-findings:
+    description: Findings on lines this pull request adds.
+runs:
+  using: node24
+  main: index.mjs
