@@ -21,13 +21,13 @@ jobs:
     timeout-minutes: 15
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # Node 22 is not a preference. better-sqlite3 ships a native binding
       # compiled against a NODE_MODULE_VERSION, and Node 20 loads a different
       # one, so `npm run build` and anything importing lib/db fails on 20.
       # Pinned to the major, not the patch: the ABI is per-major.
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: '22.x'
           cache: npm
