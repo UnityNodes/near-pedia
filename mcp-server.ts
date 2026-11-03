@@ -1,5 +1,5 @@
 /**
- * NEAR-pedia MCP Server
+ * NEARpedia MCP Server
  * Exposes NEAR knowledge base via Model Context Protocol
  * Transport: Streamable HTTP on port 3131 → proxied at https://near-pedia.xyz/mcp
  */
@@ -241,7 +241,7 @@ function createServer(): McpServer {
 const sdk = new McpServer({
   name: 'nearpedia',
   version: '1.0.0',
-  description: 'NEAR-pedia: what NEAR looks like today, for agents writing NEAR code. Check code and packages against deprecations and breaking changes, explain errors, read standards, docs and live protocol and contract state, and follow the radar, governance, incidents and ecosystem, every answer with a source and a date.',
+  description: 'NEARpedia: what NEAR looks like today, for agents writing NEAR code. Check code and packages against deprecations and breaking changes, explain errors, read standards, docs and live protocol and contract state, and follow the radar, governance, incidents and ecosystem, every answer with a source and a date.',
 });
 const server = registrarFor(sdk, toolFilter());
 

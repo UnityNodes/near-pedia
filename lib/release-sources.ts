@@ -1,5 +1,5 @@
 /**
- * The products whose GitHub releases NEAR-pedia serves, and the repositories
+ * The products whose GitHub releases NEARpedia serves, and the repositories
  * the releases sync reads to get them.
  *
  * A product is not a repository. near-sdk-rs releases near-sdk,

@@ -1,4 +1,4 @@
-# NEAR-pedia — deployment (do NOT run without explicit approval)
+# NEARpedia — deployment (do NOT run without explicit approval)
 
 A Linux server behind Cloudflare. Ports: **3130** (Next.js web), **3131** (MCP `/mcp`
 and the REST API `/api/v1`). Node **v22** (`/root/.nvm/versions/node/v22.18.0`).

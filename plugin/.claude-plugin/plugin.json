@@ -1,6 +1,6 @@
 {
   "name": "nearpedia",
-  "displayName": "NEAR-pedia",
+  "displayName": "NEARpedia",
   "description": "Live NEAR knowledge for agents: check NEAR code for removed or deprecated APIs and stale packages, explain errors, read standards, protocol upgrades, governance, incidents and contracts, every answer with a source and a date",
   "author": {
     "name": "Unity Nodes",

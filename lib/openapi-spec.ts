@@ -1,5 +1,5 @@
 /**
- * OpenAPI 3.1 description of the public NEAR-pedia REST API.
+ * OpenAPI 3.1 description of the public NEARpedia REST API.
  *
  * Source of truth: this file. The /api/v1/openapi.json endpoint
  * serves it as-is; the /for-ai page renders a human view. When you

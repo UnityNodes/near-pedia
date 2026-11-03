@@ -1,6 +1,6 @@
 {
   "name": "nearpedia",
-  "description": "NEAR-pedia: live NEAR knowledge for agents writing NEAR code",
+  "description": "NEARpedia: live NEAR knowledge for agents writing NEAR code",
   "owner": {
     "name": "Unity Nodes",
     "url": "https://github.com/UnityNodes"
@@ -9,7 +9,7 @@
     {
       "name": "nearpedia",
       "source": "./plugin",
-      "description": "The NEAR-pedia MCP server and a skill that checks NEAR code against deprecations and breaking changes before and after writing it"
+      "description": "The NEARpedia MCP server and a skill that checks NEAR code against deprecations and breaking changes before and after writing it"
     }
   ]
 }

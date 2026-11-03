@@ -50,9 +50,11 @@ export function SiteFooter() {
     <footer className="site-footer" aria-label="Site footer">
       <div className="footer-inner">
         <div className="footer-brand">
-          <Image src={SITE.logo.light} alt={`${SITE.name} logo`} width={44} height={44} className="footer-logo-img footer-logo-light" />
-          <Image src={SITE.logo.dark} alt={`${SITE.name} logo`} width={44} height={44} className="footer-logo-img footer-logo-dark" />
-          <Link href="/" className="footer-word">{SITE.name}<span>by {SITE.publisher.name}</span></Link>
+          <Link href="/" className="footer-word" aria-label={SITE.name}>
+            <Image src={SITE.logo.light} alt="" width={177} height={34} className="footer-logo-img footer-logo-light" unoptimized />
+            <Image src={SITE.logo.dark} alt="" width={177} height={34} className="footer-logo-img footer-logo-dark" unoptimized />
+            <span>by {SITE.publisher.name}</span>
+          </Link>
           <p className="footer-tag">{t.footer_tagline}</p>
           <div className="footer-powered">
             <a href={SITE.publisher.url} target="_blank" rel="noopener noreferrer" className="footer-pub">
