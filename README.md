@@ -1,120 +1,185 @@
-# NEAR-pedia
+<p align="center">
+  <img src="assets/banner.svg" alt="NEAR-pedia. What NEAR looks like today. A terminal session: an agent adds the NEAR-pedia MCP server (27 tools), check_code names near-sdk-js, DelegateV2 and keyStores in its file with their replacements, get_validators and get_proposal answer live." width="100%">
+</p>
 
-Live NEAR knowledge for AI agents. NEAR-pedia is an MCP server and REST API that tells a coding agent when the NEAR code it is about to write is already stale, and gives the replacement, with a source and a date on every answer. The same index serves people researching NEAR: a site and an `/ask` chat that answer what is happening with protocol upgrades, House of Stake votes, projects and incidents.
+<p align="center">
+  <a href="#connect-an-agent"><img alt="Connect an agent" src="https://img.shields.io/badge/CONNECT_AN_AGENT-D4FF00?style=for-the-badge&logo=modelcontextprotocol&logoColor=0A0B0F"></a>
+  <a href="https://near-pedia.xyz"><img alt="Live site near-pedia.xyz" src="https://img.shields.io/badge/LIVE-near--pedia.xyz-21262D?style=for-the-badge&labelColor=4F6500"></a>
+  <a href="https://near-pedia.xyz/ask"><img alt="Ask a question" src="https://img.shields.io/badge/ASK-a_question-21262D?style=for-the-badge&labelColor=4F6500"></a>
+  <a href="https://near-pedia.xyz/for-ai"><img alt="MCP setup for every client" src="https://img.shields.io/badge/MCP-every_client-21262D?style=for-the-badge&labelColor=4F6500"></a>
+</p>
 
-> Status: built for the NEAR Hackathon (1–14 November 2026, tracks `open` and `agents`). Everything in [What is done](#what-is-done) runs locally and is tested; what has not been run against a live service yet says so in its row. Live at https://near-pedia.xyz (MCP at https://near-pedia.xyz/mcp) since 2 November 2026; the NEAR accounts for the daily database hash are pending.
+<p align="center">
+  <a href="https://github.com/UnityNodes/near-pedia/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/UnityNodes/near-pedia/actions/workflows/ci.yml/badge.svg"></a>
+  <a href="LICENSE"><img alt="License MIT" src="https://img.shields.io/badge/license-MIT-4F6500"></a>
+  <img alt="Node 22" src="https://img.shields.io/badge/node-22-4F6500?logo=nodedotjs&logoColor=white">
+  <img alt="MCP over Streamable HTTP" src="https://img.shields.io/badge/MCP-Streamable_HTTP-4F6500">
+  <img alt="NEAR mainnet" src="https://img.shields.io/badge/network-NEAR_mainnet-4F6500">
+</p>
 
-## The problem
+Live NEAR knowledge for AI agents. NEAR-pedia is an MCP server and REST API that tells a coding agent when the NEAR code it is about to write is already stale, and gives the replacement, with a source and a date on every answer. The same index serves people researching NEAR: a site and an `/ask` chat about protocol upgrades, House of Stake votes, validators, projects and incidents.
 
-Agents write NEAR code from what they remember, and NEAR keeps moving. A few changes from the weeks before this hackathon that a model trained earlier cannot know about:
+Built for the NEAR Hackathon (1–14 November 2026, tracks `open` and `agents`). Live at [near-pedia.xyz](https://near-pedia.xyz) since 2 November 2026; the MCP endpoint `https://near-pedia.xyz/mcp` needs no key.
 
-- [`near-sdk-js`](https://github.com/near/near-sdk-js) is archived and its README says "DO NOT USE".
-- [nearcore 2.14.0](https://github.com/near/nearcore/releases/tag/2.14.0) removes `DelegateV2`.
-- NEAR Lake is shut down and its tutorials are gone from docs.near.org.
-- `@near-js/*` packages stopped at 2.5.1; the maintained package is `near-api-js` 7.x.
+> [!TIP]
+> Agents write NEAR code from what they remember, and NEAR keeps moving. A few changes from the weeks before this hackathon that a model trained earlier cannot know about:
+>
+> - [`near-sdk-js`](https://github.com/near/near-sdk-js) is archived and its README says "DO NOT USE".
+> - [nearcore 2.14.0](https://github.com/near/nearcore/releases/tag/2.14.0) removes `DelegateV2`.
+> - NEAR Lake is shut down and its tutorials are gone from docs.near.org.
+> - `@near-js/*` packages stopped at 2.5.1; the maintained package is `near-api-js` 7.x, which ships no `keyStores`.
+>
+> Package registries rarely flag any of this, so the agent finds out when the build or the transaction fails. The official [`near/agent-skills`](https://github.com/near/agent-skills) are static instructions, and [`nearai/near-mcp`](https://github.com/nearai/near-mcp) performs chain actions rather than answering what is current.
 
-Package registries rarely flag any of this, so the agent finds out when the build or the transaction fails. The official [`near/agent-skills`](https://github.com/near/agent-skills) are static instructions, and [`nearai/near-mcp`](https://github.com/nearai/near-mcp) performs chain actions rather than answering what is current.
+## How it works
 
-## What it does
+<p align="center">
+  <img src="assets/flow.svg" alt="Four steps. 1, Read: NEAR's own sources, live (docs, GitHub, npm and crates, RPC, House of Stake, the forum, blogs, videos, NEAR Catalog). 2, Index: full-text search and 17,867 meaning chunks, 137 entries of what NEAR deprecated, a radar whose alerts expire. 3, Check: check_code names each line that uses something NEAR removed, with what replaces it. 4, Answer: 27 MCP tools, a REST API, a site and /ask on NEAR AI, each answer with its source and its date." width="100%">
+</p>
 
-- `check_code` takes one JS/TS or Rust file, `Cargo.toml` or `package.json` and reports the lines that use something NEAR removed, deprecated or changed, and dependencies that are yanked or whole breaking lines behind, each with its replacement, the evidence and the date.
-- A deprecation engine fed by six signals: archived repositories, "deprecated / do not use" in a README, npm and crates.io deprecation or yank flags, removals in release notes, the docs' own deprecation markers and deleted pages, and long-dormant packages with a live successor. Weak signals are reported as "possibly deprecated".
-- A radar of what is changing now: protocol upgrades and the validator vote read from RPC, House of Stake votes, incidents, deadlines. Every alert ends when its subject resolves.
-- 27 MCP tools, 12 for code, 10 for builders and 5 for anyone researching NEAR, the same data over REST, and a site with two ways in, one for builders and one for researchers: `/deprecations`, `/radar`, `/protocol`, `/governance`, `/feed`, `/ask`.
-- `/ask` answers through a TEE model on NEAR AI Cloud with a verifiable signature, and a hash of the database is recorded on NEAR once a day.
+The deprecation engine is fed by six signals: archived repositories, "deprecated / do not use" in a README, npm and crates.io deprecation or yank flags, removals in release notes, the docs' own deprecation markers and deleted pages, and long-dormant packages with a live successor. Weak signals are reported as "possibly deprecated". The radar keeps only what is true now: every alert ends when its subject resolves.
 
-## What is done
+## Three ways in
 
-| Part | State |
-|---|---|
-| Engine: SQLite store with FTS5 and `sqlite-vec` search, MCP server, REST API, web UI, cron sync runner, standing checks | inherited from the baseline (see below), rebranded. The baseline's features with no NEAR counterpart (its improvement-proposal pages, whitepapers, digest, trending, glossary, foundation pages and analytics) were removed with their tools, endpoints, tables and tests |
-| NEAR sources | syncs written and run locally against the live sources: docs.near.org (198 pages), npm and crates.io (89 packages with every version, deprecation and yank flags), GitHub (808 repositories in 9 NEAR orgs, archived state and README deprecation notices), releases of 10 products from nearcore to near-api-js. Every change they see is logged and served by `get_recent_changes` |
-| Corpus and semantic search | built and filled from scratch on 2026-11-02: 483 documentation pages (docs.near.org, the Nomicon, NEAR AI Cloud, NEAR Intents, the Intents Agent API, Trezu), 2,834 gov.near.org topics (the posts of the 2,289 in the governance, staking, developer, ecosystem and education categories), 670 near.org and near.ai blog posts, 1,837 videos of the NEAR Protocol, NEAR DevHub and NEAR AI channels (1,806 with their description), 1,328 release notes, the 340 catalog projects, and with a `GITHUB_TOKEN` the 2,517 open issues and 622 open pull requests of 19 NEAR repositories and the 255 GitHub Discussions of 6 (`scripts/check-completeness.ts` matched all 37 counts against the upstream totals). 17,867 chunks of text (forum posts and GitHub bodies stripped of their HTML, blog posts without the site's footer, videos only once they have a description, releases only with notes) embedded with Qwen3-Embedding on NEAR AI Cloud and reranked with Qwen3-Reranker there, so `semantic_search` matches meaning; the whole index cost about $0.07 to embed. The first fill reads the posts of the 300 newest threads and 300 video descriptions; the schedule reads the rest (40 threads every 15 minutes, 300 descriptions a day) |
-| Deprecation engine and seed entries | built and run locally: 137 entries on 2026-11-02, 118 from five automatic signals (archived repos, README notices, registry flags, release-note removals, the docs RPC reference's `[Deprecated]` marker) plus a weak dormancy signal, and 19 curated entries whose quotes are re-checked against the synced sources on every build, among them what near-api-js 7 removed or renamed from the v4 API agents remember (key stores, `WalletConnection`, `actionCreators`). Served by the `check_deprecation` MCP tool and `/api/v1/deprecations` |
-| `check_code` | built: one JS/TS, Rust, Cargo.toml, package.json or JSON file in, the lines that import, depend on, call or configure something stale out, plus yanked pins and dependencies whole breaking lines behind. MCP tool and `POST /api/v1/check-code` |
-| RPC protocol state | built: mainnet and testnet protocol version, nearcore version, epoch progress, the stake-weighted upgrade vote of the block producers, the threshold from RPC and the voting schedule from the nearcore release notes, every 15 minutes. `get_protocol_status` and `/api/v1/protocol`; protocol-gated deprecations (DelegateV2, the gas rebate) say whether they are live on each network |
-| House of Stake and forum | built: every vote.dao proposal with its votes and the contract's own quorum and approval arithmetic, veNEAR totals, and the gov.near.org thread each is discussed in; the governance, staking, developer, ecosystem and education listings of gov.near.org over Discourse JSON (2,834 topics; community, marketing and grant-pitch categories left out). `list_proposals`, `get_proposal`, `/api/v1/proposals` |
-| Ecosystem, incidents, partners | built: the 340 projects of NEAR Catalog with tokens and TVL on NEAR from DefiLlama (Rhea Finance $270M across Rhea Lend, RHEA LST and Rhea Dex), the security incidents of NEAR protocols from DefiLlama's hacks (Rhea Lend $18.4M, NEAR Intents $3.8M, Sweat $3.5M) and of catalog projects hacked elsewhere, and a registry of six partners (NEAR Intents, the Intents Agent API, OutLayer, Trezu, HOT, Rhea) with their mainnet contracts, GitHub and docs; the Intents, Agent API and Trezu docs (85 pages) are searchable. `find_project`, `list_incidents`, `get_incident`, `get_partner`, `/api/v1/projects`, `/api/v1/incidents`, `/api/v1/partners` |
-| Radar | built: only what is true now. Protocol upgrade 86 → 88 on mainnet (critical, due at the 4 November voting step, gone once mainnet runs 88), House of Stake votes until they close, timelocks, HSP drafts on gov.near.org until they go on chain, CODE_RED and security nearcore releases, NEAR incidents for 30 days, the hackathon deadline. Each alert carries its expiry; a resolved one is retired on the next 15-minute run, and `check-radar-expiry` fails on any live alert that is no longer true. `get_radar`, `/api/v1/radar`, `/radar`. Potlock rounds are not in: no working mainnet source on 2026-11-01 |
-| `/ask` through NEAR AI Cloud | built: `/ask` and `POST /api/v1/ask` answer from this index's sources through a model in a TEE on NEAR AI Cloud: docs, deprecation entries, the catalog projects and incidents a question names, the protocol state when it asks about an upgrade, the House of Stake proposals it names, the closest passages of the semantic index (forum, blogs, videos, issues), the radar, and `check_code` on a pasted file. `@nearai/inference-sdk` verifies the gateway's and the model's Intel TDX attestation, encrypts the request to the model's key, and checks the response signature; an answer that does not verify is not shown. Each answer carries numbered sources with dates and a receipt that opens NEAR AI's Verification Center. Needs `NEARAI_API_KEY`. Run against the live API on 2026-11-02: answers verified with `provider_tee`, TCB `UpToDate`; questions that name a catalog project or an incident get its record ("Was Rhea hacked?" answers with Rhea Lend $18.4M and Ref Finance $3.2M); "When does mainnet move to protocol 88?" answers with the 6 November voting step and the 80% stake threshold from RPC and the nearcore release notes; "What does HSP-029 change, and did it pass?" answers with the 2.5% to 1.6% issuance ramp and the closed vote from vote.dao |
-| MCP tool surface | built: 27 tools on the public endpoint, 12 for code (`check_code`, `check_deprecation`, `resolve_package`, `get_breaking_changes`, `explain_error`, `find_known_issues`, `get_protocol_status`, `get_doc`, `search`, `semantic_search`, `find_code_examples`, `get_standard`) 10 for builders (`get_radar`, `list_proposals`, `get_proposal`, `list_incidents`, `get_incident`, `find_project`, `get_partner`, `get_contract_info`, `get_recent_changes`, `get_discussion`) and 5 for everyone (`get_network_state`, `get_validators`, `list_blog_posts`, `get_blog_post`, `list_videos`). Each of the 47 handlers was called with real inputs on 2026-11-02; the 20 left out duplicate a public tool, return the baseline's template data or match loosely, and stay reachable over REST only (`lib/mcp-toolset.ts`). `get_validators` reads the validator set live from RPC (stake, share, work done this epoch, kickouts, a pool's fee) and `get_network_state` the NEAR price, supply and stake. `explain_error` answers from 19 NEAR errors whose quotes are re-checked against docs.near.org and the Nomicon on every sync, `get_standard` from the 59 NEPs of github.com/near/NEPs, `get_contract_info` from RPC live (methods from the wasm's export section, NEP-330 source metadata, token metadata), and every `find_code_examples` result has been through `check_code` |
-| Distribution | prepared, nothing published: `server.json` for the MCP Registry, a Claude Code plugin marketplace (`.claude-plugin/`, `plugin/` with the server and a `near-current` skill), `public/llms.txt`, and the IronClaw registry entry; steps in `docs/distribution/README.md`. Publishing waits for the public repository and the domain |
-| Site | built: a home page with two ways in ("I write NEAR code" leads to the MCP setup, "I'm researching NEAR" to `/ask`); `/deprecations` (search, status and kind filters, each entry with its evidence), `/protocol` (version, vote by stake against the threshold, schedule, the changes waiting on the upgrade), `/radar` (each alert with what ends it), `/governance` (every House of Stake proposal with its vote standing), `/feed` (deprecation and doc changes, releases, forum, blogs and videos of the last days), `/ask` with example questions for both audiences, and the docs, forum, blog, video, release, project and issue browsers on NEAR data. Checked in a browser at desktop and phone width |
-| Daily database hash on NEAR | built: `scripts/anchor-db.ts` hashes the database's content (not its file: a vacuumed copy hashes the same) and records it in `contracts/db-anchor`, a Rust contract that keeps one hash per date and refuses to change it or take one from anyone but its owner; `--verify <db>` checks any copy against the chain. Run end to end on a local nearcore 2.13.4 sandbox (protocol 86, as mainnet): record, re-run, matching copy, tampered copy, rewrite and stranger refused. `/api/v1/anchors`. Not yet deployed on mainnet: needs the team's account |
+<p align="center">
+  <img src="assets/card-developers.svg" alt="For developers: is my NEAR code current? 12 tools: check_code, check_deprecation, resolve_package, get_breaking_changes, explain_error, find_known_issues, find_code_examples, get_standard, get_protocol_status, search, semantic_search, get_doc." width="32%">
+  <img src="assets/card-builders.svg" alt="For builders: what is moving on NEAR? 10 tools: get_radar, list_proposals, get_proposal, get_discussion, list_incidents, get_incident, find_project, get_partner, get_contract_info, get_recent_changes." width="32%">
+  <img src="assets/card-everyone.svg" alt="For everyone: what is NEAR right now? 5 tools: get_network_state, get_validators, list_blog_posts, get_blog_post, list_videos." width="32%">
+</p>
 
-## Try it: the judge path
+| You want to | Go to |
+| --- | --- |
+| Give your coding agent the tools | [Connect an agent](#connect-an-agent), or [/for-ai](https://near-pedia.xyz/for-ai) for Claude Desktop, VS Code, Windsurf, Cline and Continue |
+| See what NEAR deprecated, with the evidence | [/deprecations](https://near-pedia.xyz/deprecations) |
+| Follow the protocol upgrade and the validator vote | [/protocol](https://near-pedia.xyz/protocol), [/radar](https://near-pedia.xyz/radar) |
+| Read House of Stake proposals and how the vote stands | [/governance](https://near-pedia.xyz/governance) |
+| Ask in plain words | [/ask](https://near-pedia.xyz/ask), answered by a model in a TEE on NEAR AI Cloud |
 
-Node 22 is required (`better-sqlite3` is built against its ABI, see `.nvmrc`). No key is needed for steps 1–5. Two keys widen the fill if they are in the environment: `NEARAI_API_KEY` embeds the corpus for `semantic_search` (otherwise it matches words) and turns on `/ask`; `GITHUB_TOKEN` adds the open issues and discussions of the NEAR repositories.
-
-**1. Install and fill the database** (about 25 minutes; every source is read live, and embedding with `NEARAI_API_KEY` adds about 50):
+## Connect an agent
 
 ```bash
+claude mcp add --transport http nearpedia https://near-pedia.xyz/mcp
+```
+
+Then ask Claude Code to write a NEAR contract in JavaScript with meta-transactions and to check it with the nearpedia tools: `check_code` names near-sdk-js and `DelegateV2` with their replacements.
+
+<details>
+<summary><strong>Codex, Cursor and other clients</strong></summary>
+
+Codex, in `~/.codex/config.toml`:
+
+```toml
+[mcp_servers.nearpedia]
+url = "https://near-pedia.xyz/mcp"
+```
+
+Cursor, in `~/.cursor/mcp.json` or `.cursor/mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "nearpedia": { "url": "https://near-pedia.xyz/mcp" }
+  }
+}
+```
+
+Claude Desktop, VS Code, Windsurf, Cline and Continue each name the fields differently; [near-pedia.xyz/for-ai](https://near-pedia.xyz/for-ai) has the exact block for each. The public endpoint allows 300 tool calls per 15 minutes per client.
+
+</details>
+
+## Try it against the live API
+
+No install, no key:
+
+```bash
+# a file written from memory: three findings, each with its replacement and sources
+curl -s -X POST https://near-pedia.xyz/api/v1/check-code -H 'Content-Type: application/json' \
+  -d '{"filename":"contract.ts","code":"import { NearBindgen } from \"near-sdk-js\";\nconst d = { DelegateV2: signed };\nconst ks = new keyStores.InMemoryKeyStore();"}'
+
+# the mainnet protocol version, the upgrade vote by stake and the voting schedule
+curl -s 'https://near-pedia.xyz/api/v1/protocol?network=mainnet' | head -c 600
+
+# what is changing now, each alert with what ends it
+curl -s https://near-pedia.xyz/api/v1/radar | head -c 600
+```
+
+`check_code` answers: line 1 imports near-sdk-js, archived, use near-sdk in Rust; line 2 builds a `DelegateV2` action, removed in nearcore 2.14.0, use `Delegate` signed with a regular access key; line 3 uses `keyStores`, which near-api-js 7 does not ship, use a `KeyPairSigner`.
+
+## Run it yourself
+
+The judge path, from a clean clone:
+
+```bash
+git clone https://github.com/UnityNodes/near-pedia
+cd near-pedia
 npm ci
 npm run db:init
-npm run sync:near
+npm run sync:near          # every source is read live, about 25 minutes
+npx tsx mcp-server.ts      # MCP and REST on :3131, leave it running
 ```
 
-**2. Start the MCP server and REST API** (port 3131), and leave it running:
-
-```bash
-npx tsx mcp-server.ts
-```
-
-**3. Check a file written from memory.** In another terminal:
+In another terminal:
 
 ```bash
 curl -s -X POST http://127.0.0.1:3131/api/v1/check-code -H 'Content-Type: application/json' \
   -d '{"filename":"contract.ts","code":"import { near } from \"near-sdk-js\";\nconst a = { DelegateV2: signed };"}'
-```
-
-You see two findings. Line 1 imports near-sdk-js, which is archived: use near-sdk in Rust. Line 2 builds a DelegateV2 action, which nearcore 2.14.0 removed: use Delegate, signed with a regular access key. Each finding carries its sources, dated where the source has a date.
-
-**4. Ask what is changing:**
-
-```bash
-curl -s http://127.0.0.1:3131/api/v1/radar | head -c 600
 curl -s 'http://127.0.0.1:3131/api/v1/protocol?network=mainnet' | head -c 600
-```
-
-You see the mainnet protocol upgrade with its voting dates and the share of stake that has voted, and any open House of Stake vote with the date it closes.
-
-**5. Explain an error and read a contract, live:**
-
-```bash
 curl -s -X POST http://127.0.0.1:3131/api/v1/explain-error -H 'Content-Type: application/json' \
   -d '{"error_text":"wasm execution failed with error: MethodResolveError(MethodNotFound)"}'
 curl -s http://127.0.0.1:3131/api/v1/contracts/intents.near | head -c 600
-```
-
-**6. Give an agent the tools:**
-
-```bash
 claude mcp add --transport http nearpedia http://127.0.0.1:3131/mcp
 ```
 
-Then ask Claude Code to write a NEAR contract in JavaScript with meta-transactions and to check it with the nearpedia tools: `check_code` answers as in step 3, naming near-sdk-js and DelegateV2 with their replacements.
+You see two `check_code` findings (near-sdk-js on line 1, `DelegateV2` on line 2, each with its sources, dated where the source has a date), the mainnet upgrade with its voting dates and the share of stake that has voted, what the `MethodNotFound` error means and how to fix it, and the methods deployed on `intents.near` read live from RPC. `npm run build && npm run start` serves the site on :3130 from the same database.
 
-**The site** (optional): `npm run build && npm run start` serves it on :3130; `/deprecations`, `/radar` and `/protocol` read the same database.
+**You need**
 
-## What was built before the hackathon, and what during it
+- Node 22 (`better-sqlite3` is built against its ABI, see `.nvmrc`)
+- No key for the steps above. `NEARAI_API_KEY` embeds the corpus for `semantic_search` (otherwise it matches words; embedding adds about 50 minutes) and turns on `/ask`; `GITHUB_TOKEN` adds the open issues and discussions of the NEAR repositories
 
-Hackathon rules count work from 19 October 2026; everything earlier is a baseline (Q-001, Q-002, Q-005).
+## What is done
 
-**Baseline, not hackathon work.** The engine is a copy of `pedia-template`, the ecosystem-neutral engine we extracted from our earlier knowledge hubs [CCPEDIA](https://ccpedia.xyz) (Canton) and Blobpedia (Celestia). It brings the database layer, search and embeddings, the MCP and REST servers, the web UI, the sync runner and the standing checks. The repository's first commit is that copy, tagged [`pre-hackathon`](https://github.com/UnityNodes/near-pedia/tree/pre-hackathon).
+| Part | State |
+| --- | --- |
+| Engine: SQLite with FTS5 and `sqlite-vec`, MCP server, REST API, web UI, sync runner, standing checks | inherited from the baseline (see [below](#what-was-built-before-the-hackathon-and-what-during-it)), rebranded. The baseline's features with no NEAR counterpart (improvement-proposal pages, whitepapers, digest, trending, glossary, foundation pages, analytics) were removed with their tools, endpoints, tables and tests |
+| NEAR sources | built and run against the live sources: docs.near.org (198 pages), npm and crates.io (89 packages with every version, deprecation and yank flags), GitHub (808 repositories in 9 NEAR orgs, archived state and README notices), releases of 10 products from nearcore to near-api-js. Every change they see is logged and served by `get_recent_changes` |
+| Corpus and semantic search | built on 2026-11-02: 17,867 chunks from docs, the forum, blogs, videos, release notes, the catalog and GitHub, embedded with Qwen3-Embedding and reranked with Qwen3-Reranker on NEAR AI Cloud (about $0.07 for the whole index). `scripts/check-completeness.ts` matched all 37 source counts against the upstream totals; the breakdown is under "What the corpus holds" below |
+| Deprecation engine | built: 137 entries on 2026-11-02, 118 from five automatic signals plus a weak dormancy signal, and 19 curated entries whose quotes are re-checked against the synced sources on every build, among them what near-api-js 7 removed or renamed from the v4 API agents remember (key stores, `WalletConnection`, `actionCreators`). `check_deprecation`, `/api/v1/deprecations` |
+| `check_code` | built: one JS/TS, Rust, `Cargo.toml`, `package.json` or JSON file in; the lines that import, depend on, call or configure something stale out, plus yanked pins and dependencies whole breaking lines behind. MCP tool and `POST /api/v1/check-code` |
+| RPC protocol state and validators | built: mainnet and testnet protocol and nearcore version, epoch progress, the stake-weighted upgrade vote against the threshold from RPC, and the voting schedule from the nearcore release notes, every 15 minutes; protocol-gated deprecations (`DelegateV2`, the gas rebate) say whether they are live on each network. The validator set live from RPC: stake, share, work done this epoch, kickouts, a pool's fee. `get_protocol_status`, `get_validators`, `/api/v1/protocol` |
+| House of Stake and forum | built: every vote.dao proposal with its votes and the contract's own quorum and approval arithmetic, veNEAR totals, and the gov.near.org thread it is discussed in; 2,834 gov.near.org topics in the governance, staking, developer, ecosystem and education categories. `list_proposals`, `get_proposal`, `get_discussion`, `/api/v1/proposals` |
+| Ecosystem, incidents, partners | built: the 340 projects of NEAR Catalog with tokens and TVL on NEAR from DefiLlama, the security incidents of NEAR protocols from DefiLlama's hacks and of catalog projects hacked elsewhere, and six partners (NEAR Intents, the Intents Agent API, OutLayer, Trezu, HOT, Rhea) with their mainnet contracts, GitHub and docs. `find_project`, `list_incidents`, `get_incident`, `get_partner` |
+| Radar | built: protocol upgrades, House of Stake votes until they close, timelocks, HSP drafts until they go on chain, CODE_RED and security nearcore releases, NEAR incidents for 30 days, the hackathon deadline. Each alert carries its expiry and is retired on the next 15-minute run once resolved; `check-radar-expiry` fails on any live alert that is no longer true. `get_radar`, `/api/v1/radar`. Potlock rounds are not in: no working mainnet source on 2026-11-01 |
+| `/ask` on NEAR AI Cloud | built and run against the live API on 2026-11-02: answers from this index through a model in a TEE. `@nearai/inference-sdk` verifies the gateway's and the model's Intel TDX attestation, encrypts the request to the model's key and checks the response signature; an answer that does not verify is not shown. Each answer carries numbered, dated sources and a receipt for NEAR AI's Verification Center. Needs `NEARAI_API_KEY` |
+| MCP tool surface | built: 27 tools on the public endpoint, 12 for code, 10 for builders and 5 for everyone (the cards above). Each of the 47 handlers was called with real inputs on 2026-11-02; the 20 left out duplicate a public tool, return the baseline's template data or match loosely, and stay reachable over REST (`lib/mcp-toolset.ts`; `MCP_TOOLSET=full` serves all 47) |
+| Site | built and live: a home page with two ways in, `/deprecations`, `/protocol`, `/radar`, `/governance`, `/feed`, `/ask`, and browsers for docs, forum, blog, videos, releases, projects and issues. Checked in a browser at desktop and phone width |
+| Distribution | prepared, nothing published yet: `server.json` for the MCP Registry, a Claude Code plugin marketplace (`.claude-plugin/`, `plugin/` with the server and a `near-current` skill), `public/llms.txt` and the IronClaw registry entry; steps in `docs/distribution/README.md` |
+| Daily database hash on NEAR | built, not yet deployed on mainnet (needs the team's account): `scripts/anchor-db.ts` hashes the database's content (a vacuumed copy hashes the same) and records it in `contracts/db-anchor`, a Rust contract that keeps one hash per date and refuses to change it or take one from anyone but its owner; `--verify <db>` checks any copy against the chain. Run end to end on a local nearcore 2.13.4 sandbox: record, re-run, matching copy, tampered copy, rewrite and stranger refused. `/api/v1/anchors` |
 
-**Hackathon work.** Everything after that tag: the NEAR rebrand, the NEAR sources, the deprecation engine, `check_code`, the RPC and House of Stake readers, the ecosystem, incident and partner data, the radar, the 21-tool MCP surface, the site pages, the NEAR AI Cloud integration, the database hash contract and the distribution files. The full difference is one link (Q-003): [`pre-hackathon...main`](https://github.com/UnityNodes/near-pedia/compare/pre-hackathon...main).
+<details>
+<summary><strong>What the corpus holds</strong></summary>
 
-**Code from our other projects.** `lib/retry.ts` and `lib/polite-fetch.ts` are ported from Monpedia, our Monad knowledge hub (October 2026); the port added conditional requests.
+As filled on 2026-11-02:
 
-**Third-party code.** Open-source libraries listed in `package.json` (Next.js, React, better-sqlite3, sqlite-vec, the MCP SDK, Express, zod, `@nearai/inference-sdk`, `near-api-js` and others) and `contracts/db-anchor/Cargo.toml` (`near-sdk`), each under its own license. Two Lottie animations are credited in `public/animations/CREDITS.txt`.
+| Source | Count |
+| --- | --- |
+| Documentation pages: docs.near.org, the Nomicon, NEAR AI Cloud, NEAR Intents, the Intents Agent API, Trezu | 483 |
+| gov.near.org topics (posts read for the 2,289 in the governance, staking, developer, ecosystem and education categories) | 2,834 |
+| near.org and near.ai blog posts | 670 |
+| Videos of the NEAR Protocol, NEAR DevHub and NEAR AI channels (1,806 with a description) | 1,837 |
+| Release notes | 1,328 |
+| NEAR Catalog projects | 340 |
+| Open issues and open pull requests of 19 NEAR repositories (with `GITHUB_TOKEN`) | 2,517 and 622 |
+| GitHub Discussions of 6 repositories (with `GITHUB_TOKEN`) | 255 |
+| NEP standards, for `get_standard` | 59 |
+| NEAR errors with quotes re-checked against docs.near.org and the Nomicon, for `explain_error` | 19 |
 
-**AI assistance.** The code in this repository, the baseline included, was written with Claude Code.
+Forum posts and GitHub bodies are stripped of their HTML and blog posts of the site's footer; videos are embedded once they have a description, releases only with notes. The first fill reads the posts of the 300 newest threads and 300 video descriptions; the schedule reads the rest (40 threads every 15 minutes, 300 descriptions a day).
 
-## Our other hackathon project
+</details>
 
-The team also submits **Hungry Minds**, an AI pet NFT that pays for its own thoughts from its own balance (tracks `nfts` and `games`). The two projects are independent and share no code (Q-015).
-
-## Layout
+<details>
+<summary><strong>Layout</strong></summary>
 
 ```
 app/            Next.js pages and route handlers
@@ -126,9 +191,36 @@ contracts/      db-anchor, the Rust contract that records the daily database has
 plugin/         Claude Code plugin: the MCP server and the near-current skill
 deploy/         systemd units, Caddyfile, sync-tick.sh, git hooks
 docs/           setup (cron) and distribution notes
+assets/         the images in this README
 tests/          Vitest
 ```
+
+</details>
+
+## What was built before the hackathon, and what during it
+
+Hackathon rules count work from 19 October 2026; everything earlier is a baseline (Q-001, Q-002, Q-005).
+
+**Baseline, not hackathon work.** The engine is a copy of `pedia-template`, the ecosystem-neutral engine we extracted from our earlier knowledge hubs [CCPEDIA](https://ccpedia.xyz) (Canton) and Blobpedia (Celestia). It brings the database layer, search and embeddings, the MCP and REST servers, the web UI, the sync runner and the standing checks. The repository's first commit is that copy, tagged [`pre-hackathon`](https://github.com/UnityNodes/near-pedia/tree/pre-hackathon).
+
+**Hackathon work.** Everything after that tag: the NEAR rebrand, the NEAR sources, the deprecation engine, `check_code`, the RPC, validator and House of Stake readers, the ecosystem, incident and partner data, the radar, the 27-tool MCP surface, the site pages, the NEAR AI Cloud integration, the database hash contract and the distribution files. The full difference is one link (Q-003): [`pre-hackathon...main`](https://github.com/UnityNodes/near-pedia/compare/pre-hackathon...main).
+
+**Code from our other projects.** `lib/retry.ts` and `lib/polite-fetch.ts` are ported from Monpedia, our Monad knowledge hub (October 2026); the port added conditional requests.
+
+**Third-party code.** Open-source libraries listed in `package.json` (Next.js, React, better-sqlite3, sqlite-vec, the MCP SDK, Express, zod, `@nearai/inference-sdk`, `near-api-js` and others) and `contracts/db-anchor/Cargo.toml` (`near-sdk`), each under its own license. Two Lottie animations are credited in `public/animations/CREDITS.txt`.
+
+**AI assistance.** The code in this repository, the baseline included, was written with Claude Code.
+
+## Our other hackathon project
+
+The team also submits **Hungry Minds**, an AI pet NFT that pays for its own thoughts from its own balance (tracks `nfts` and `games`). The two projects are independent and share no code (Q-015).
+
+## Not an official project
+
+NEAR-pedia is an independent community project. It is not a product of the NEAR Foundation, NEAR AI or House of Stake; it reads their public sources and links back to each.
 
 ## License
 
 [MIT](LICENSE).
+
+Maintained by [Unity Nodes](https://github.com/UnityNodes).
