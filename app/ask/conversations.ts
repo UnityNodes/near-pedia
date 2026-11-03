@@ -24,7 +24,6 @@ function isConversation(c: unknown): c is Conversation {
   return !!conv && typeof conv.id === 'string' && typeof conv.title === 'string' && typeof conv.updatedAt === 'string' && Array.isArray(conv.turns);
 }
 
-/** Reads what the browser kept: the current store, or the single chat an earlier version kept, as one conversation. */
 export function parseStore(current: string | null, legacy: string | null): ChatStore {
   try {
     if (current) {
@@ -43,7 +42,6 @@ export function parseStore(current: string | null, legacy: string | null): ChatS
   }
 }
 
-/** What is written back: answered turns only, without pasted code, newest conversations first and capped. */
 export function storable(store: ChatStore): ChatStore {
   const conversations = store.conversations
     .map((c) => ({ ...c, turns: c.turns.filter((t) => t.status === 'done').slice(-KEEP_TURNS).map((t) => (t.code ? { ...t, code: { text: '', filename: t.code.filename } } : t)) }))

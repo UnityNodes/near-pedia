@@ -89,7 +89,6 @@ export const CHAT_TIMEOUT_MS = 90_000;
 /** Kept just long enough for verifyResponse() to run right after the answer, instead of the SDK's 60 minutes. */
 const RESPONSE_CACHE_MS = 5 * 60_000;
 export const MAX_CONCURRENT = 4;
-/** One more try after a dropped connection or a 5xx from the gateway, within the same CHAT_TIMEOUT_MS. */
 const RETRY_DELAY_MS = 800;
 
 function isTransient(e: unknown): boolean {

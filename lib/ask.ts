@@ -58,14 +58,8 @@ export interface AskSource { n: number; kind: 'doc' | 'deprecation' | 'project' 
 /** A passage the meaning index found for the question: a forum post, a video transcript, an issue, a blog post. */
 export interface RelatedPassage { kind: string; title: string; url: string | null; as_of: string | null; text: string }
 
-/** One earlier exchange of the conversation, as the asker's browser sent it back. */
 export interface AskTurn { question: string; answer: string }
 
-/**
- * The earlier turns a follow-up refers to. They come from the client, so they
- * are checked for shape and size here and reach the model fenced as data,
- * never as assistant messages it could be made to continue.
- */
 export function parseHistory(raw: unknown): { turns: AskTurn[] } | { error: string } {
   if (raw === undefined || raw === null) return { turns: [] };
   if (!Array.isArray(raw)) return { error: 'history must be an array of { question, answer }' };
@@ -79,11 +73,6 @@ export function parseHistory(raw: unknown): { turns: AskTurn[] } | { error: stri
   return { turns };
 }
 
-/**
- * What the index is searched with: the new question first, so its words lead the
- * capped token and name lists, then the last earlier questions so "did it pass?"
- * still finds HSP-029.
- */
 export function retrievalQuery(question: string, history: readonly AskTurn[]): string {
   return [question, ...history.slice(-HISTORY_QUERY_TURNS).map((t) => t.question).reverse()].join('\n');
 }
