@@ -51,9 +51,8 @@ self.addEventListener('activate', (event) => {
 // Strategy:
 //   - GET only.
 //   - Bypassed paths → straight to network.
-//   - Same-origin /_next/static (content-hashed, immutable): stale-while-revalidate from RUNTIME cache.
-//   - Same-origin everything else (pages, RSC payloads, data): network first, the cache only when offline,
-//     so a deploy shows on the first visit after it instead of one visit later.
+//   - Same-origin /_next/static: stale-while-revalidate from RUNTIME cache.
+//   - Same-origin everything else: network first, the cache only when offline.
 //   - Cross-origin (e.g. youtube.com thumbnails): network-only.
 self.addEventListener('fetch', (event) => {
   const req = event.request;
