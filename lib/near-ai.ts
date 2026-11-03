@@ -89,6 +89,14 @@ export const CHAT_TIMEOUT_MS = 90_000;
 /** Kept just long enough for verifyResponse() to run right after the answer, instead of the SDK's 60 minutes. */
 const RESPONSE_CACHE_MS = 5 * 60_000;
 export const MAX_CONCURRENT = 4;
+/** One more try after a dropped connection or a 5xx from the gateway, within the same CHAT_TIMEOUT_MS. */
+const RETRY_DELAY_MS = 800;
+
+function isTransient(e: unknown): boolean {
+  const { name, status } = e as { name?: string; status?: unknown };
+  if (name === 'AbortError' || name === 'TimeoutError') return false;
+  return typeof status === 'number' ? status >= 500 : true;
+}
 
 let cached: { key: string; client: InferenceClient } | null = null;
 
@@ -126,10 +134,13 @@ export async function verifiedChat(
   if (inFlight >= MAX_CONCURRENT) throw new BusyError(`${MAX_CONCURRENT} answers are already being written; try again in a minute`);
   inFlight++;
   try {
-    const completion = await client.chat.completions.create(
-      { model: cfg.model, messages: [...messages], max_tokens: opts.maxTokens },
-      { signal: AbortSignal.timeout(CHAT_TIMEOUT_MS) },
-    );
+    const signal = AbortSignal.timeout(CHAT_TIMEOUT_MS);
+    const create = () => client.chat.completions.create({ model: cfg.model, messages: [...messages], max_tokens: opts.maxTokens }, { signal });
+    const completion = await create().catch(async (e: unknown) => {
+      if (!isTransient(e) || signal.aborted) throw e;
+      await new Promise((r) => setTimeout(r, RETRY_DELAY_MS));
+      return create();
+    });
     const choice = completion.choices[0];
     const text = choice?.message?.content?.trim() ?? '';
     let verified: VerifiedCompletionResult;
