@@ -92,12 +92,12 @@ mcp-server.js.map
 *.bak-*
 mcp-publisher
 
-# deploy build directories (see CLAUDE.md, Deploying)
+# deploy build directories
 /.next.new/
 /.next.prev/
 
 # Rust build output of contracts/*
 contracts/*/target/
 
-# Submission drafts: the X post and the form text are published by the maintainers, not committed
+# Submission drafts: the X post and the form text are published by hand, not committed
 docs/submission-drafts/

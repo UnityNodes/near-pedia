@@ -1,12 +1,12 @@
 # NEAR-pedia — deployment (do NOT run without explicit approval)
 
-Shared VPS (<server IP>). Ports: **3130** (Next.js web), **3131** (MCP `/mcp`
+A Linux server behind Cloudflare. Ports: **3130** (Next.js web), **3131** (MCP `/mcp`
 and the REST API `/api/v1`). Node **v22** (`/root/.nvm/versions/node/v22.18.0`).
 Domain **near-pedia.xyz**, behind Cloudflare like the other sites on this box.
 
 ## 0. Cloudflare (once, in the dashboard)
 1. Add `near-pedia.xyz` to Cloudflare and set the registrar's nameservers to the two Cloudflare gives.
-2. DNS: `A  @  <server IP>` and `CNAME  www  near-pedia.xyz`, both proxied (orange cloud).
+2. DNS: `A  @  <server IP>` and `CNAME  www  near-pedia.xyz`, both proxied (orange cloud), so the server's address stays private.
 3. SSL/TLS → Overview: **Full (strict)**.
 4. SSL/TLS → Origin Server → Create Certificate for `near-pedia.xyz, *.near-pedia.xyz`.
    Put the certificate in `/etc/ssl/cf-origin-nearpedia.pem` and the private key in
@@ -18,7 +18,7 @@ Create `/srv/nearpedia/.env.production` (chmod 600) from `.env.example`. Require
 `NEXT_PUBLIC_SITE_URL=https://near-pedia.xyz` (every canonical, sitemap and MCP link is
 built from it) and `GITHUB_TOKEN` (5000 calls an hour instead of 60). `NEARAI_API_KEY`
 turns on `/ask`, semantic search embeddings and the reranker. The `NEARPEDIA_ANCHOR_*`
-variables record the daily database hash on NEAR (see CLAUDE.md).
+variables record the daily database hash on NEAR (`scripts/anchor-db.ts`, `contracts/db-anchor`).
 
 ## 2. Build (with Node v22)
 ```bash
@@ -84,7 +84,5 @@ curl -s https://near-pedia.xyz/api/v1/sources        # via Caddy
 Feature branch → checked → merged into `main` → build → `systemctl restart
 nearpedia nearpedia-mcp` → post-deploy check (section 7). Tags: `pre-hackathon`
 is the baseline (never moved), release snapshots on `main` are semver tags
-(`git tag --sort=-v:refname | head -1` gives the latest). Push through
-`deploy/push-main.sh`, which reads `GITHUB_TOKEN` from `.env.production` for a
-one-off authenticated push and keeps it out of the output. Nothing is pushed,
+(`git tag --sort=-v:refname | head -1` gives the latest). Nothing is pushed,
 deployed or restarted without an explicit go from the maintainers.

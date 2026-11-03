@@ -39,7 +39,7 @@ const nextConfig: NextConfig = {
   // `next start` reads chunks from disk lazily, so `npm run build` into the live
   // .next can serve broken asset manifests until the restart lands. Building into
   // .next.new and swapping afterwards keeps that window to two renames. Defaults
-  // to .next, so nothing changes unless the variable is set (see CLAUDE.md).
+  // to .next, so nothing changes unless the variable is set.
   distDir: process.env.NEXT_DIST_DIR || '.next',
   images: {
     remotePatterns: REMOTE_IMAGES.map((p) => ({ ...p })),

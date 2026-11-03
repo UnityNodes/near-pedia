@@ -1,7 +1,7 @@
 # Security disclosure policy for NEAR-pedia
 # RFC 9116 — https://www.rfc-editor.org/rfc/rfc9116
 
-Contact: https://github.com/UnityNodes/nearpedia/security/advisories/new
+Contact: https://github.com/UnityNodes/near-pedia/security/advisories/new
 Contact: https://near-pedia.xyz/contact
 
 # Expires once a year. Renew before the date below.

@@ -15,8 +15,8 @@
  * Also found and fixed sync-ecosystem.ts using INSERT OR REPLACE: every
  * daily re-sync would have deleted-and-reinserted every row, silently
  * wiping fail_streak/dead_since/liveness back to their defaults the day
- * after this check first set them - the exact trap this app's own
- * CLAUDE.md documents for a different table. Converted to ON CONFLICT DO
+ * after this check first set them - the same trap an upsert with INSERT OR
+ * REPLACE sets for any table. Converted to ON CONFLICT DO
  * UPDATE naming only the columns that sync owns.
  *
  * The catalog is fed by an upstream list that keeps a project long after it
