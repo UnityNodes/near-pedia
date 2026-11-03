@@ -1,11 +1,9 @@
 # Distribution
 
 Where NEAR-pedia is listed so agents find it, and what each listing needs.
-Every step that publishes something is done only after the maintainers say yes;
-the files are ready in this repository before then.
-
-All of them carry `near-pedia.xyz`, the placeholder of the domain (see
-CLAUDE.md); replace it with the real one everywhere at once.
+Every step that publishes something is done by the maintainers; the files
+are ready in this repository before then. All of them carry the production
+domain, `near-pedia.xyz`.
 
 ## 1. One command, no listing
 
@@ -18,7 +16,7 @@ Codex, Cursor and other clients: the configurations on `/for-ai`.
 ## 2. Official MCP Registry
 
 `server.json` at the repository root (schema 2025-12-11): name
-`io.github.UnityNodes/nearpedia`, one remote, Streamable HTTP. The
+`io.github.UnityNodes/near-pedia`, one remote, Streamable HTTP. The
 `io.github.<owner>/` namespace is proven by logging in to the publisher with
 the GitHub account that owns the repository, so the repository has to be
 public first.
@@ -39,7 +37,7 @@ lists the plugin in `plugin/`, which bundles the MCP server and the
 `near-current` skill (check before writing NEAR code, check_code after).
 
 ```bash
-claude plugin marketplace add UnityNodes/nearpedia
+claude plugin marketplace add UnityNodes/near-pedia
 claude plugin install nearpedia@nearpedia
 ```
 

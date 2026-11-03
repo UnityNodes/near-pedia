@@ -120,7 +120,7 @@ function main(): void {
   }
 
   // tsconfig.json already covers scripts/ (unlike the template this was
-  // forked from, where it didn't and hid a live regression - see CLAUDE.md),
+  // forked from, where it didn't and hid a live regression),
   // so a plain --noEmit is the same check `npm run build`'s type pass runs.
   // Still worth asserting here: this repo has no CI, so this daily check is
   // the only thing that runs it unless someone remembers to by hand.

@@ -3,10 +3,8 @@
 # Symlinks the tracked hook templates into .git/hooks/.
 # Run once after `git clone`, and again whenever deploy/hooks/* changes.
 #
-# CLAUDE.md has told every reader to run this since before the file existed:
-# a fresh clone got "No such file or directory", and the secret-leak backstop
-# the same paragraph describes was never installed. A documented step that
-# cannot be taken is worse than an undocumented one, because it reads as done.
+# The hooks are the backstop against committing or pushing a .env file; a
+# fresh clone does not have them until this runs.
 
 set -euo pipefail
 

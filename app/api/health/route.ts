@@ -40,7 +40,7 @@ export async function GET(req: Request) {
     uptime_s: Math.floor((Date.now() - START) / 1000),
     db: { ok: false, docs: 0, last_sync: null, embeddings: 0 },
     build_time: process.env.BUILD_TIME,
-    // package.json's version isn't maintained (CLAUDE.md says so), so this
+    // package.json's version isn't maintained (semver tags are), so this
     // reported 0.1.0 forever and answered nothing. The commit the bundle was
     // built from is the fact an operator actually needs, and
     // scripts/check-deployed.ts compares it to HEAD.

@@ -100,9 +100,9 @@ Then ask Claude Code to write a NEAR contract in JavaScript with meta-transactio
 
 Hackathon rules count work from 19 October 2026; everything earlier is a baseline (Q-001, Q-002, Q-005).
 
-**Baseline, not hackathon work.** The engine is a copy of `pedia-template`, the ecosystem-neutral engine we extracted from our earlier knowledge hubs [CCPEDIA](https://ccpedia.xyz) (Canton) and Blobpedia (Celestia). It brings the database layer, search and embeddings, the MCP and REST servers, the web UI, the sync runner and the standing checks. The repository's first commit is that copy, tagged [`pre-hackathon`](https://github.com/UnityNodes/nearpedia/tree/pre-hackathon).
+**Baseline, not hackathon work.** The engine is a copy of `pedia-template`, the ecosystem-neutral engine we extracted from our earlier knowledge hubs [CCPEDIA](https://ccpedia.xyz) (Canton) and Blobpedia (Celestia). It brings the database layer, search and embeddings, the MCP and REST servers, the web UI, the sync runner and the standing checks. The repository's first commit is that copy, tagged [`pre-hackathon`](https://github.com/UnityNodes/near-pedia/tree/pre-hackathon).
 
-**Hackathon work.** Everything after that tag: the NEAR rebrand, the NEAR sources, the deprecation engine, `check_code`, the RPC and House of Stake readers, the ecosystem, incident and partner data, the radar, the 21-tool MCP surface, the site pages, the NEAR AI Cloud integration, the database hash contract and the distribution files. The full difference is one link (Q-003): [`pre-hackathon...main`](https://github.com/UnityNodes/nearpedia/compare/pre-hackathon...main).
+**Hackathon work.** Everything after that tag: the NEAR rebrand, the NEAR sources, the deprecation engine, `check_code`, the RPC and House of Stake readers, the ecosystem, incident and partner data, the radar, the 21-tool MCP surface, the site pages, the NEAR AI Cloud integration, the database hash contract and the distribution files. The full difference is one link (Q-003): [`pre-hackathon...main`](https://github.com/UnityNodes/near-pedia/compare/pre-hackathon...main).
 
 **Code from our other projects.** `lib/retry.ts` and `lib/polite-fetch.ts` are ported from Monpedia, our Monad knowledge hub (October 2026); the port added conditional requests.
 
@@ -121,11 +121,9 @@ mcp-server.ts   MCP server and REST API v1
 contracts/      db-anchor, the Rust contract that records the daily database hash
 plugin/         Claude Code plugin: the MCP server and the near-current skill
 deploy/         systemd units, Caddyfile, sync-tick.sh, git hooks
-docs/           architecture and operations notes
+docs/           setup (cron) and distribution notes
 tests/          Vitest
 ```
-
-[`docs/architecture/`](docs/architecture/README.md) explains how the engine works and the landmines already found in it.
 
 ## License
 

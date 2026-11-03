@@ -33,7 +33,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? SITE.url),
   // title.template appends " | <SITE.name>" to every page that sets a bare title.
   // Per-page metadata MUST use bare titles (e.g. "Docs") — never include the
-  // brand suffix manually, or it doubles. Template gotcha: docs/architecture/gotchas.md.
+  // brand suffix manually, or it doubles.
   title: {
     default: SITE_TITLE,
     template: `%s | ${SITE.name}`,
