@@ -2,31 +2,18 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { getDb } from '../lib/db';
 import { checkCode } from '../lib/check-code';
-import { clip, isChecked } from '../github-action/lib.mjs';
+import { clip } from '../github-action/lib.mjs';
+import { listCodeFiles } from '../lib/repo-files';
 
 const STALE = new Set(['deprecated', 'removed', 'changed']);
 const STATS_SKIP = new Set(['view-access-key-list-unpaginated', 'experimental-tx-status']);
-const SKIP_DIR = /^(node_modules|target|dist|build|out|vendor|\.next|coverage|\.git)$/;
 const NOT_CODE_PATH = /(^|\/)(tests?|__tests__|fixtures?|mocks?|examples?|docs?)\/|\.(test|spec)\.[a-z]+$/i;
 const COMMENT = /^(\/\/|\/\*|\*|#(?!\[)|<!--)/;
-const MAX_BYTES = 2_000_000;
 
-function files(base: string, dir = base, out: string[] = []): string[] {
-  for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
-    const full = path.join(dir, e.name);
-    if (e.isDirectory()) {
-      if (!SKIP_DIR.test(e.name)) files(base, full, out);
-    } else if (e.isFile()) {
-      const rel = path.relative(base, full);
-      if (isChecked(rel) && !NOT_CODE_PATH.test(rel) && fs.statSync(full).size < MAX_BYTES) out.push(rel);
-    }
-  }
-  return out;
-}
 
 function staleIn(db: ReturnType<typeof getDb>, base: string): Map<string, number> {
   const hits = new Map<string, number>();
-  for (const rel of files(base)) {
+  for (const rel of listCodeFiles(base).filter((f) => !NOT_CODE_PATH.test(f))) {
     const text = fs.readFileSync(path.join(base, rel), 'utf8');
     const { code } = clip(text);
     if (!code.trim()) continue;
