@@ -3,7 +3,7 @@
    v2: cache invalidation after Cloudflare Email Obfuscation removal —
        stale shells were still injecting cdn-cgi/email-decode script.
    Bumping the version below invalidates all old caches on next load. */
-const VERSION = 'v5';
+const VERSION = 'v6';
 const RUNTIME = `nearpedia-runtime-${VERSION}`;
 const SHELL = `nearpedia-shell-${VERSION}`;
 
@@ -51,7 +51,9 @@ self.addEventListener('activate', (event) => {
 // Strategy:
 //   - GET only.
 //   - Bypassed paths → straight to network.
-//   - Same-origin: stale-while-revalidate from RUNTIME cache.
+//   - Same-origin /_next/static (content-hashed, immutable): stale-while-revalidate from RUNTIME cache.
+//   - Same-origin everything else (pages, RSC payloads, data): network first, the cache only when offline,
+//     so a deploy shows on the first visit after it instead of one visit later.
 //   - Cross-origin (e.g. youtube.com thumbnails): network-only.
 self.addEventListener('fetch', (event) => {
   const req = event.request;
@@ -69,19 +71,19 @@ self.addEventListener('fetch', (event) => {
       .then((res) => {
         // Only cache successful, basic responses (no opaque, no redirects).
         if (res && res.status === 200 && res.type === 'basic') {
-          cache.put(req, res.clone());
+          event.waitUntil(cache.put(req, res.clone()));
         }
         return res;
       })
       .catch(() => null);
 
-    // Stale-while-revalidate: return cached now, refresh in the background.
-    if (cached) {
+    if (cached && url.pathname.startsWith('/_next/static/')) {
       event.waitUntil(network);
       return cached;
     }
 
     const res = await network;
+    if (cached && (!res || res.status >= 500)) return cached;
     if (res) return res;
 
     // Offline + no cache: serve the shell '/' as a last-ditch HTML so
