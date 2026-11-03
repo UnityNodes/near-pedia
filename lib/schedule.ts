@@ -49,6 +49,14 @@ export const TOLERANCE_HOURS: Record<string, number> = {
  */
 export const GUARDED_TOLERANCE_HOURS: Record<string, number> = {};
 
+export const OWN_CRON_TOLERANCE_HOURS: Record<string, number> = {
+  'backup-db': 36,
+  'backup-offbox': 36,
+  'backup-freshness': 3,
+  'restore-drill-local': 200,
+  'restore-drill-offbox': 200,
+};
+
 export interface Scheduled { bucket: string; guard: string | null }
 
 /**
@@ -142,6 +150,9 @@ export function toleranceSecondsBySource(): Map<string, number> {
     // late as soon as the most frequent thing that writes it is.
     const prev = out.get(source);
     if (prev === undefined || secs < prev) out.set(source, secs);
+  }
+  for (const [source, hours] of Object.entries(OWN_CRON_TOLERANCE_HOURS)) {
+    if (!out.has(source)) out.set(source, hours * 3600);
   }
   return out;
 }

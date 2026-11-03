@@ -13,25 +13,17 @@ sudo -n crontab -l -u root
 ```
 
 ```cron
-# health watchdog, every minute
-* * * * * /usr/local/bin/nearpedia-watchdog.sh
-
-# plain-fetch sync buckets, bucketed by cost/freshness
-*/5  * * * *   /srv/nearpedia/deploy/sync-tick.sh fast   >> /var/log/nearpedia-sync.log 2>&1
-*/15 * * * *   /srv/nearpedia/deploy/sync-tick.sh medium >> /var/log/nearpedia-sync.log 2>&1
-0 */6 * * *    /srv/nearpedia/deploy/sync-tick.sh slow   >> /var/log/nearpedia-sync.log 2>&1
-15 3 * * *     /srv/nearpedia/deploy/sync-tick.sh daily  >> /var/log/nearpedia-sync.log 2>&1
-30 4 * * 1     /srv/nearpedia/deploy/sync-tick.sh weekly >> /var/log/nearpedia-sync.log 2>&1
-
-# DB backup
-30 4 * * *     PEDIA_DB=/srv/nearpedia/data/nearpedia.db PEDIA_BACKUP_DIR=/srv/nearpedia/data/backups /srv/nearpedia/scripts/backup-db.sh >> /var/log/nearpedia-sync.log 2>&1
-
-# staleness watchdog — hits the live site, not the DB directly
-17 * * * *     BASE_URL=http://127.0.0.1:3130 FAIL_ON_STALE=0 /srv/nearpedia/scripts/check-sync-staleness.sh >> /var/log/nearpedia-staleness.log 2>&1
+2-59/5 * * * * /srv/nearpedia/deploy/sync-tick.sh fast   >> /var/log/nearpedia-sync.log 2>&1
+7-59/15 * * * * /srv/nearpedia/deploy/sync-tick.sh medium >> /var/log/nearpedia-sync.log 2>&1
+20 */6 * * *   /srv/nearpedia/deploy/sync-tick.sh slow   >> /var/log/nearpedia-sync.log 2>&1
+45 3 * * *     /srv/nearpedia/deploy/sync-tick.sh daily  >> /var/log/nearpedia-sync.log 2>&1
+50 4 * * 1     /srv/nearpedia/deploy/sync-tick.sh weekly >> /var/log/nearpedia-sync.log 2>&1
+* * * * *      /usr/local/bin/nearpedia-watchdog.sh
+# NEARpedia — daily DB backup, local + off-box to gdrive:nearpedia-backups (docs/setup/CRON_SETUP.md)
+20 5 * * *     PEDIA_OFFBOX_REMOTE=gdrive:nearpedia-backups RCLONE_CONFIG=/home/claude/.config/rclone/rclone.conf /srv/nearpedia/scripts/backup-db.sh >> /var/log/nearpedia-backup.log 2>&1
 ```
 
-(`PEDIA_DB` / `PEDIA_BACKUP_DIR` are historical env-var names carried over
-from `backup-db.sh`'s origin; they point at nearpedia's own DB path.)
+The buckets are offset from the other projects on this box (`2-59/5`, `7-59/15`, `:20`, `03:45`, `04:50`), and the backup runs at 05:20 UTC, after the other projects' backups (03:00 to 04:30) and outside the Monday weekly bucket. `scripts/check-sync-staleness.sh` exists but is not installed.
 
 ## What each bucket does
 
@@ -45,12 +37,12 @@ for the current, authoritative list — this is a summary, not a mirror:
 - **`slow`** (every 6 h) — `sync-docs`, `sync-packages`, `build-deprecations`,
   `sync-github-discussions`, `sync-github-items`, `sync-network-stats`, then
   `build-embeddings`.
-- **`daily`** (03:15) — `sync-repos`, the full releases read, the YouTube,
+- **`daily`** (03:45) — `sync-repos`, the full releases read, the YouTube,
   ecosystem, incident, partner-docs, Nomicon, NEP and blog syncs,
   `build-embeddings`, `anchor-db`, then the full `check-*.ts` suite (dozens of
   scripts — `check-sql`, `check-completeness`, `check-citations`,
   `check-fencing`, and many more), finishing with `prune-logs`.
-- **`weekly`** (Mondays 04:30) — `sync-forum --full`, `sync-blog --full`.
+- **`weekly`** (Mondays 04:50) — `sync-forum --full`, `sync-blog --full`.
 - **`all`** — every plain-fetch sync in one pass + embed; not on cron, run by
   hand for a first data load or a full backfill (`deploy/sync-tick.sh all`).
 
@@ -61,11 +53,44 @@ Every sync script is invoked as `npx tsx scripts/<name>.ts` — there is no
 build step for any of this; editing a script under `scripts/` changes cron's
 next run, live, with no restart.
 
+## Backups
+
+`scripts/backup-db.sh` runs once a day from the root crontab, not from a sync-tick bucket:
+
+1. It copies the live database with `VACUUM INTO`, checks the copy with `PRAGMA integrity_check`, and runs `ANALYZE` on the live database.
+2. It gzips the copy to `/var/backups/nearpedia/nearpedia-YYYY-MM-DD.db.gz` and keeps 30 days there.
+3. It uploads the copy to `gdrive:nearpedia-backups` with rclone, verifies the checksum with `rclone check`, keeps 7 daily copies and, from Sundays, 4 weekly copies in `weekly/`.
+
+The local copies sit on the same RAID0 stripe as the live database, so the Drive copy is the one that survives the box.
+
+- **Remote.** `gdrive` in `/home/claude/.config/rclone/rclone.conf`: the team's Google Drive account, `drive.file` scope. The folder `nearpedia-backups` is this project's alone; other projects' folders on the same Drive are not touched. The script defaults to this remote and config; the cron line also sets both, so it does not depend on which copy of the script is deployed.
+- **Outcome rows.** Each run writes one `sync_log` row per leg: `backup-db` and `backup-offbox`. An off-box failure logs an error row but does not fail the local backup.
+- **Freshness.** `scripts/check-backup-freshness.sh` writes `backup-freshness` as an error row when the last successful `backup-db` or `backup-offbox` row is more than 36 hours old (`BACKUP_MAX_AGE_HOURS`). `lib/schedule.ts` gives these sources a deadline, so `check-failures` treats such a row as an open failure and `/api/metrics` publishes their age.
+- **Restore drill.** `scripts/backup-restore-drill.sh` restores the newest local copy and the newest Drive copy, downloaded fresh, into scratch databases beside the live one. It checks both with `integrity_check` and compares the row counts of six key tables against live: a restore must hold at least 80%. It writes `restore-drill-local` and `restore-drill-offbox`.
+
+Cron lines for the last two, to install once they are deployed to `/srv/nearpedia`:
+
+```cron
+40 * * * *     /srv/nearpedia/scripts/check-backup-freshness.sh >> /var/log/nearpedia-backup.log 2>&1
+40 5 * * 2     /srv/nearpedia/scripts/backup-restore-drill.sh   >> /var/log/nearpedia-backup.log 2>&1
+```
+
+Where to look:
+
+```bash
+tail -50 /var/log/nearpedia-backup.log
+sudo ls -la /var/backups/nearpedia/
+sudo rclone lsl gdrive:nearpedia-backups --config /home/claude/.config/rclone/rclone.conf
+sqlite3 /srv/nearpedia/data/nearpedia.db "SELECT source, status, ran_at, error FROM sync_log WHERE source LIKE 'backup%' OR source LIKE 'restore-drill%' ORDER BY id DESC LIMIT 10;"
+```
+
+To restore: download the file and `gunzip` it, stop both services (`systemctl stop nearpedia nearpedia-mcp`), move the old `data/nearpedia.db` and its `-wal` and `-shm` files aside, put the restored file in its place, and start both services again.
+
 ## Logs
 
 ```bash
 tail -f /var/log/nearpedia-sync.log        # sync-tick.sh output
-tail -f /var/log/nearpedia-staleness.log   # check-sync-staleness.sh output
+tail -f /var/log/nearpedia-backup.log      # backup, freshness check and restore drill
 ```
 
 Both files are plain `>>` appends with no rotation configured in the crontab
@@ -132,9 +157,9 @@ curl -fs --max-time 10 http://127.0.0.1:3131/health      >/dev/null 2>&1 || syst
 
 This restarts the **web app or MCP server process**, not a sync — it has
 nothing to do with whether data is fresh, only whether the two services are
-answering. Staleness (data not being refreshed) is a separate concern, caught
-by `check-sync-staleness.sh` above, which reads `/api/metrics` on the live
-site rather than querying the DB directly.
+answering. Staleness (data not being refreshed) is a separate concern: `/api/metrics`
+publishes each source's age beside its deadline, and
+`scripts/check-sync-staleness.sh` reads it, but that script is not installed in cron.
 
 ## Troubleshooting checklist
 
