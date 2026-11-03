@@ -66,7 +66,7 @@ export function AskComposer({ busy, onSend }: { busy: boolean; onSend: (draft: D
           <ArrowUp size={18} />
         </button>
       </div>
-      <p className="ak-hint">Enter sends, Shift+Enter starts a new line. Follow-ups see the last three exchanges.</p>
+      <p className="ak-hint">Answers come only from the cited sources. Check them before you rely on one.</p>
     </form>
   );
 }
