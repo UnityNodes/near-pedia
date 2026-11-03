@@ -22,7 +22,7 @@ export interface ActivityItem {
   id: string;
   /** One-line title shown to the agent / user */
   title: string;
-  /** Canonical NEAR-pedia URL when applicable, else null */
+  /** Canonical NEARpedia URL when applicable, else null */
   url: string | null;
   /** Free-form extra fields per kind (status, repo, level, group, etc.) */
   meta?: Record<string, unknown>;

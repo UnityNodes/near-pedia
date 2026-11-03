@@ -1,4 +1,4 @@
-# Security disclosure policy for NEAR-pedia
+# Security disclosure policy for NEARpedia
 # RFC 9116 — https://www.rfc-editor.org/rfc/rfc9116
 
 Contact: https://github.com/UnityNodes/near-pedia/security/advisories/new

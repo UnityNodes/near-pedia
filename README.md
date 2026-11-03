@@ -1,23 +1,23 @@
 <p align="center">
-  <img src="assets/banner.svg" alt="NEAR-pedia. What NEAR looks like today. A terminal session: an agent adds the NEAR-pedia MCP server (27 tools), check_code names near-sdk-js, DelegateV2 and keyStores in its file with their replacements, get_validators and get_proposal answer live." width="100%">
+  <img src="assets/banner.svg" alt="NEARpedia. What NEAR looks like today. A terminal session: an agent adds the NEARpedia MCP server (27 tools), check_code names near-sdk-js, DelegateV2 and keyStores in its file with their replacements, get_validators and get_proposal answer live." width="100%">
 </p>
 
 <p align="center">
-  <a href="#connect-an-agent"><img alt="Connect an agent" src="https://img.shields.io/badge/CONNECT_AN_AGENT-D4FF00?style=for-the-badge&logo=modelcontextprotocol&logoColor=0A0B0F"></a>
-  <a href="https://near-pedia.xyz"><img alt="Live site near-pedia.xyz" src="https://img.shields.io/badge/LIVE-near--pedia.xyz-21262D?style=for-the-badge&labelColor=4F6500"></a>
-  <a href="https://near-pedia.xyz/ask"><img alt="Ask a question" src="https://img.shields.io/badge/ASK-a_question-21262D?style=for-the-badge&labelColor=4F6500"></a>
-  <a href="https://near-pedia.xyz/for-ai"><img alt="MCP setup for every client" src="https://img.shields.io/badge/MCP-every_client-21262D?style=for-the-badge&labelColor=4F6500"></a>
+  <a href="#connect-an-agent"><img alt="Connect an agent" src="https://img.shields.io/badge/CONNECT_AN_AGENT-00EC97?style=for-the-badge&logo=modelcontextprotocol&logoColor=0B0B0C"></a>
+  <a href="https://near-pedia.xyz"><img alt="Live site near-pedia.xyz" src="https://img.shields.io/badge/LIVE-near--pedia.xyz-21262D?style=for-the-badge&labelColor=008F5D"></a>
+  <a href="https://near-pedia.xyz/ask"><img alt="Ask a question" src="https://img.shields.io/badge/ASK-a_question-21262D?style=for-the-badge&labelColor=008F5D"></a>
+  <a href="https://near-pedia.xyz/for-ai"><img alt="MCP setup for every client" src="https://img.shields.io/badge/MCP-every_client-21262D?style=for-the-badge&labelColor=008F5D"></a>
 </p>
 
 <p align="center">
   <a href="https://github.com/UnityNodes/near-pedia/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/UnityNodes/near-pedia/actions/workflows/ci.yml/badge.svg"></a>
-  <a href="LICENSE"><img alt="License MIT" src="https://img.shields.io/badge/license-MIT-4F6500"></a>
-  <img alt="Node 22" src="https://img.shields.io/badge/node-22-4F6500?logo=nodedotjs&logoColor=white">
-  <img alt="MCP over Streamable HTTP" src="https://img.shields.io/badge/MCP-Streamable_HTTP-4F6500">
-  <img alt="NEAR mainnet" src="https://img.shields.io/badge/network-NEAR_mainnet-4F6500">
+  <a href="LICENSE"><img alt="License MIT" src="https://img.shields.io/badge/license-MIT-008F5D"></a>
+  <img alt="Node 22" src="https://img.shields.io/badge/node-22-008F5D?logo=nodedotjs&logoColor=white">
+  <img alt="MCP over Streamable HTTP" src="https://img.shields.io/badge/MCP-Streamable_HTTP-008F5D">
+  <img alt="NEAR mainnet" src="https://img.shields.io/badge/network-NEAR_mainnet-008F5D">
 </p>
 
-Live NEAR knowledge for AI agents. NEAR-pedia is an MCP server and REST API that tells a coding agent when the NEAR code it is about to write is already stale, and gives the replacement, with a source and a date on every answer. The same index serves people researching NEAR: a site and an `/ask` chat about protocol upgrades, House of Stake votes, validators, projects and incidents.
+Live NEAR knowledge for AI agents. NEARpedia is an MCP server and REST API that tells a coding agent when the NEAR code it is about to write is already stale, and gives the replacement, with a source and a date on every answer. The same index serves people researching NEAR: a site and an `/ask` chat about protocol upgrades, House of Stake votes, validators, projects and incidents.
 
 Built for the NEAR Hackathon (1–14 November 2026, tracks `open` and `agents`). Live at [near-pedia.xyz](https://near-pedia.xyz) since 2 November 2026; the MCP endpoint `https://near-pedia.xyz/mcp` needs no key.
 
@@ -207,7 +207,7 @@ Hackathon rules count work from 19 October 2026; everything earlier is a baselin
 
 **Code from our other projects.** `lib/retry.ts` and `lib/polite-fetch.ts` are ported from Monpedia, our Monad knowledge hub (October 2026); the port added conditional requests.
 
-**Third-party code.** Open-source libraries listed in `package.json` (Next.js, React, better-sqlite3, sqlite-vec, the MCP SDK, Express, zod, `@nearai/inference-sdk`, `near-api-js` and others) and `contracts/db-anchor/Cargo.toml` (`near-sdk`), each under its own license. Two Lottie animations are credited in `public/animations/CREDITS.txt`.
+**Third-party code.** Open-source libraries listed in `package.json` (Next.js, React, better-sqlite3, sqlite-vec, the MCP SDK, Express, zod, `@nearai/inference-sdk`, `near-api-js` and others) and `contracts/db-anchor/Cargo.toml` (`near-sdk`), each under its own license. Two Lottie animations are credited in `public/animations/CREDITS.txt`. The site and the images in `assets/` use Space Grotesk and JetBrains Mono, both under the SIL Open Font License 1.1.
 
 **AI assistance.** The code in this repository, the baseline included, was written with Claude Code.
 
@@ -217,7 +217,7 @@ The team also submits **Hungry Minds**, an AI pet NFT that pays for its own thou
 
 ## Not an official project
 
-NEAR-pedia is an independent community project. It is not a product of the NEAR Foundation, NEAR AI or House of Stake; it reads their public sources and links back to each.
+NEARpedia is an independent community project. It is not a product of the NEAR Foundation, NEAR AI or House of Stake; it reads their public sources and links back to each.
 
 ## License
 

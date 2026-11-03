@@ -1,11 +1,11 @@
 ---
 name: near-current
-description: Use before writing, reviewing or upgrading NEAR Protocol code (smart contracts, near-api-js, near-sdk, cargo-near, wallet connections, RPC calls), or when answering what is happening on NEAR (protocol upgrades, House of Stake votes, validators and staking, projects, incidents, news). Checks code and answers against NEAR-pedia's live index instead of trusting training data.
+description: Use before writing, reviewing or upgrading NEAR Protocol code (smart contracts, near-api-js, near-sdk, cargo-near, wallet connections, RPC calls), or when answering what is happening on NEAR (protocol upgrades, House of Stake votes, validators and staking, projects, incidents, news). Checks code and answers against NEARpedia's live index instead of trusting training data.
 ---
 
 # Writing NEAR code against what NEAR looks like today
 
-Your training data predates changes NEAR has made: near-sdk-js is archived, DelegateV2 was removed in nearcore 2.14.0, the @near-js/* packages stopped at 2.5.1 in favour of near-api-js 7.x, wallet-selector gave way to @hot-labs/near-connect. The NEAR-pedia MCP tools answer from NEAR's own sources as they are now.
+Your training data predates changes NEAR has made: near-sdk-js is archived, DelegateV2 was removed in nearcore 2.14.0, the @near-js/* packages stopped at 2.5.1 in favour of near-api-js 7.x, wallet-selector gave way to @hot-labs/near-connect. The NEARpedia MCP tools answer from NEAR's own sources as they are now.
 
 ## Before writing
 

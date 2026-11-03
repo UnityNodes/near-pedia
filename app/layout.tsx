@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-import { Geist, JetBrains_Mono } from 'next/font/google';
+import { Space_Grotesk, JetBrains_Mono } from 'next/font/google';
 import { AppProvider } from '@/components/app-context';
 import { Topbar } from '@/components/topbar';
 import { SiteFooter } from '@/components/site-footer';
@@ -10,7 +10,7 @@ import { SITE, SITE_TITLE } from '@/lib/site.config';
 import './globals.css';
 import './design.css';
 
-const geist = Geist({
+const spaceGrotesk = Space_Grotesk({
   subsets: ['latin'],
   variable: '--font-display',
   display: 'swap',
@@ -27,6 +27,7 @@ const SITE_DESCRIPTION = SITE.description;
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
+  themeColor: '#0B0B0C',
 };
 
 export const metadata: Metadata = {
@@ -52,9 +53,12 @@ export const metadata: Metadata = {
     description: SITE_DESCRIPTION,
   },
   icons: {
-    icon: SITE.logo.icon,
-    shortcut: SITE.logo.icon,
-    apple: SITE.logo.icon,
+    icon: [
+      { url: '/favicon.ico', sizes: '48x48' },
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+    ],
+    shortcut: '/favicon.ico',
+    apple: '/apple-touch-icon.png',
   },
   appleWebApp: {
     title: SITE.name,
@@ -129,7 +133,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <head>
         <ThemeInit />
         {/* No preconnect to Google Fonts: the typefaces are self-hosted through
-            next/font (geist, jetbrainsMono) and nothing on the site loads
+            next/font (spaceGrotesk, jetbrainsMono) and nothing on the site loads
             from googleapis at runtime. Dead hints like these generated CSP
             report noise once, when an external audit found them alongside a
             genuinely blocked stylesheet request. */}
@@ -137,7 +141,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <link rel="dns-prefetch" href="https://img.youtube.com" />
         <JsonLd payload={[WEBSITE_SCHEMA, ORGANIZATION_SCHEMA]} />
       </head>
-      <body className={`${geist.variable} ${jetbrainsMono.variable}`} style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+      <body className={`${spaceGrotesk.variable} ${jetbrainsMono.variable}`} style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
         <a href="#main-content" className="skip-to-content">Skip to content</a>
         <ServiceWorkerRegister />
         <AppProvider>

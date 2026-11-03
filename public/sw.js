@@ -1,9 +1,9 @@
-/* NEAR-pedia Service Worker
+/* NEARpedia Service Worker
    v1: offline-resilient cache for shell + reads.
    v2: cache invalidation after Cloudflare Email Obfuscation removal —
        stale shells were still injecting cdn-cgi/email-decode script.
    Bumping the version below invalidates all old caches on next load. */
-const VERSION = 'v4';
+const VERSION = 'v5';
 const RUNTIME = `nearpedia-runtime-${VERSION}`;
 const SHELL = `nearpedia-shell-${VERSION}`;
 
@@ -11,9 +11,10 @@ const SHELL = `nearpedia-shell-${VERSION}`;
 const SHELL_URLS = [
   '/',
   '/manifest.webmanifest',
-  '/logo-light.png',
-  '/logo-dark.png',
-  '/icon.png',
+  '/brand/logo-horizontal-light.svg',
+  '/brand/logo-horizontal-dark.svg',
+  '/favicon.svg',
+  '/icon-192.png',
 ];
 
 // Paths the SW must never cache or touch.

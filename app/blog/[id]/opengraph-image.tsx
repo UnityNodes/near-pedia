@@ -3,6 +3,7 @@ import { readFile } from 'fs/promises';
 import path from 'path';
 import { authorLabel, getBlogPost, kindLabel, shortLine } from '@/lib/blog';
 import { SITE } from '@/lib/site.config';
+import { OG_FONT_FAMILY, ogFonts } from '@/lib/og-fonts';
 
 export const runtime = 'nodejs';
 export const alt = 'NEAR blog post';
@@ -15,8 +16,8 @@ export default async function Image({ params }: { params: Promise<{ id: string }
   const { id } = await params;
   const post = getBlogPost(id);
 
-  const logoBuffer = await readFile(path.join(process.cwd(), 'public/logo-light.png'));
-  const logoSrc = `data:image/png;base64,${logoBuffer.toString('base64')}`;
+  const logoBuffer = await readFile(path.join(process.cwd(), 'public', SITE.logo.mark));
+  const logoSrc = `data:image/svg+xml;base64,${logoBuffer.toString('base64')}`;
 
   const title = post?.title ?? 'NEAR blog post';
   const excerpt = post ? shortLine(post.excerpt, post.content_text, EXCERPT_CHARS) : '';
@@ -32,10 +33,10 @@ export default async function Image({ params }: { params: Promise<{ id: string }
           height: '100%',
           display: 'flex',
           flexDirection: 'column',
-          background: '#0A0B0F',
-          color: '#ffffff',
+          background: '#0B0B0C',
+          color: '#F2F2EE',
           padding: '64px 80px',
-          fontFamily: 'system-ui, -apple-system, "Segoe UI", sans-serif',
+          fontFamily: OG_FONT_FAMILY,
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
@@ -51,7 +52,7 @@ export default async function Image({ params }: { params: Promise<{ id: string }
               fontWeight: 800,
               lineHeight: 1.15,
               letterSpacing: -1,
-              color: '#D4FF00',
+              color: '#00EC97',
               display: '-webkit-box',
               WebkitLineClamp: 3,
               WebkitBoxOrient: 'vertical',
@@ -83,6 +84,6 @@ export default async function Image({ params }: { params: Promise<{ id: string }
         </div>
       </div>
     ),
-    size,
+    { ...size, fonts: await ogFonts() },
   );
 }
