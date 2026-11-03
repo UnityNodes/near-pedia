@@ -76,6 +76,22 @@ describe('verifiedChat', () => {
     expect(refused.calls()).toBe(1);
   });
 
+  it('waits for a signature NEAR AI has not published yet, and gives up on any other verify error', async () => {
+    let calls = 0;
+    const late = { ...client({}), verifyResponse: async () => {
+      calls++;
+      if (calls === 1) throw new Error('[api.http_status] Cloud API completion signature returned HTTP 404');
+      return sig('provider_tee') as never;
+    } };
+    expect((await verifiedChat(cfg, msgs, { maxTokens: 10 }, late)).receipt.signature_kind).toBe('provider_tee');
+    expect(calls).toBe(2);
+  }, 10_000);
+
+  it('signs the receipt with the model the call asked for', async () => {
+    const r = await verifiedChat(cfg, msgs, { maxTokens: 10, model: 'Qwen/Qwen3.8-27B' }, client({}));
+    expect(r.receipt.model).toBe('Qwen/Qwen3.8-27B');
+  });
+
   it('says when the answer hit its length limit', async () => {
     expect((await verifiedChat(cfg, msgs, { maxTokens: 10 }, client({ finish: 'length' }))).truncated).toBe(true);
   });
