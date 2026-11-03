@@ -27,7 +27,7 @@ const SKIP_SECTION = /\b(?:fix|fixes|fixed|bug|refactor|chore|misc|miscellaneous
  * something a caller's code depends on.
  */
 const HOUSEKEEPING = /\b(?:redundant|unused|unnecessary|duplicated?|dead|leftover)\b/i;
-const NOT_AN_INTERFACE = /^\s*(?:diagnostics?|lints?|warnings?|logs?|logging|tests?|examples?|comments?|assertions?|limits?|dependency|dependencies|requirements?|checks?|restrictions?|bounds?|constraints?|validations?)\b/i;
+const NOT_AN_INTERFACE = /^\s*(?:diagnostics?|lints?|warnings?|logs?|logging|tests?|examples?|comments?|assertions?|limits?|dependency|dependencies|requirements?|checks?|restrictions?|bounds?|constraints?|validations?|feature[\s-]+(?:gates?|gating|flags?))\b/i;
 
 const VERB = /^(removed?|removes|dropped|deprecated?|deprecates|stabili[sz]ed)\b/i;
 
