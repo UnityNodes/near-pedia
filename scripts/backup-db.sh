@@ -20,22 +20,24 @@
 #   PEDIA_DB             — source DB       (default: /srv/nearpedia/data/nearpedia.db)
 #   PEDIA_BACKUP_DIR     — local dir       (default: /var/backups/nearpedia)
 #   RETENTION_DAYS         — local keep days (default: 30)
-#   PEDIA_OFFBOX_REMOTE  — rclone target   (default: remote:nearpedia-backups)
+#   PEDIA_OFFBOX_REMOTE  — rclone target   (default: gdrive:nearpedia-backups, a folder of
+#                            its own: two pedias sharing a folder and a file name
+#                            overwrote each other on 2026-09-25)
 #   OFFBOX_RETENTION_DAYS  — remote keep days for the daily copies (default: 7)
 #   OFFBOX_WEEKLY_DAYS     — remote keep days for the Sunday copies in weekly/
 #                            (default: 29, i.e. four of them)
-#   RCLONE_CONFIG          — rclone config   (default: ~/.config/rclone/rclone.conf
-#                            of the user that runs the backup)
+#   RCLONE_CONFIG          — rclone config   (default: /home/claude/.config/rclone/rclone.conf,
+#                            where the gdrive remote lives; root cron runs this)
 
 set -uo pipefail
 
 DB="${PEDIA_DB:-/srv/nearpedia/data/nearpedia.db}"
 DIR="${PEDIA_BACKUP_DIR:-/var/backups/nearpedia}"
 RETAIN="${RETENTION_DAYS:-30}"
-REMOTE="${PEDIA_OFFBOX_REMOTE:-remote:nearpedia-backups}"
+REMOTE="${PEDIA_OFFBOX_REMOTE:-gdrive:nearpedia-backups}"
 OFFBOX_RETAIN="${OFFBOX_RETENTION_DAYS:-7}"
 OFFBOX_WEEKLY_RETAIN="${OFFBOX_WEEKLY_DAYS:-29}"
-export RCLONE_CONFIG="${RCLONE_CONFIG:-$HOME/.config/rclone/rclone.conf}"
+export RCLONE_CONFIG="${RCLONE_CONFIG:-/home/claude/.config/rclone/rclone.conf}"
 
 # One row per leg. sqlite3 has no bound params; single quotes in the error
 # text are doubled so a quote in an rclone message cannot break the INSERT.
