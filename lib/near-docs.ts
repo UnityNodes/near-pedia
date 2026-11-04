@@ -13,6 +13,7 @@
  */
 
 import { createHash } from 'node:crypto';
+import { parseStub, renderOperation } from './openapi-pages';
 
 export const DOCS_ORIGIN = 'https://docs.near.org';
 export const LLMS_URL = `${DOCS_ORIGIN}/llms-full.txt`;
@@ -32,6 +33,7 @@ export interface NearDocPage {
   excerpt: string | null;
   content_text: string;
   content_hash: string;
+  stub_hash?: string;
 }
 
 export function canonicalDocUrl(raw: string): string {
@@ -121,6 +123,35 @@ export function singleDocPage(text: string, url: string): NearDocPage | null {
   };
 }
 
+export async function expandOpenApiPages(
+  pages: readonly NearDocPage[],
+  origin: string,
+  load: (url: string) => Promise<unknown | null>,
+): Promise<{ pages: NearDocPage[]; problems: string[] }> {
+  const specs = new Map<string, Promise<unknown | null>>();
+  const problems = new Set<string>();
+  const out: NearDocPage[] = [];
+  for (const p of pages) {
+    const stub = parseStub(p.content_text);
+    if (!stub) {
+      out.push(p);
+      continue;
+    }
+    const url = new URL(stub.spec, origin).href;
+    if (!specs.has(url)) specs.set(url, load(url).catch(() => null));
+    const spec = await specs.get(url)!;
+    const rendered = spec ? renderOperation(spec, stub.method, stub.path) : null;
+    if (!rendered) {
+      problems.add(spec ? `${url}: no ${stub.method.toUpperCase()} ${stub.path}` : `${url}: could not be read`);
+      out.push(p);
+      continue;
+    }
+    const content_text = !stub.rest || rendered.includes(stub.rest) ? rendered : `${stub.rest}\n\n${rendered}`;
+    out.push({ ...p, content_text, excerpt: excerptOf(content_text), content_hash: contentHash(content_text), stub_hash: p.content_hash });
+  }
+  return { pages: out, problems: [...problems] };
+}
+
 /** Every page URL llms-full.txt announces, including any with an empty body. */
 export function announcedUrls(text: string, origin: string = DOCS_ORIGIN): string[] {
   return [...new Set([...text.matchAll(headerRe(origin))].map((m) => canonicalDocUrl(m[2])))];
@@ -147,7 +178,7 @@ export function diffPages(
   for (const p of fresh) {
     const old = before.get(p.url);
     if (!old) changes.push({ url: p.url, title: p.title, kind: 'doc_added' });
-    else if (old.content_hash && old.content_hash !== p.content_hash) changes.push({ url: p.url, title: p.title, kind: 'doc_changed' });
+    else if (old.content_hash && old.content_hash !== p.content_hash && old.content_hash !== p.stub_hash) changes.push({ url: p.url, title: p.title, kind: 'doc_changed' });
   }
   return changes;
 }
