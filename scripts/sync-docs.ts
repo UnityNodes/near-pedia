@@ -28,7 +28,8 @@ import { SITE } from '../lib/site.config';
 import { politeFetch } from '../lib/polite-fetch';
 import { prune } from '../lib/prune';
 import { pruneConfirmingUrls } from '../lib/confirm-gone';
-import { DOCS_ORIGIN, LLMS_URL, HEADER_RE, announcedUrls, diffPages, parseLlmsFull, type NearDocPage } from '../lib/near-docs';
+import { DOCS_ORIGIN, LLMS_URL, HEADER_RE, announcedUrls, diffPages, expandOpenApiPages, parseLlmsFull, type NearDocPage } from '../lib/near-docs';
+import { fetchSpec } from '../lib/openapi-fetch';
 import { recordEvents, type ChangeEvent } from '../lib/change-events';
 
 export { LLMS_URL, HEADER_RE };
@@ -55,7 +56,7 @@ async function syncDocs(): Promise<void> {
   const lastModified = isoOrNull(r.res.headers.get('last-modified'));
   const text = await r.res.text();
 
-  const pages = parseLlmsFull(text);
+  const { pages, problems: specProblems } = await expandOpenApiPages(parseLlmsFull(text), DOCS_ORIGIN, (url) => fetchSpec(url, UA));
   const announced = announcedUrls(text);
   console.log(`[sync-docs] ${text.length} bytes, ${announced.length} pages announced, ${pages.length} with a body (last-modified ${lastModified ?? 'n/a'})`);
   if (pages.length === 0) throw new Error('No pages parsed - aborting before touching the DB');
@@ -122,7 +123,7 @@ async function syncDocs(): Promise<void> {
 
   db.prepare("INSERT INTO docs_fts(docs_fts) VALUES('rebuild')").run();
 
-  const problems: string[] = [];
+  const problems: string[] = [...specProblems];
   if (result.refused) problems.push(`prune refused: ${result.reason}`);
   if (report.overCap) problems.push(`${report.candidates} removal candidates, over the probe cap; nothing probed`);
   logRun('docs', { status: problems.length ? 'partial' : 'success', items: pages.length, error: problems.join(' ; ') || undefined }, db);
