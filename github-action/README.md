@@ -36,7 +36,7 @@ The action reads the pull request's changed files through the GitHub API with th
 
 ## Try it without a repository
 
-Run it against any public pull request with a token that can read it:
+Run it against any public pull request, no token needed (for a private one, or past GitHub's 60 unauthenticated calls an hour, start the second line with `env INPUT_GITHUB-TOKEN=<token>`):
 
 ```bash
 echo "{\"pull_request\":$(curl -s https://api.github.com/repos/near-examples/coin-flip-examples/pulls/37)}" > /tmp/event.json
@@ -45,4 +45,4 @@ GITHUB_EVENT_PATH=/tmp/event.json GITHUB_REPOSITORY=near-examples/coin-flip-exam
 cat /tmp/report.md
 ```
 
-On 3 November 2026 that pull request added 7 such lines: the `@near-js/*` packages that near-api-js 7 replaced, and dependencies whole breaking lines behind.
+Checked on 3 November 2026, that pull request adds 7 such lines: the `@near-js/*` packages that near-api-js 7 replaced, and dependencies a major version or more behind.
