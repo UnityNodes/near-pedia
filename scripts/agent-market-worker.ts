@@ -10,6 +10,8 @@ import { REPORT_FILE, confirmMessage, fitDeliverable, nextStep, withChanges, typ
 const BASE = (process.env.MARKET_BASE_URL ?? 'https://market.near.ai').replace(/\/+$/, '');
 const TOKEN = process.env.AGENT_API_TOKEN ?? '';
 const POLL_MS = 45_000;
+const MAX_TRIES = 3;
+const RETRY_AFTER_MS = 5 * 60_000;
 const PATCH_NAME = 'nearpedia-migration.patch';
 const WORK_ROOT = process.env.AGENT_WORKDIR ?? path.join(os.tmpdir(), 'nearpedia-agent');
 const ASK_FOR_REPO = 'To start I need the public GitHub repository to migrate, as a link like https://github.com/owner/repo (add /tree/<branch> for a branch other than the default).';
@@ -32,7 +34,9 @@ async function upload(name: string, content: string, type: string): Promise<stri
     method: 'PUT', headers: { authorization: `Bearer ${TOKEN}`, 'content-type': type }, body: bytes,
   });
   if (!put.ok) throw new Error(`upload ${name} -> ${put.status}`);
-  await api('POST', `/v1/files/${slot.fileId}/complete`);
+  const done = await fetch(`${BASE}/v1/files/${slot.fileId}/complete`, { method: 'POST', headers: { authorization: `Bearer ${TOKEN}` } });
+  const reply = await done.text();
+  if (!done.ok && !(done.status === 409 && reply.includes('upload_not_pending'))) throw new Error(`complete ${name} -> ${done.status} ${reply.slice(0, 200)}`);
   return slot.fileUrl ?? slot.fileId;
 }
 
@@ -70,6 +74,7 @@ async function work(row: AssignmentRow, mark: string, feedback?: string): Promis
 }
 
 const done = new Set<string>();
+const failures = new Map<string, { tries: number; at: number }>();
 
 async function poll(): Promise<void> {
   const { assignments } = await api<{ assignments: AssignmentRow[] }>('GET', '/v1/agents/me/assignments?status=in_progress');
@@ -77,12 +82,15 @@ async function poll(): Promise<void> {
     const a = row.assignment;
     const step = nextStep(row);
     if (step.kind === 'skip' || done.has(step.mark)) continue;
+    const failed = failures.get(step.mark);
+    if (failed && (failed.tries >= MAX_TRIES || Date.now() - failed.at < RETRY_AFTER_MS)) continue;
     done.add(step.mark);
     try {
       if (!a.startedAt) await api('POST', `/v1/assignments/${a.assignmentId}/start`);
       await work(row, step.mark, step.feedback);
     } catch (e) {
       done.delete(step.mark);
+      failures.set(step.mark, { tries: (failed?.tries ?? 0) + 1, at: Date.now() });
       logRun('agent-market', { status: 'error', items: 0, error: (e as Error).message.slice(0, 300) });
       console.error(`[agent] ${a.assignmentId}: ${(e as Error).message}`);
     }
