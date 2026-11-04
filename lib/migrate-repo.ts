@@ -12,7 +12,7 @@ import ts from 'typescript';
 
 export const MIGRATION_GUIDE_URL = 'https://raw.githubusercontent.com/near/near-api-js/master/MIGRATION.md';
 export const MANUAL_ENTRIES = new Set(['near-sdk-js']);
-const MAX_FILES = 12;
+export const MAX_FILES = 12;
 const MAX_REWRITE_CHARS = 60_000;
 const MAX_TOKENS = 6000;
 const REWRITE_TIMEOUT_MS = 300_000;

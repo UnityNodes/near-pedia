@@ -5,6 +5,7 @@ import { getDb } from '../lib/db';
 import { logRun } from '../lib/sync-log';
 import { nearAiConfig } from '../lib/near-ai';
 import { MIGRATION_GUIDE_URL, migrateRepo, renderReport, repoFrom, type RepoRef } from '../lib/migrate-repo';
+import { REPORT_FILE, confirmMessage, fitDeliverable, nextStep, withChanges, type AssignmentRow } from '../lib/agent-market';
 
 const BASE = (process.env.MARKET_BASE_URL ?? 'https://market.near.ai').replace(/\/+$/, '');
 const TOKEN = process.env.AGENT_API_TOKEN ?? '';
@@ -12,12 +13,6 @@ const POLL_MS = 45_000;
 const PATCH_NAME = 'nearpedia-migration.patch';
 const WORK_ROOT = process.env.AGENT_WORKDIR ?? path.join(os.tmpdir(), 'nearpedia-agent');
 const ASK_FOR_REPO = 'To start I need the public GitHub repository to migrate, as a link like https://github.com/owner/repo (add /tree/<branch> for a branch other than the default).';
-
-interface Row {
-  assignment: { assignmentId: string; status: string; startedAt: string | null; submittedAt: string | null; deliverableUrl: string | null };
-  job: { title: string; description: string };
-  latestMessage: { body?: string; createdAt?: string; senderSide?: string; truncated?: boolean } | null;
-}
 
 async function api<T>(method: string, route: string, body?: unknown): Promise<T> {
   const res = await fetch(`${BASE}${route}`, {
@@ -30,11 +25,11 @@ async function api<T>(method: string, route: string, body?: unknown): Promise<T>
   return (text ? JSON.parse(text) : {}) as T;
 }
 
-async function upload(name: string, content: string): Promise<string> {
+async function upload(name: string, content: string, type: string): Promise<string> {
   const bytes = Buffer.from(content, 'utf8');
   const slot = await api<{ fileId: string; fileUrl: string | null; uploadUrl: string }>('POST', '/v1/files', { filename: name, byteSize: bytes.length, link: true });
   const put = await fetch(slot.uploadUrl.startsWith('http') ? slot.uploadUrl : `${BASE}${slot.uploadUrl}`, {
-    method: 'PUT', headers: { authorization: `Bearer ${TOKEN}`, 'content-type': 'text/x-diff' }, body: bytes,
+    method: 'PUT', headers: { authorization: `Bearer ${TOKEN}`, 'content-type': type }, body: bytes,
   });
   if (!put.ok) throw new Error(`upload ${name} -> ${put.status}`);
   await api('POST', `/v1/files/${slot.fileId}/complete`);
@@ -53,17 +48,22 @@ async function migrate(repo: RepoRef, id: string, feedback?: string) {
   return migrateRepo(getDb(), cfg, repo, { workdir: path.join(WORK_ROOT, id), guide: await guide(), feedback, log: (l) => console.log(l) });
 }
 
-async function work(row: Row, feedback?: string): Promise<void> {
+async function work(row: AssignmentRow, mark: string, feedback?: string): Promise<void> {
   const id = row.assignment.assignmentId;
   const repo = repoFrom(`${row.job.description}\n${row.latestMessage?.body ?? ''}`);
   if (!repo) {
-    await api('POST', `/v1/assignments/${id}/messages`, { body: ASK_FOR_REPO, clientRequestId: `${id}-ask-repo` });
+    await api('POST', `/v1/assignments/${id}/messages`, { body: ASK_FOR_REPO, clientRequestId: `${mark}-ask-repo` });
     return;
   }
-  await api('POST', `/v1/assignments/${id}/messages`, { body: `Picked up. Reading ${repo.url} and checking every NEAR source file against NEARpedia.`, clientRequestId: `${id}-picked-${row.assignment.submittedAt ?? 'fresh'}` });
+  await api('POST', `/v1/assignments/${id}/messages`, { body: confirmMessage(repo, row.assignment.slaDeadlineAt, feedback !== undefined), clientRequestId: `${mark}-confirm` });
   const result = await migrate(repo, id, feedback);
-  const files = result.patch ? [await upload(PATCH_NAME, result.patch)] : [];
-  await api('POST', `/v1/assignments/${id}/submit`, { deliverableMarkdown: renderReport(result, PATCH_NAME), files });
+  const report = renderReport(result, PATCH_NAME);
+  const fit = fitDeliverable(feedback !== undefined ? withChanges(report, feedback) : report);
+  const files = [
+    ...(result.patch ? [await upload(PATCH_NAME, result.patch, 'text/x-diff')] : []),
+    ...(fit.overflow ? [await upload(REPORT_FILE, fit.overflow, 'text/markdown')] : []),
+  ];
+  await api('POST', `/v1/assignments/${id}/submit`, { deliverableMarkdown: fit.markdown, files });
   fs.rmSync(path.join(WORK_ROOT, id), { recursive: true, force: true });
   logRun('agent-market', { status: 'success', items: result.results.length });
   console.log(`[agent] ${id}: submitted, ${result.results.filter((r) => r.status === 'migrated').length} files migrated`);
@@ -72,19 +72,17 @@ async function work(row: Row, feedback?: string): Promise<void> {
 const done = new Set<string>();
 
 async function poll(): Promise<void> {
-  const { assignments } = await api<{ assignments: Row[] }>('GET', '/v1/agents/me/assignments?status=in_progress');
+  const { assignments } = await api<{ assignments: AssignmentRow[] }>('GET', '/v1/agents/me/assignments?status=in_progress');
   for (const row of assignments) {
     const a = row.assignment;
-    const rework = Boolean(a.submittedAt) && row.latestMessage?.senderSide === 'buyer';
-    if (a.submittedAt && !rework) continue;
-    const mark = `${a.assignmentId}:${rework ? row.latestMessage?.createdAt : a.deliverableUrl ? `redo:${a.deliverableUrl}` : 'fresh'}`;
-    if (done.has(mark)) continue;
-    done.add(mark);
+    const step = nextStep(row);
+    if (step.kind === 'skip' || done.has(step.mark)) continue;
+    done.add(step.mark);
     try {
       if (!a.startedAt) await api('POST', `/v1/assignments/${a.assignmentId}/start`);
-      await work(row, rework ? row.latestMessage?.body : undefined);
+      await work(row, step.mark, step.feedback);
     } catch (e) {
-      done.delete(mark);
+      done.delete(step.mark);
       logRun('agent-market', { status: 'error', items: 0, error: (e as Error).message.slice(0, 300) });
       console.error(`[agent] ${a.assignmentId}: ${(e as Error).message}`);
     }
