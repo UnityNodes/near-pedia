@@ -13,6 +13,7 @@ import ts from 'typescript';
 export const MIGRATION_GUIDE_URL = 'https://raw.githubusercontent.com/near/near-api-js/master/MIGRATION.md';
 export const MANUAL_ENTRIES = new Set(['near-sdk-js']);
 export const MAX_FILES = 12;
+const MENTION_REASON = 'only mentioned in strings or comments, which the patch leaves as they are';
 const MAX_REWRITE_CHARS = 60_000;
 const MAX_TOKENS = 6000;
 const REWRITE_TIMEOUT_MS = 300_000;
@@ -148,8 +149,7 @@ export async function nearApiExports(): Promise<NearApiExports> {
 }
 
 export function missingNearApi(file: string, code: string, api: NearApiExports): string[] {
-  const kind = /x$/.test(file) ? ts.ScriptKind.TSX : /\.[cm]?ts$/.test(file) ? ts.ScriptKind.TS : ts.ScriptKind.JS;
-  const source = ts.createSourceFile(file, code, ts.ScriptTarget.Latest, true, kind);
+  const source = ts.createSourceFile(file, code, ts.ScriptTarget.Latest, true, scriptKind(file));
   const imported = new Map<string, string>();
   const namespaces = new Set<string>();
   const isNearApi = (n: ts.Node | undefined) => !!n && ts.isStringLiteral(n) && n.text === 'near-api-js';
@@ -212,6 +212,52 @@ export function undeclaredNames(file: string, code: string): string[] {
   return [...new Set(names)].sort();
 }
 
+function scriptKind(file: string): ts.ScriptKind {
+  return /x$/.test(file) ? ts.ScriptKind.TSX : /\.[cm]?ts$/.test(file) ? ts.ScriptKind.TS : ts.ScriptKind.JS;
+}
+
+function textRanges(file: string, code: string): Array<[number, number]> {
+  const source = ts.createSourceFile(file, code, ts.ScriptTarget.Latest, true, scriptKind(file));
+  const ranges: Array<[number, number]> = [];
+  const loads = (n: ts.Node) => {
+    const p = n.parent;
+    if ((ts.isImportDeclaration(p) || ts.isExportDeclaration(p)) && p.moduleSpecifier === n) return true;
+    if (ts.isExternalModuleReference(p) || ts.isLiteralTypeNode(p) && ts.isImportTypeNode(p.parent)) return true;
+    return ts.isCallExpression(p) && p.arguments[0] === n && (p.expression.kind === ts.SyntaxKind.ImportKeyword || (ts.isIdentifier(p.expression) && p.expression.text === 'require'));
+  };
+  const visit = (n: ts.Node) => {
+    if ((ts.isStringLiteral(n) || ts.isNoSubstitutionTemplateLiteral(n)) && !loads(n)) ranges.push([n.getStart(source), n.getEnd()]);
+    else if (ts.isTemplateHead(n) || ts.isTemplateMiddle(n) || ts.isTemplateTail(n) || ts.isJsxText(n)) ranges.push([n.getStart(source), n.getEnd()]);
+    ts.forEachChild(n, visit);
+  };
+  visit(source);
+  const scanner = ts.createScanner(ts.ScriptTarget.Latest, false, source.languageVariant, code);
+  for (let t = scanner.scan(); t !== ts.SyntaxKind.EndOfFileToken; t = scanner.scan()) {
+    if (t === ts.SyntaxKind.SingleLineCommentTrivia || t === ts.SyntaxKind.MultiLineCommentTrivia) ranges.push([scanner.getTokenStart(), scanner.getTokenEnd()]);
+  }
+  return ranges;
+}
+
+export function mentionOnly(file: string, code: string, f: Finding, ranges = SCRIPT.test(file) ? textRanges(file, code) : null): boolean {
+  if (!ranges || !f.matched) return false;
+  const lineStart = code.split('\n').slice(0, f.line - 1).reduce((n, l) => n + l.length + 1, 0);
+  const line = code.split('\n')[f.line - 1] ?? '';
+  const hits: number[] = [];
+  for (let i = line.indexOf(f.matched); i >= 0; i = line.indexOf(f.matched, i + 1)) hits.push(lineStart + i);
+  return hits.length > 0 && hits.every((at) => ranges.some(([from, to]) => at >= from && at + f.matched.length <= to));
+}
+
+export function mentionsKept(file: string, original: string, updated: string, before: readonly Finding[], after: readonly Finding[]): boolean {
+  const tally = (code: string, fs: readonly Finding[]) => {
+    const ranges = SCRIPT.test(file) ? textRanges(file, code) : null;
+    const n = new Map<string, number>();
+    for (const f of fs) if (mentionOnly(file, code, f, ranges)) n.set(key(f), (n.get(key(f)) ?? 0) + 1);
+    return n;
+  };
+  const kept = tally(updated, after);
+  return [...tally(original, before)].every(([k, n]) => (kept.get(k) ?? 0) >= n);
+}
+
 export function addedCommentLines(original: string, updated: string): number {
   const comments = (s: string) => s.split('\n').filter((l) => /^\s*(?:\/\/|\/\*|\*\s|#(?!\[))/.test(l)).length;
   return comments(updated) - comments(original);
@@ -267,6 +313,9 @@ function checkCandidate(db: Database.Database, file: string, original: string, b
   const missing = api ? missingNearApi(file, updated, api).filter((n) => !already.has(n)) : [];
   if (missing.length) return { ok: false, reason: `the rewrite uses what near-api-js ${api!.version} does not have: ${missing.join(', ')}`, retryWith: `near-api-js ${api!.version} has none of these: ${missing.join(', ')}. Its exports are: ${api!.names.join(', ')}.` };
   const after = counted(checkCode(db, updated, { filename: file }).findings);
+  if (!mentionsKept(file, original, updated, before, after)) {
+    return { ok: false, reason: 'the rewrite changed text that only mentions an old name', retryWith: 'Those edits change strings or comments that only mention an old name. Leave text as it is and change only code.' };
+  }
   if (!isImprovement(before, after)) {
     const known = new Set(before.map(key));
     const added = after.filter((f) => !known.has(key(f)));
@@ -285,11 +334,14 @@ async function migrateFile(db: Database.Database, cfg: NearAiConfig, dir: string
   const full = path.join(dir, file);
   const original = fs.readFileSync(full, 'utf8');
   const base = { file, before, after: before, receipt: null };
-  if (needsHand(before)) return { ...base, status: 'manual', reason: 'moving a contract off near-sdk-js means rewriting it in Rust with near-sdk' };
+  const ranges = SCRIPT.test(file) ? textRanges(file, original) : null;
+  const inCode = before.filter((f) => !mentionOnly(file, original, f, ranges));
+  if (inCode.length === 0) return { ...base, status: 'unchanged', reason: MENTION_REASON };
+  if (needsHand(inCode)) return { ...base, status: 'manual', reason: 'moving a contract off near-sdk-js means rewriting it in Rust with near-sdk' };
   if (MANIFEST.test(file)) return { ...base, status: 'manual', reason: 'change the dependency once the code builds and its tests pass against the new API' };
   if (original.length > MAX_REWRITE_CHARS) return { ...base, status: 'manual', reason: `over ${MAX_REWRITE_CHARS.toLocaleString('en')} characters, too long to rewrite in one pass` };
   const api = SCRIPT.test(file) ? await nearApiExports() : null;
-  const messages: ChatMessage[] = migrateMessages(file, original, before, guide, feedback, docsFor(db, before));
+  const messages: ChatMessage[] = migrateMessages(file, original, inCode, guide, feedback, docsFor(db, inCode));
   let last: { reason: string; receipt: AnswerReceipt | null } = { reason: 'no attempt', receipt: null };
   for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
     const { text, truncated, receipt } = await verifiedChat(cfg, messages, { maxTokens: MAX_TOKENS, timeoutMs: REWRITE_TIMEOUT_MS, model: MIGRATE_MODEL, extra: SAMPLING });
@@ -323,7 +375,15 @@ export async function migrateRepo(
   }
   log(`${repo.url}: ${files.length} files read, ${flagged.length} with findings`);
   const results: FileResult[] = [];
-  for (const { file, findings } of flagged.slice(0, MAX_FILES)) {
+  const inCode = flagged.filter(({ file, findings }) => {
+    const code = fs.readFileSync(path.join(opts.workdir, file), 'utf8');
+    const ranges = SCRIPT.test(file) ? textRanges(file, code) : null;
+    return findings.some((f) => !mentionOnly(file, code, f, ranges));
+  });
+  for (const { file, findings } of flagged.filter((f) => !inCode.includes(f))) {
+    results.push({ file, before: findings, after: findings, status: 'unchanged', reason: MENTION_REASON, receipt: null });
+  }
+  for (const { file, findings } of inCode.slice(0, MAX_FILES)) {
     log(`  ${file}: ${findings.length} findings`);
     try {
       results.push(await migrateFile(db, cfg, opts.workdir, file, findings, opts.guide, opts.feedback, log));
@@ -331,11 +391,12 @@ export async function migrateRepo(
       results.push({ file, before: findings, after: findings, status: 'unchanged', reason: `NEAR AI failed: ${(e as Error).message.slice(0, 160)}`, receipt: null });
     }
   }
-  for (const { file, findings } of flagged.slice(MAX_FILES)) {
+  for (const { file, findings } of inCode.slice(MAX_FILES)) {
     results.push({ file, before: findings, after: findings, status: 'manual', reason: `past the first ${MAX_FILES} files this job rewrites`, receipt: null });
   }
   const api = await nearApiExports();
   const apiGaps = files.filter((f) => SCRIPT.test(f)).map((file) => ({ file, names: missingNearApi(file, fs.readFileSync(path.join(opts.workdir, file), 'utf8'), api) })).filter((g) => g.names.length > 0);
+  results.sort((x, y) => x.file.localeCompare(y.file));
   return { repo, scanned: files.length, results, patch: git(['diff'], opts.workdir), apiVersion: api.version, apiGaps };
 }
 
@@ -351,6 +412,8 @@ export function renderReport(r: MigrationResult, patchName: string): string {
     `Read ${r.scanned} source files${r.repo.branch ? ` on \`${r.repo.branch}\`` : ''}. ${r.results.length} use something NEAR deprecated, removed or changed: ${total} findings. This delivery fixes ${fixed} of them in ${migrated.length} files.`,
     '',
   ];
+  const mentioned = r.results.filter((x) => x.reason === MENTION_REASON);
+  if (mentioned.length) lines.push(`${mentioned.length} of those files only name an old API inside strings or comments (${mentioned.reduce((n, x) => n + x.before.length, 0)} findings). The patch leaves that text as it is; the lines are listed below in case any of it is user-facing.`, '');
   if (migrated.length) {
     lines.push(`Apply the patch from the root of the repository, then build and run your tests:`, '', '```bash', `git apply ${patchName}`, '```', '');
   }
@@ -365,7 +428,7 @@ export function renderReport(r: MigrationResult, patchName: string): string {
     for (const f of x.before) {
       const gone = x.status === 'migrated' && !x.after.some((a) => a.line === f.line && a.matched === f.matched);
       const source = f.sources[0]?.url;
-      lines.push(`- ${gone ? 'fixed' : 'open'} · line ${f.line} · \`${cell(f.matched)}\`: ${cell(f.message)}${source ? ` [source](${source})` : ''}`);
+      lines.push(`- ${gone ? 'fixed' : x.reason === MENTION_REASON ? 'mentioned' : 'open'} · line ${f.line} · \`${cell(f.matched)}\`: ${cell(f.message)}${source ? ` [source](${source})` : ''}`);
     }
     lines.push('');
   }
