@@ -216,9 +216,14 @@ function scriptKind(file: string): ts.ScriptKind {
   return /x$/.test(file) ? ts.ScriptKind.TSX : /\.[cm]?ts$/.test(file) ? ts.ScriptKind.TS : ts.ScriptKind.JS;
 }
 
-function textRanges(file: string, code: string): Array<[number, number]> {
+type TextRange = [number, number, 'comment' | 'prose' | 'value', string];
+const usedAsValue = (f: Finding, kind: TextRange[2], text: string) =>
+  kind === 'value' && (f.via === 'url' || ((f.via === 'rpc' || f.via === 'config') && text === f.matched));
+
+function textRanges(file: string, code: string): TextRange[] {
   const source = ts.createSourceFile(file, code, ts.ScriptTarget.Latest, true, scriptKind(file));
-  const ranges: Array<[number, number]> = [];
+  const ranges: TextRange[] = [];
+  const kindOf = (text: string): 'prose' | 'value' => (/\s/.test(text.trim()) ? 'prose' : 'value');
   const loads = (n: ts.Node) => {
     const p = n.parent;
     if ((ts.isImportDeclaration(p) || ts.isExportDeclaration(p)) && p.moduleSpecifier === n) return true;
@@ -226,14 +231,15 @@ function textRanges(file: string, code: string): Array<[number, number]> {
     return ts.isCallExpression(p) && p.arguments[0] === n && (p.expression.kind === ts.SyntaxKind.ImportKeyword || (ts.isIdentifier(p.expression) && p.expression.text === 'require'));
   };
   const visit = (n: ts.Node) => {
-    if ((ts.isStringLiteral(n) || ts.isNoSubstitutionTemplateLiteral(n)) && !loads(n)) ranges.push([n.getStart(source), n.getEnd()]);
-    else if (ts.isTemplateHead(n) || ts.isTemplateMiddle(n) || ts.isTemplateTail(n) || ts.isJsxText(n)) ranges.push([n.getStart(source), n.getEnd()]);
+    if ((ts.isStringLiteral(n) || ts.isNoSubstitutionTemplateLiteral(n)) && !loads(n)) ranges.push([n.getStart(source), n.getEnd(), kindOf(n.text), n.text.trim()]);
+    else if (ts.isTemplateHead(n) || ts.isTemplateMiddle(n) || ts.isTemplateTail(n)) ranges.push([n.getStart(source), n.getEnd(), kindOf(n.text), n.text.trim()]);
+    else if (ts.isJsxText(n)) ranges.push([n.getStart(source), n.getEnd(), 'prose', '']);
     ts.forEachChild(n, visit);
   };
   visit(source);
   const scanner = ts.createScanner(ts.ScriptTarget.Latest, false, source.languageVariant, code);
   for (let t = scanner.scan(); t !== ts.SyntaxKind.EndOfFileToken; t = scanner.scan()) {
-    if (t === ts.SyntaxKind.SingleLineCommentTrivia || t === ts.SyntaxKind.MultiLineCommentTrivia) ranges.push([scanner.getTokenStart(), scanner.getTokenEnd()]);
+    if (t === ts.SyntaxKind.SingleLineCommentTrivia || t === ts.SyntaxKind.MultiLineCommentTrivia) ranges.push([scanner.getTokenStart(), scanner.getTokenEnd(), 'comment', '']);
   }
   return ranges;
 }
@@ -244,7 +250,7 @@ export function mentionOnly(file: string, code: string, f: Finding, ranges = SCR
   const line = code.split('\n')[f.line - 1] ?? '';
   const hits: number[] = [];
   for (let i = line.indexOf(f.matched); i >= 0; i = line.indexOf(f.matched, i + 1)) hits.push(lineStart + i);
-  return hits.length > 0 && hits.every((at) => ranges.some(([from, to]) => at >= from && at + f.matched.length <= to));
+  return hits.length > 0 && hits.every((at) => ranges.some(([from, to, kind, text]) => at >= from && at + f.matched.length <= to && !usedAsValue(f, kind, text)));
 }
 
 export function mentionsKept(file: string, original: string, updated: string, before: readonly Finding[], after: readonly Finding[]): boolean {
@@ -402,6 +408,37 @@ export async function migrateRepo(
 
 const cell = (s: string) => s.replace(/\|/g, '\\|').replace(/\r?\n/g, ' ');
 
+const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
+
+function grouped(findings: ReadonlyArray<{ status: string; f: Finding }>): string[] {
+  const groups = new Map<string, { status: string; f: Finding; lines: number[] }>();
+  for (const { status, f } of findings) {
+    const k = `${status}|${f.matched}|${f.message}`;
+    const g = groups.get(k);
+    if (g) g.lines.push(f.line);
+    else groups.set(k, { status, f, lines: [f.line] });
+  }
+  return [...groups.values()].sort((a, b) => a.lines[0] - b.lines[0]).map(({ status, f, lines }) => {
+    const where = `${lines.length === 1 ? 'line' : 'lines'} ${[...new Set(lines)].sort((a, b) => a - b).join(', ')}`;
+    if (status === 'mentioned') return `- mentioned · ${where} · \`${cell(f.matched)}\``;
+    const source = f.sources[0]?.url;
+    return `- ${status} · ${where} · \`${cell(f.matched)}\`: ${cell(f.message)}${source ? ` [source](${source})` : ''}`;
+  });
+}
+
+function fileFindings(x: FileResult): string[] {
+  if (x.reason === MENTION_REASON) return grouped(x.before.map((f) => ({ status: 'mentioned', f })));
+  if (x.status !== 'migrated') return grouped(x.before.map((f) => ({ status: 'open', f })));
+  const left = new Map<string, number>();
+  for (const f of x.after) left.set(key(f), (left.get(key(f)) ?? 0) + 1);
+  const fixed = x.before.filter((f) => {
+    const n = left.get(key(f)) ?? 0;
+    if (n > 0) left.set(key(f), n - 1);
+    return n === 0;
+  });
+  return grouped([...fixed.map((f) => ({ status: 'fixed', f })), ...x.after.map((f) => ({ status: 'open', f }))]);
+}
+
 export function renderReport(r: MigrationResult, patchName: string): string {
   const total = r.results.reduce((n, x) => n + x.before.length, 0);
   const fixed = r.results.reduce((n, x) => n + (x.status === 'migrated' ? x.before.length - x.after.length : 0), 0);
@@ -409,11 +446,11 @@ export function renderReport(r: MigrationResult, patchName: string): string {
   const lines = [
     `# NEAR migration report: ${r.repo.owner}/${r.repo.repo}`,
     '',
-    `Read ${r.scanned} source files${r.repo.branch ? ` on \`${r.repo.branch}\`` : ''}. ${r.results.length} use something NEAR deprecated, removed or changed: ${total} findings. This delivery fixes ${fixed} of them in ${migrated.length} files.`,
+    `Read ${r.scanned} source files${r.repo.branch ? ` on \`${r.repo.branch}\`` : ''}. ${r.results.length} use something NEAR deprecated, removed or changed: ${plural(total, 'finding')}. This delivery fixes ${fixed} of them in ${plural(migrated.length, 'file')}.`,
     '',
   ];
   const mentioned = r.results.filter((x) => x.reason === MENTION_REASON);
-  if (mentioned.length) lines.push(`${mentioned.length} of those files only name an old API inside strings or comments (${mentioned.reduce((n, x) => n + x.before.length, 0)} findings). The patch leaves that text as it is; the lines are listed below in case any of it is user-facing.`, '');
+  if (mentioned.length) lines.push(`${mentioned.length} of those files only name an old API inside strings or comments (${plural(mentioned.reduce((n, x) => n + x.before.length, 0), 'finding')}). The patch leaves that text as it is; the lines are listed below in case any of it is user-facing.`, '');
   if (migrated.length) {
     lines.push(`Apply the patch from the root of the repository, then build and run your tests:`, '', '```bash', `git apply ${patchName}`, '```', '');
   }
@@ -422,16 +459,8 @@ export function renderReport(r: MigrationResult, patchName: string): string {
     const result = x.status === 'migrated' ? 'migrated' : x.status === 'manual' ? `by hand: ${x.reason}` : `unchanged: ${x.reason}`;
     lines.push(`| \`${cell(x.file)}\` | ${x.before.length} | ${x.after.length} | ${cell(result)} |`);
   }
-  lines.push('', '## Every finding, with what replaces it', '');
-  for (const x of r.results) {
-    lines.push(`### \`${x.file}\``, '');
-    for (const f of x.before) {
-      const gone = x.status === 'migrated' && !x.after.some((a) => a.line === f.line && a.matched === f.matched);
-      const source = f.sources[0]?.url;
-      lines.push(`- ${gone ? 'fixed' : x.reason === MENTION_REASON ? 'mentioned' : 'open'} · line ${f.line} · \`${cell(f.matched)}\`: ${cell(f.message)}${source ? ` [source](${source})` : ''}`);
-    }
-    lines.push('');
-  }
+  lines.push('', '## Every finding, with what replaces it', '', 'Line numbers of open findings in a migrated file are those after the patch.', '');
+  for (const x of r.results) lines.push(`### \`${x.file}\``, '', ...fileFindings(x), '');
   if (r.apiGaps.length) {
     lines.push(`## Before you move to near-api-js ${r.apiVersion}`, '', `With this patch applied, these files still use names that near-api-js ${r.apiVersion} does not export. Each needs its own change before the dependency moves:`, '');
     for (const g of r.apiGaps) lines.push(`- \`${g.file}\`: ${g.names.map((n) => `\`${n}\``).join(', ')}`);

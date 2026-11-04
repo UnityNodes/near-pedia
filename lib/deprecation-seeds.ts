@@ -272,7 +272,7 @@ export const SEEDS: readonly Seed[] = [
     kind: 'service',
     status: 'removed',
     summary: "Pagoda's hosted RPC endpoints refuse requests and its Console and Enhanced API repositories are archived. docs.near.org's near-api page still uses rpc.testnet.pagoda.co in examples (2026-11-01); use an endpoint from the RPC providers list.",
-    replacement: 'A public RPC endpoint from the providers list (e.g. https://free.rpc.fastnear.com)',
+    replacement: 'A public RPC endpoint on the same network from the providers list (e.g. https://free.rpc.fastnear.com for mainnet, https://test.rpc.fastnear.com for testnet)',
     replacement_url: 'https://docs.near.org/api/rpc/providers',
     since: null,
     effective: null,
