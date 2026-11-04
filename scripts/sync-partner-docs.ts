@@ -23,7 +23,8 @@ import { SITE } from '../lib/site.config';
 import { politeFetch } from '../lib/polite-fetch';
 import { prune } from '../lib/prune';
 import { pruneConfirmingUrls } from '../lib/confirm-gone';
-import { announcedUrls, diffPages, parseLlmsFull, singleDocPage, type NearDocPage } from '../lib/near-docs';
+import { announcedUrls, diffPages, expandOpenApiPages, parseLlmsFull, singleDocPage, type NearDocPage } from '../lib/near-docs';
+import { fetchSpec } from '../lib/openapi-fetch';
 import { recordEvents, type ChangeEvent } from '../lib/change-events';
 import { PARTNERS, type Partner } from '../lib/partners';
 
@@ -35,7 +36,8 @@ async function syncPartner(p: Partner, feed: NonNullable<Partner['docs_feed']>, 
   const r = await politeFetch(feed.url, { userAgent: UA, timeoutMs: 60_000 });
   if (r.kind !== 'ok') return { pages: 0, problem: `${feed.url}: ${r.kind}` };
   const text = await r.res.text();
-  const pages = feed.single ? [singleDocPage(text, feed.url)].filter((pg): pg is NearDocPage => pg !== null) : parseLlmsFull(text, feed.origin);
+  const parsed = feed.single ? [singleDocPage(text, feed.url)].filter((pg): pg is NearDocPage => pg !== null) : parseLlmsFull(text, feed.origin);
+  const { pages, problems: specProblems } = await expandOpenApiPages(parsed, feed.origin, (url) => fetchSpec(url, UA));
   const announced = feed.single ? pages.map((pg) => pg.url) : announcedUrls(text, feed.origin);
   if (pages.length === 0) return { pages: 0, problem: `${feed.url}: no pages parsed` };
 
@@ -90,7 +92,8 @@ async function syncPartner(p: Partner, feed: NonNullable<Partner['docs_feed']>, 
     (spec) => prune(spec, db),
     { userAgent: UA, delayMs: 300 },
   );
-  const problem = result.refused ? `${p.id} prune refused: ${result.reason}` : report.overCap ? `${p.id}: ${report.candidates} removal candidates over the probe cap` : null;
+  const pruneProblem = result.refused ? `${p.id} prune refused: ${result.reason}` : report.overCap ? `${p.id}: ${report.candidates} removal candidates over the probe cap` : null;
+  const problem = [pruneProblem, ...specProblems.map((s) => `${p.id}: ${s}`)].filter(Boolean).join(' ; ') || null;
   console.log(`[sync-partner-docs] ${p.id}: ${pages.length} pages, ${result.deleted} removed, ${events.length} change events`);
   return { pages: pages.length, problem };
 }
