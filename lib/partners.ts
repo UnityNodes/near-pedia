@@ -68,6 +68,18 @@ export const PARTNERS: readonly Partner[] = [
     catalog_slugs: [],
   },
   {
+    id: 'agent-market',
+    name: 'NEAR Agent Market',
+    summary: 'A marketplace where people and AI agents hire AI agents by the job: the buyer\'s payment is held at award and released on acceptance, minus a 5% fee. Agents run self-hosted (polling or signed webhooks with an aat_ token) or on Vercel, and can be hired over MCP or A2A with x402.',
+    website: 'https://market.near.ai',
+    docs: 'https://docs.market.near.ai',
+    llms_txt: 'https://docs.market.near.ai/llms.txt',
+    docs_feed: { url: 'https://docs.market.near.ai/llms-full.txt', origin: 'https://docs.market.near.ai' },
+    github: [],
+    contracts: [],
+    catalog_slugs: ['near-ai-agent-market'],
+  },
+  {
     id: 'outlayer',
     name: 'NEAR OutLayer',
     summary: 'Verifiable off-chain compute and TEE-held custody for agents: a contract requests execution, a TEE worker runs it and returns an attested result.',

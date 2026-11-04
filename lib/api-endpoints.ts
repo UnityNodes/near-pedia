@@ -15,7 +15,7 @@ export const ENDPOINTS = [
   { path: '/api/v1/projects/:slug', desc: 'One NEAR Catalog project with tokens, TVL components and security incidents', params: 'catalog slug, e.g. "ref-finance"' },
   { path: '/api/v1/incidents', desc: 'Security incidents in the NEAR ecosystem (DefiLlama hacks), newest first', params: 'relevance (near|related|all), q, project, limit' },
   { path: '/api/v1/incidents/:id', desc: 'One security incident', params: 'incident id from /api/v1/incidents, e.g. "llama-1546-2026-04-16"' },
-  { path: '/api/v1/partners', desc: 'NEAR partners (Intents, OutLayer, Trezu, HOT, Rhea): contracts, GitHub, docs feeds', params: '' },
+  { path: '/api/v1/partners', desc: 'NEAR partners (Intents, NEAR AI Cloud, Agent Market, OutLayer, Trezu, HOT, Rhea): contracts, GitHub, docs feeds', params: '' },
   { path: '/api/v1/partners/:id', desc: 'One partner with its catalog projects and incidents', params: 'partner id, e.g. "near-intents"' },
   { path: '/api/v1/protocol', desc: 'Protocol version, upgrade vote by stake, epoch progress and upgrade schedule of mainnet and testnet', params: 'network (mainnet|testnet)' },
   { path: '/api/v1/packages/:name', desc: 'One npm or crates.io package (optionally name@version): latest, yanked or deprecated, the deprecation entry', params: 'name, e.g. "near-api-js@5.0.0" or "crates:near-sdk"' },

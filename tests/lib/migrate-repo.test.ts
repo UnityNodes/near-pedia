@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  addedCommentLines, applyEdits, editsFrom, isImprovement, missingNearApi, needsHand, parseErrors, renderReport, repoFrom,
+  addedCommentLines, applyEdits, editsFrom, isImprovement, mentionOnly, mentionsKept, missingNearApi, needsHand, parseErrors, renderReport, repoFrom,
   replacementNames, undeclaredNames, type MigrationResult, type NearApiExports,
 } from '@/lib/migrate-repo';
 import type { Finding } from '@/lib/check-code';
@@ -62,6 +62,38 @@ describe('checking a rewrite before it is kept', () => {
     expect(parseErrors('Cargo.toml', '[[[')).toEqual([]);
   });
 
+  it('tells a name the code uses from one a string or a comment only mentions, and counts module names as code', () => {
+    const at = (line: number, matched: string) => finding({ line, matched });
+    const code = [
+      "import { keyStores } from 'near-api-js';",
+      "import { Account } from '@near-js/accounts';",
+      "const lib = require('@near-js/providers');",
+      "const q = 'What replaces keyStores in near-api-js 7?';",
+      '// keyStores went away in v7',
+      'const ks = new keyStores.InMemoryKeyStore();',
+      'const msg = `store: ${keyStores.InMemoryKeyStore.name}`;',
+      'const chips = [`DelegateV2`, "near-sdk-js"];',
+    ].join('\n');
+    expect(mentionOnly('a.ts', code, at(1, 'keyStores'))).toBe(false);
+    expect(mentionOnly('a.ts', code, at(2, '@near-js/accounts'))).toBe(false);
+    expect(mentionOnly('a.ts', code, at(3, '@near-js/providers'))).toBe(false);
+    expect(mentionOnly('a.ts', code, at(4, 'keyStores'))).toBe(true);
+    expect(mentionOnly('a.ts', code, at(5, 'keyStores'))).toBe(true);
+    expect(mentionOnly('a.ts', code, at(6, 'keyStores'))).toBe(false);
+    expect(mentionOnly('a.ts', code, at(7, 'keyStores'))).toBe(false);
+    expect(mentionOnly('a.ts', code, at(8, 'DelegateV2'))).toBe(true);
+    expect(mentionOnly('src/lib.rs', '// keyStores', at(1, 'keyStores'))).toBe(false);
+  });
+
+  it('refuses a rewrite that edits the text that only mentions an old name', () => {
+    const original = "import { keyStores } from 'near-api-js';\nconst q = 'What replaces keyStores?';\nnew keyStores.InMemoryKeyStore();\n";
+    const before = [finding({ line: 1 }), finding({ line: 2 }), finding({ line: 3 })];
+    const good = "import { KeyPairSigner } from 'near-api-js';\nconst q = 'What replaces keyStores?';\nKeyPairSigner.fromSecretKey(k);\n";
+    const bad = "import { KeyPairSigner } from 'near-api-js';\nconst q = 'What replaces KeyPairSigner?';\nKeyPairSigner.fromSecretKey(k);\n";
+    expect(mentionsKept('a.ts', original, good, before, [finding({ line: 2 })])).toBe(true);
+    expect(mentionsKept('a.ts', original, bad, before, [])).toBe(false);
+  });
+
   it('counts commentary the model added', () => {
     expect(addedCommentLines('a();\n', '// Wait, the original...\n// so we should\na();\n')).toBe(2);
   });
@@ -93,6 +125,7 @@ describe('the deliverable', () => {
       scanned: 9,
       results: [
         { file: 'lib/near.mjs', before: [finding()], after: [], status: 'migrated', reason: null, receipt: { verify_url: 'https://cloud.near.ai/verify#x' } as never },
+        { file: 'src/ui.ts', before: [finding({ line: 4 })], after: [finding({ line: 4 })], status: 'unchanged', reason: 'only mentioned in strings or comments, which the patch leaves as they are', receipt: null },
         { file: 'package.json', before: [finding({ matched: 'near-api-js ^5.1.1', via: 'version', entry: null })], after: [finding({ via: 'version', entry: null })], status: 'manual', reason: 'change the dependency once the code builds', receipt: null },
       ],
       patch: 'diff --git a/lib/near.mjs b/lib/near.mjs',
@@ -100,7 +133,9 @@ describe('the deliverable', () => {
       apiGaps: [{ file: 'lib/near.mjs', names: ['connect'] }],
     };
     const md = renderReport(r, 'nearpedia-migration.patch');
-    expect(md).toContain('2 use something NEAR deprecated, removed or changed: 2 findings. This delivery fixes 1 of them in 1 files.');
+    expect(md).toContain('3 use something NEAR deprecated, removed or changed: 3 findings. This delivery fixes 1 of them in 1 files.');
+    expect(md).toContain('1 of those files only name an old API inside strings or comments (1 findings).');
+    expect(md).toContain('- mentioned · line 4 · `keyStores`');
     expect(md).toContain('git apply nearpedia-migration.patch');
     expect(md).toContain('| `package.json` | 1 | 1 | by hand: change the dependency once the code builds |');
     expect(md).toContain('- `lib/near.mjs`: `connect`');
