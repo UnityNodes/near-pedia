@@ -133,7 +133,7 @@ export interface DocsMarker {
  * ("Consider using send_tx instead", "Consider genesis_config instead").
  */
 export function extractDocsMarker(content: string): DocsMarker | null {
-  const method = content.match(/^\/openapi\.json\s+post\s+\/(\S+)/m)?.[1];
+  const method = content.match(/^(?:\/openapi\.json\s+post|POST)\s+\/(\S+)/m)?.[1];
   // The method's own description is the first line after the spec header; a
   // `[Deprecated]` further down describes a parameter or a field, not the method.
   const head = content.split(/\r?\n/).filter((l) => l.trim()).slice(0, 3);
