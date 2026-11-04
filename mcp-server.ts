@@ -1920,7 +1920,7 @@ const searchLimiter = rateLimit({
 
 app.use('/mcp', mcpLimiter);
 app.use('/api/v1/search', searchLimiter);
-// /ask spends NEAR AI credits on every call: 10 an hour per address.
+// /ask spends NEAR AI credits on every call: 30 an hour per address.
 app.use('/api/v1/ask', rateLimit({ windowMs: 60 * 60 * 1000, max: 30, standardHeaders: true, legacyHeaders: false, ...rateLimitResponse(30, 60) }));
 app.use('/api/v1', apiLimiter);
 
