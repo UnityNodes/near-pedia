@@ -249,7 +249,7 @@ const server = registrarFor(sdk, toolFilter());
 // Uses lib/search.ts::unifiedSearch - same FTS5+fuzzy pipeline as the UI.
 // External consumers (AI agents) get the same quality as the website.
 server.tool('search',
-  'Keyword/full-text search over the NEAR knowledge base: docs.near.org and partner docs (NEAR Intents, Trezu), gov.near.org governance and developer threads, NEAR release notes, blog and GitHub issues of NEAR repositories. NEAR only: not for other blockchains, the general web or local files. Use this for exact-term or name lookups; use semantic_search for conceptual how-does-X-work questions, and get_doc to read a full page once you have its id.',
+  'Keyword/full-text search over the NEAR knowledge base: docs.near.org and partner docs (NEAR Intents, NEAR AI Cloud, NEAR Agent Market, Trezu), gov.near.org governance and developer threads, NEAR release notes, blog and GitHub issues of NEAR repositories. NEAR only: not for other blockchains, the general web or local files. Use this for exact-term or name lookups; use semantic_search for conceptual how-does-X-work questions, and get_doc to read a full page once you have its id.',
   {
     query: z.string().describe('Search query'),
     type: z.enum(['all','doc','discussion','blog','youtube','github']).optional().default('all'),
