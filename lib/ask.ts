@@ -33,6 +33,8 @@ export const MAX_HISTORY_TURNS = 3;
 const HISTORY_ANSWER_CHARS = 1500;
 const HISTORY_QUERY_TURNS = 2;
 const DOC_LIMIT = 4;
+const DOC_CANDIDATES = DOC_LIMIT * 5;
+const MIN_DOC_WEIGHT_SHARE = 0.5;
 const EXCERPT = 1500;
 const DEPRECATION_LIMIT = 4;
 const ENTITY_LIMIT = 3;
@@ -117,10 +119,17 @@ export function excerptAround(text: string, terms: readonly string[], size = EXC
 function docSources(db: Database.Database, question: string): Array<{ title: string; url: string; as_of: string | null; excerpt: string }> {
   const terms = likeTokens(tokenize(question)).slice(0, 10);
   if (terms.length === 0) return [];
-  const q = terms.map((t) => `"${t.replace(/"/g, '""')}"`).join(' OR ');
-  const rows = db.prepare(`SELECT d.title, d.url, COALESCE(d.last_modified, d.synced_at) AS as_of, d.content_text
-    FROM doc_pages d JOIN docs_fts ON d.id = docs_fts.rowid WHERE docs_fts MATCH ? ORDER BY rank LIMIT ?`).all(q, DOC_LIMIT) as Array<{ title: string | null; url: string; as_of: string | null; content_text: string | null }>;
-  return rows.map((r) => ({ title: r.title ?? r.url, url: r.url, as_of: r.as_of, excerpt: excerptAround(r.content_text ?? '', terms) }));
+  const quoted = terms.map((t) => `"${t.replace(/"/g, '""')}"`);
+  const pages = (db.prepare('SELECT count(*) AS n FROM doc_pages').get() as { n: number }).n;
+  const holding = db.prepare('SELECT rowid AS id FROM docs_fts WHERE docs_fts MATCH ?');
+  const held = quoted.map((q) => new Set((holding.all(q) as Array<{ id: number }>).map((r) => r.id)));
+  const weights = held.map((ids) => Math.log((pages + 1) / (ids.size + 0.5)));
+  const full = weights.reduce((a, b) => a + b, 0);
+  const covers = (id: number) => held.reduce((sum, ids, i) => sum + (ids.has(id) ? weights[i] : 0), 0) >= full * MIN_DOC_WEIGHT_SHARE;
+  const rows = db.prepare(`SELECT d.id, d.title, d.url, COALESCE(d.last_modified, d.synced_at) AS as_of, d.content_text
+    FROM doc_pages d JOIN docs_fts ON d.id = docs_fts.rowid WHERE docs_fts MATCH ? ORDER BY rank LIMIT ?`).all(quoted.join(' OR '), DOC_CANDIDATES) as Array<{ id: number; title: string | null; url: string; as_of: string | null; content_text: string | null }>;
+  return rows.filter((r) => covers(r.id)).slice(0, DOC_LIMIT)
+    .map((r) => ({ title: r.title ?? r.url, url: r.url, as_of: r.as_of, excerpt: excerptAround(r.content_text ?? '', terms) }));
 }
 
 function deprecationSources(db: Database.Database, text: string): DeprecationMatch[] {
