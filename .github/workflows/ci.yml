@@ -1,6 +1,6 @@
 name: CI
 
-# Actions minutes are billed for this private repository. Branches are expected
+# Actions minutes are billed. Branches are expected
 # to be built and tested before they merge, so CI runs for main
 # and pull requests only, skips commits that touch nothing but prose, and a
 # newer push to the same ref cancels the run it supersedes.
