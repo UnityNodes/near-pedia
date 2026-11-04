@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  addedCommentLines, applyEdits, editsFrom, isImprovement, mentionOnly, mentionsKept, missingNearApi, needsHand, parseErrors, renderReport, repoFrom,
+  addedCommentLines, applyEdits, editsFrom, isImprovement, isTransient, mentionOnly, mentionsKept, missingNearApi, needsHand, parseErrors, renderReport, repoFrom,
   replacementNames, undeclaredNames, type MigrationResult, type NearApiExports,
 } from '@/lib/migrate-repo';
 import type { Finding } from '@/lib/check-code';
@@ -25,6 +25,16 @@ describe('reading the job', () => {
     expect(repoFrom('my repo is private')).toBeNull();
     expect(repoFrom('https://github.com/acme/relayer/tree/--upload-pack=touch')).toBeNull();
     expect(repoFrom('https://github.com/acme/relayer/tree/a/../b')).toBeNull();
+  });
+});
+
+describe('when NEAR AI fails', () => {
+  it('tries a file once more after a provider hiccup, not after a refusal', () => {
+    expect(isTransient("400 Provider failed for model 'Qwen/Qwen3.8-27B': Upstream request failed")).toBe(true);
+    expect(isTransient('NEAR AI 503 Service Unavailable')).toBe(true);
+    expect(isTransient('The operation timed out')).toBe(true);
+    expect(isTransient('NEAR AI 401 invalid api key')).toBe(false);
+    expect(isTransient('the response signature did not verify')).toBe(false);
   });
 });
 
