@@ -85,6 +85,24 @@ describe('checking a rewrite before it is kept', () => {
     expect(mentionOnly('src/lib.rs', '// keyStores', at(1, 'keyStores'))).toBe(false);
   });
 
+  it('counts an endpoint, an RPC method or a config key written as a bare string value as code, and the same name in a sentence as a mention', () => {
+    const code = [
+      "const RPC = 'https://rpc.testnet.pagoda.co';",
+      "const body = { method: 'broadcast_tx_commit' };",
+      "const note = 'rpc.testnet.pagoda.co is gone, use another endpoint';",
+      '// call broadcast_tx_commit',
+      "const label = 'DelegateV2';",
+      "const page = '/post-broadcast_tx_commit';",
+    ].join('\n');
+    const at = (line: number, matched: string, via: Finding['via']) => finding({ line, matched, via });
+    expect(mentionOnly('a.mjs', code, at(1, 'rpc.testnet.pagoda.co', 'url'))).toBe(false);
+    expect(mentionOnly('a.mjs', code, at(2, 'broadcast_tx_commit', 'rpc'))).toBe(false);
+    expect(mentionOnly('a.mjs', code, at(3, 'rpc.testnet.pagoda.co', 'url'))).toBe(true);
+    expect(mentionOnly('a.mjs', code, at(4, 'broadcast_tx_commit', 'rpc'))).toBe(true);
+    expect(mentionOnly('a.mjs', code, at(5, 'DelegateV2', 'identifier'))).toBe(true);
+    expect(mentionOnly('a.mjs', code, at(6, 'broadcast_tx_commit', 'rpc'))).toBe(true);
+  });
+
   it('refuses a rewrite that edits the text that only mentions an old name', () => {
     const original = "import { keyStores } from 'near-api-js';\nconst q = 'What replaces keyStores?';\nnew keyStores.InMemoryKeyStore();\n";
     const before = [finding({ line: 1 }), finding({ line: 2 }), finding({ line: 3 })];
@@ -119,6 +137,25 @@ describe('checking a rewrite before it is kept', () => {
 });
 
 describe('the deliverable', () => {
+  it('marks as open what a migrated file still carries, by name, wherever its lines moved, and states each repeated finding once', () => {
+    const r: MigrationResult = {
+      repo: { owner: 'acme', repo: 'relayer', branch: null, url: 'https://github.com/acme/relayer' },
+      scanned: 1,
+      results: [{
+        file: 'relay.mjs',
+        before: [finding({ line: 1 }), finding({ line: 7 }), finding({ line: 19, matched: 'broadcast_tx_commit', via: 'rpc', message: 'broadcast_tx_commit is deprecated.' })],
+        after: [finding({ line: 17, matched: 'broadcast_tx_commit', via: 'rpc', message: 'broadcast_tx_commit is deprecated.' })],
+        status: 'migrated', reason: null, receipt: null,
+      }],
+      patch: 'diff', apiVersion: '7.4.0', apiGaps: [],
+    };
+    const md = renderReport(r, 'p.patch');
+    expect(md).toContain('This delivery fixes 2 of them in 1 file.');
+    expect(md).toContain('- fixed · lines 1, 7 · `keyStores`: keyStores is deprecated.');
+    expect(md).toContain('- open · line 17 · `broadcast_tx_commit`: broadcast_tx_commit is deprecated.');
+    expect(md.match(/keyStores is deprecated/g)).toHaveLength(1);
+  });
+
   it('says what was fixed, what is left and why, how to apply the patch, and what still blocks near-api-js 7', () => {
     const r: MigrationResult = {
       repo: { owner: 'acme', repo: 'relayer', branch: null, url: 'https://github.com/acme/relayer' },
@@ -133,9 +170,10 @@ describe('the deliverable', () => {
       apiGaps: [{ file: 'lib/near.mjs', names: ['connect'] }],
     };
     const md = renderReport(r, 'nearpedia-migration.patch');
-    expect(md).toContain('3 use something NEAR deprecated, removed or changed: 3 findings. This delivery fixes 1 of them in 1 files.');
-    expect(md).toContain('1 of those files only name an old API inside strings or comments (1 findings).');
+    expect(md).toContain('3 use something NEAR deprecated, removed or changed: 3 findings. This delivery fixes 1 of them in 1 file.');
+    expect(md).toContain('1 of those files only name an old API inside strings or comments (1 finding).');
     expect(md).toContain('- mentioned · line 4 · `keyStores`');
+    expect(md).not.toMatch(/mentioned · line 4 · `keyStores`: /);
     expect(md).toContain('git apply nearpedia-migration.patch');
     expect(md).toContain('| `package.json` | 1 | 1 | by hand: change the dependency once the code builds |');
     expect(md).toContain('- `lib/near.mjs`: `connect`');
