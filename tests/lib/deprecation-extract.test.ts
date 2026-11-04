@@ -127,6 +127,12 @@ describe('extractDocsMarker on docs.near.org RPC reference pages (2026-11-01)', 
     expect(extractDocsMarker('/openapi.json post /query\nQueries the state.\n\n## Params\n[Deprecated] `finality: optimistic` alias.')).toBeNull();
   });
 
+  it('reads the same marker on a page written out from the OpenAPI spec', () => {
+    const page = 'POST /broadcast_tx_commit\n[Deprecated] Sends a transaction and waits until transaction is fully complete. Consider using send_tx instead.\n\nRequest body (application/json):\n- params (array, required)';
+    expect(extractDocsMarker(page)).toMatchObject({ method: 'broadcast_tx_commit', replacement: 'send_tx' });
+    expect(extractDocsMarker('POST /block\nReturns block details for given height or hash\n\nResponses:\n- finality: [Deprecated] alias')).toBeNull();
+  });
+
   it('returns null for a live method and keeps a marker without a successor', () => {
     expect(extractDocsMarker('/openapi.json post /block\nReturns block details for given height or hash')).toBeNull();
     expect(extractDocsMarker('/openapi.json post /EXPERIMENTAL_maintenance_windows\n[Deprecated] Returns the future windows for maintenance.')?.replacement).toBeNull();
