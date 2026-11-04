@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  addedCommentLines, applyEdits, editsFrom, isImprovement, isTransient, mentionOnly, mentionsKept, missingNearApi, needsHand, parseErrors, renderReport, repoFrom,
+  addedCommentLines, applyEdits, assistantTurn, editsFrom, isImprovement, isTransient, mentionOnly, mentionsKept, missingNearApi, needsHand, parseErrors, renderReport, repoFrom,
   replacementNames, undeclaredNames, type MigrationResult, type NearApiExports,
 } from '@/lib/migrate-repo';
 import type { Finding } from '@/lib/check-code';
@@ -29,6 +29,11 @@ describe('reading the job', () => {
 });
 
 describe('when NEAR AI fails', () => {
+  it('sends the previous answer back inside a code fence: NEAR AI refuses a bare JSON array as an assistant turn', () => {
+    expect(assistantTurn('[{"find":"a","replace":"b"}]')).toBe('```json\n[{"find":"a","replace":"b"}]\n```');
+    expect(assistantTurn('```json\n[]\n```')).toBe('```json\n[]\n```');
+  });
+
   it('tries a file once more after a provider hiccup, not after a refusal', () => {
     expect(isTransient("400 Provider failed for model 'Qwen/Qwen3.8-27B': Upstream request failed")).toBe(true);
     expect(isTransient('NEAR AI 503 Service Unavailable')).toBe(true);

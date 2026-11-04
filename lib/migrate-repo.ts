@@ -15,6 +15,10 @@ export const MANUAL_ENTRIES = new Set(['near-sdk-js']);
 export const MAX_FILES = 12;
 const TRANSIENT_RETRY_MS = 5000;
 
+export function assistantTurn(reply: string): string {
+  return /^\s*```/.test(reply) ? reply : `\`\`\`json\n${reply.trim()}\n\`\`\``;
+}
+
 export function isTransient(message: string): boolean {
   return /upstream request failed|\b(?:429|50[0234])\b|timed? ?out|econnreset|fetch failed/i.test(message);
 }
@@ -365,7 +369,7 @@ async function migrateFile(db: Database.Database, cfg: NearAiConfig, dir: string
     last = { reason: check.reason, receipt };
     log(`    attempt ${attempt + 1}: ${check.reason}`);
     if (!check.retryWith) break;
-    messages.push({ role: 'assistant', content: text }, { role: 'user', content: `${check.retryWith} Answer again with the full corrected list of edits.` });
+    messages.push({ role: 'assistant', content: assistantTurn(text) }, { role: 'user', content: `${check.retryWith} Answer again with the full corrected list of edits.` });
   }
   return { ...base, status: 'unchanged', reason: last.reason, receipt: last.receipt };
 }
