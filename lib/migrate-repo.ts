@@ -13,6 +13,12 @@ import ts from 'typescript';
 export const MIGRATION_GUIDE_URL = 'https://raw.githubusercontent.com/near/near-api-js/master/MIGRATION.md';
 export const MANUAL_ENTRIES = new Set(['near-sdk-js']);
 export const MAX_FILES = 12;
+const TRANSIENT_RETRY_MS = 5000;
+
+export function isTransient(message: string): boolean {
+  return /upstream request failed|\b(?:429|50[0234])\b|timed? ?out|econnreset|fetch failed/i.test(message);
+}
+
 const MENTION_REASON = 'only mentioned in strings or comments, which the patch leaves as they are';
 const MAX_REWRITE_CHARS = 60_000;
 const MAX_TOKENS = 6000;
@@ -391,8 +397,14 @@ export async function migrateRepo(
   }
   for (const { file, findings } of inCode.slice(0, MAX_FILES)) {
     log(`  ${file}: ${findings.length} findings`);
+    const run = () => migrateFile(db, cfg, opts.workdir, file, findings, opts.guide, opts.feedback, log);
     try {
-      results.push(await migrateFile(db, cfg, opts.workdir, file, findings, opts.guide, opts.feedback, log));
+      results.push(await run().catch(async (e: Error) => {
+        if (!isTransient(e.message)) throw e;
+        log(`    NEAR AI: ${e.message.slice(0, 80)}; trying once more`);
+        await new Promise((r) => setTimeout(r, TRANSIENT_RETRY_MS));
+        return run();
+      }));
     } catch (e) {
       results.push({ file, before: findings, after: findings, status: 'unchanged', reason: `NEAR AI failed: ${(e as Error).message.slice(0, 160)}`, receipt: null });
     }
