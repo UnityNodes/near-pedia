@@ -56,7 +56,9 @@ async function syncDocs(): Promise<void> {
   const lastModified = isoOrNull(r.res.headers.get('last-modified'));
   const text = await r.res.text();
 
-  const { pages, problems: specProblems } = await expandOpenApiPages(parseLlmsFull(text), DOCS_ORIGIN, (url) => fetchSpec(url, UA));
+  const held = new Map((getDb().prepare("SELECT url, content_text, content_hash FROM doc_pages WHERE source = 'docs' AND url LIKE ?")
+    .all(NAMESPACE) as Array<{ url: string; content_text: string | null; content_hash: string | null }>).map((r) => [r.url, r]));
+  const { pages, problems: specProblems } = await expandOpenApiPages(parseLlmsFull(text), DOCS_ORIGIN, (url) => fetchSpec(url, UA), (url) => held.get(url));
   const announced = announcedUrls(text);
   console.log(`[sync-docs] ${text.length} bytes, ${announced.length} pages announced, ${pages.length} with a body (last-modified ${lastModified ?? 'n/a'})`);
   if (pages.length === 0) throw new Error('No pages parsed - aborting before touching the DB');

@@ -127,6 +127,7 @@ export async function expandOpenApiPages(
   pages: readonly NearDocPage[],
   origin: string,
   load: (url: string) => Promise<unknown | null>,
+  held: (url: string) => { content_text: string | null; content_hash: string | null } | undefined = () => undefined,
 ): Promise<{ pages: NearDocPage[]; problems: string[] }> {
   const specs = new Map<string, Promise<unknown | null>>();
   const problems = new Set<string>();
@@ -143,7 +144,10 @@ export async function expandOpenApiPages(
     const rendered = spec ? renderOperation(spec, stub.method, stub.path) : null;
     if (!rendered) {
       problems.add(spec ? `${url}: no ${stub.method.toUpperCase()} ${stub.path}` : `${url}: could not be read`);
-      out.push(p);
+      const prev = held(p.url);
+      if (prev?.content_text && prev.content_hash && !parseStub(prev.content_text)) {
+        out.push({ ...p, content_text: prev.content_text, excerpt: excerptOf(prev.content_text), content_hash: prev.content_hash, stub_hash: p.content_hash });
+      } else out.push(p);
       continue;
     }
     const content_text = !stub.rest || rendered.includes(stub.rest) ? rendered : `${stub.rest}\n\n${rendered}`;
