@@ -166,7 +166,7 @@ export function tokens(text: string): string[] {
   const out = new Set<string>();
   for (const raw of text.split(/[\s,;|()[\]{}<>"']+/)) {
     const t = raw.replace(/^[`*_#•·⟪-]+|[`*_#⟪⟫.:·]+$/gu, '');
-    if (t.length < 3 || t.length > 200) continue;
+    if ((t.length < 3 && !/^\d{2}$/.test(t)) || t.length > 200) continue;
     out.add(t);
     const noEllipsis = t.replace(/[…]+$/u, '');
     if (noEllipsis !== t && noEllipsis.length >= 3) out.add(noEllipsis);

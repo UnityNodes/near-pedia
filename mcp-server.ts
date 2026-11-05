@@ -318,7 +318,7 @@ server.tool('get_discussion', 'Read a gov.near.org forum thread in full: House o
         const head = `[#${p.post_number} · ${fenceUntrustedInline(p.username ?? 'anon')} · ${p.created_at?.slice(0, 10) ?? ''}${p.like_count ? ` · ${p.like_count} likes` : ''}]`;
         return full.length <= DISCUSSION_POST_CHARS
           ? `${head}\n${fenceUntrusted(full)}`
-          : `${head}\n${fenceUntrusted(full.slice(0, DISCUSSION_POST_CHARS))}\n[cut at ${DISCUSSION_POST_CHARS} of ${full.length} characters; the whole post is in the thread above]`;
+          : `${head}\n${fenceUntrusted(full.slice(0, DISCUSSION_POST_CHARS))}\n[truncated at ${DISCUSSION_POST_CHARS} of ${full.length} chars; whole post at ${FORUM_ORIGIN}/t/${id}/${p.post_number}]`;
       }),
       more > 0 ? `${more} more post(s): call get_discussion again with from_post: ${last + 1}.` : '',
       posts.length === 0 && held > 0 ? `No post from #${first} on: the thread holds ${held} post(s); start from from_post: 1.` : '',
@@ -1080,7 +1080,12 @@ server.tool('find_code_examples',
   async ({ topic, limit }) => {
     try {
       const r = findCodeExamples(getDb(), topic, limit ?? 4);
-      return { content: [{ type: 'text', text: `${UNTRUSTED_INLINE_LEGEND}\n\n${renderExamples(topic, r, fenceUntrustedInline, fenceUntrusted)}` }] };
+      const shown = [...r.live, ...r.stale];
+      const terms = likeTokens(tokenizeQuery(topic).map((t) => t.toLowerCase()));
+      const note = shown.length
+        ? tokenMatchNote(tokenizeQuery(topic), shown.flatMap((e) => [e.title, e.code]))
+        : terms.length ? `\n_None of these terms appear in any code block held: ${terms.join(', ')}._` : '';
+      return { content: [{ type: 'text', text: `${UNTRUSTED_INLINE_LEGEND}\n\n${renderExamples(topic, r, fenceUntrustedInline, fenceUntrusted)}${note}` }] };
     } catch (e) {
       return { content: [{ type: 'text', text: `find_code_examples failed: ${(e as Error).message}` }] };
     }

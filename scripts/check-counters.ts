@@ -47,7 +47,7 @@ import { logRun } from '../lib/sync-log';
 import { startScratchMcp } from '../lib/mcp-probe';
 
 /** Names that read as "a count of something" and so must be declared below. */
-const COUNTER_NAME = /count|_total$|^total|_num$|^num_/i;
+const COUNTER_NAME = /(?<![a-z])count|_accounts$|_total$|^total|_num$|^num_/i;
 
 /** Tables whose names are index/shadow artefacts, not content. */
 const NOT_CONTENT = /_fts($|_)|_docsize|_idx$|_data$|_content$|_rowids$|_chunks/;
@@ -76,20 +76,12 @@ interface Served {
 
 const SERVED: Served[] = [
   {
-    tool: 'get_discussion', label: 'Replies', arg: 'id', argType: 'number',
-    sampleSql: `SELECT id FROM forum_topics t
-      ORDER BY ABS(COALESCE(reply_count,0) - MAX(0,(SELECT COUNT(*) FROM forum_posts p WHERE p.topic_id=t.id) - 1)) DESC
-      LIMIT 12`,
-    truthSql: `SELECT MAX(0,(SELECT COUNT(*) FROM forum_posts p WHERE p.topic_id=?) - 1) n`,
-    why: 'the answer to "did anyone reply to this thread"',
-  },
-  {
-    tool: 'get_discussion', label: 'Posts', arg: 'id', argType: 'number',
+    tool: 'get_discussion', label: 'Posts held', arg: 'topic', argType: 'number',
     sampleSql: `SELECT id FROM forum_topics t
       ORDER BY ABS(COALESCE(posts_count,0) - (SELECT COUNT(*) FROM forum_posts p WHERE p.topic_id=t.id)) DESC
       LIMIT 12`,
     truthSql: `SELECT (SELECT COUNT(*) FROM forum_posts p WHERE p.topic_id=?) n`,
-    why: 'posts_count is served raw (not derived); this is a regression guard on how well it holds up, not a repair',
+    why: 'the figure says how many posts of the thread this index holds, so it has to be the rows held',
   },
 ];
 
@@ -159,6 +151,48 @@ const DECLARED: Declared[] = [
     table: 'forum_posts', column: 'like_count',
     wouldNeed: 'the like events themselves, which Discourse does not publish per post in the listing',
     why: 'a leaf counter with no rows under it',
+  },
+  {
+    kind: 'derivable',
+    table: 'packages', column: 'versions_count',
+    child: 'package_versions', parentKey: 'id', childKey: 'package_id', shape: 'rows',
+    why: 'sync-packages stores every published version of each package, so the versions held are the count',
+  },
+  {
+    kind: 'upstream-only',
+    table: 'protocol_snapshots', column: 'threshold_num',
+    wouldNeed: 'nothing: it is the numerator of the upgrade stake threshold read from EXPERIMENTAL_protocol_config, a ratio, not a count of rows',
+    why: 'the name ends in _num but the value is a protocol parameter',
+  },
+  {
+    kind: 'upstream-only',
+    table: 'hos_proposals', column: 'votes_total',
+    wouldNeed: 'every vote cast on the House of Stake voting contract, which is read as the contract\'s own tallies',
+    why: 'the contract keeps the tally; per-vote rows are not synced',
+  },
+  {
+    kind: 'upstream-only',
+    table: 'hos_proposals', column: 'voters_total',
+    wouldNeed: 'every vote cast on the House of Stake voting contract',
+    why: 'the contract keeps the number of voters; per-vote rows are not synced',
+  },
+  {
+    kind: 'upstream-only',
+    table: 'hos_proposals', column: 'total_venear',
+    wouldNeed: 'every veNEAR lock at the proposal\'s snapshot block',
+    why: 'the veNEAR supply the voting contract snapshotted for the proposal, an amount, not a count of rows',
+  },
+  {
+    kind: 'upstream-only',
+    table: 'hos_stats', column: 'venear_total',
+    wouldNeed: 'every veNEAR lock and its growth',
+    why: 'the veNEAR contract\'s total supply at the reading, an amount',
+  },
+  {
+    kind: 'upstream-only',
+    table: 'hos_stats', column: 'venear_accounts',
+    wouldNeed: 'every account that locked NEAR into veNEAR',
+    why: 'the veNEAR contract\'s own account count at the reading',
   },
   {
     kind: 'upstream-only',
