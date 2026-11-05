@@ -159,7 +159,9 @@ curl -s http://127.0.0.1:3131/api/v1/contracts/intents.near | head -c 600
 claude mcp add --transport http nearpedia http://127.0.0.1:3131/mcp
 ```
 
-You see two `check_code` findings (near-sdk-js on line 1, `DelegateV2` on line 2, each with its sources, dated where the source has a date), the mainnet upgrade with its voting dates and the share of stake that has voted, what the `MethodNotFound` error means and how to fix it, and the methods deployed on `intents.near` read live from RPC. `npm run build && npm run start` serves the site on :3130 from the same database. `npm test` runs 935 tests without network or keys; [`docs/TESTING.md`](docs/TESTING.md) says what each part checks.
+No time for the 25-minute sync? The same curls against `https://near-pedia.xyz` instead of `http://127.0.0.1:3131` answer from the live index, and `npm test` needs neither. Without the sync, a local server answers `explain-error` and `contracts` (curated data and live RPC) but has an empty deprecation index and no protocol snapshot yet.
+
+You see two `check_code` findings (near-sdk-js on line 1, `DelegateV2` on line 2, each with its sources, dated where the source has a date), the mainnet upgrade with its voting dates and the share of stake that has voted, what the `MethodNotFound` error means and how to fix it, and the methods deployed on `intents.near` read live from RPC. `npm run build && npm run start` serves the site on :3130 from the same database. `npm test` runs 938 tests without network or keys; [`docs/TESTING.md`](docs/TESTING.md) says what each part checks.
 
 **You need**
 
