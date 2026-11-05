@@ -167,7 +167,7 @@ export function partnerOfProject(slug: string): Partner | null {
 
 export function partnerDocsCount(db: Database.Database, p: Partner): number {
   if (!p.docs_feed) return 0;
-  return (db.prepare("SELECT COUNT(*) n FROM doc_pages WHERE source = 'partner-docs' AND url LIKE ?").get(`${p.docs_feed.origin}/%`) as { n: number }).n;
+  return (db.prepare("SELECT COUNT(*) n FROM doc_pages WHERE source = 'partner-docs' AND url LIKE ? ESCAPE '\\'").get(`${escLike(p.docs_feed.origin)}/%`) as { n: number }).n;
 }
 
 export const parseJson = <T>(s: string | null, fallback: T): T => {

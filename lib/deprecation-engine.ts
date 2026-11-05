@@ -15,6 +15,7 @@ import { SEEDS, type Seed, type SeedEvidence } from './deprecation-seeds';
 import { activityEvidence, docsMarkerCandidates, dormancyEvidence, registryCandidates, releaseCandidates, repoCandidates, subjectsOf } from './deprecation-signals';
 import { DOCS_ORIGIN } from './near-docs';
 import { recordEvents, type ChangeEvent } from './change-events';
+import { escLike } from './rank';
 
 export interface BuiltEvidence extends Evidence {
   /** true: the quote was found at its source in our data; false: the source is synced and no longer says it; null: not re-checkable here. */
@@ -52,7 +53,7 @@ export function verifyQuote(db: Database.Database, e: SeedEvidence): boolean | n
   if (e.source_url.startsWith(`${DOCS_ORIGIN}/`)) {
     const row = db.prepare("SELECT content_text FROM doc_pages WHERE source = 'docs' AND url = ?").get(e.source_url) as { content_text: string | null } | undefined;
     if (row) return normalise(row.content_text ?? '').includes(quote);
-    const any = db.prepare("SELECT 1 FROM doc_pages WHERE source = 'docs' AND url LIKE ? LIMIT 1").get(`${DOCS_ORIGIN}/%`);
+    const any = db.prepare("SELECT 1 FROM doc_pages WHERE source = 'docs' AND url LIKE ? ESCAPE '\\' LIMIT 1").get(`${escLike(DOCS_ORIGIN)}/%`);
     return any ? false : null;
   }
   const release = e.source_url.match(/^https:\/\/github\.com\/([^/]+\/[^/]+)\/releases\/tag\//);

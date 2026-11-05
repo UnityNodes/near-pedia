@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import {
   ArrowRight, Boxes, CirclePlay, FileText, GitBranch, GitPullRequest, BookOpen, MessageCircle,
-  MessagesSquare, Package, PenLine, Plug, Radar, Tag, Zap,
+  MessagesSquare, Package, PenLine, Plug, Radar, ScrollText, Tag, Zap,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -25,6 +25,7 @@ const TYPE_MAP: Record<string, { name: string; Icon: LucideIcon; group: GroupKey
   doc:               { name: 'Docs',         Icon: BookOpen,       group: 'learn',      href: '/docs' },
   blog_post:         { name: 'Blog',         Icon: PenLine,        group: 'learn',      href: '/blog' },
   youtube_video:     { name: 'Videos',       Icon: CirclePlay,     group: 'learn',      href: '/videos' },
+  nep_standard:      { name: 'NEPs',         Icon: ScrollText,     group: 'learn',      href: '/docs' },
   hos_proposal:      { name: 'House of Stake', Icon: FileText,     group: 'governance', href: '/governance' },
   forum_topic:       { name: 'gov.near.org', Icon: MessagesSquare, group: 'governance', href: '/discussions' },
   github_discussion: { name: 'Discussions',  Icon: MessageCircle,  group: 'governance', href: '/discussions' },

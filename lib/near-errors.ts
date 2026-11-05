@@ -187,7 +187,7 @@ export const KNOWN_ERRORS: readonly KnownError[] = [
     cause: 'After the transaction the account would not hold enough NEAR to pay for the storage it uses (storage staking): every byte an account stores locks part of its balance.',
     fix: 'Send NEAR to the account, or free storage (delete state, remove keys) before the call that adds it.',
     source_url: NOMICON_ACTIONS,
-    quote: '`LackBalanceForState` if the account does not hold enough NEAR to cover the added storage.',
+    quote: '`LackBalanceForState` if the account balance is less than this cost, or if the balance left after paying it does not cover the account\'s storage staking.',
   },
   {
     id: 'tx-status-method-not-found',

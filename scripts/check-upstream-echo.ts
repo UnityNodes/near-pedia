@@ -115,13 +115,12 @@ const ECHOES: Echo[] = [
     why: 'fetches one full llms-full.txt dump of the whole docs corpus every run and refuses to write if nothing parsed',
   },
   {
-    sync: 'github-releases', table: 'github_releases', semantics: 'full-set',
-    why: "pages every repo's releases to the end each run; a real fetch failure logs status='error' rather than a short count. Compares against github_releases, not blog_posts - this sync also mirrors releases into blog_posts (id='rel-<id>'), a second table it does not own the full count of.",
+    sync: 'github-releases', table: 'github_releases', semantics: 'delta',
+    why: 'reports the releases it wrote this run: the 15-minute run sends each repo\'s stored ETag and skips a repo that answers 304, and only the daily --full run reads every page, so the figure is never the table total',
   },
   {
-    sync: 'blog', table: 'blog_posts', semantics: 'full-set',
-    scopeWhere: "tags LIKE '%blog%'",
-    why: "fetches the full sitemap every run and re-scrapes every URL in it. blog_posts also holds github-releases' mirrored rows (tags='release-notes,...'), so the comparison is scoped to this sync's own tag.",
+    sync: 'blog', table: 'blog_posts', semantics: 'delta',
+    why: 'reports the posts it wrote this run: the sitemap is read whole, but only URLs it does not hold yet are fetched (all of them with --full), and pruning is confirmed separately by pruneConfirmingUrls',
   },
   {
     sync: 'ecosystem', table: 'ecosystem_projects', semantics: 'full-set',

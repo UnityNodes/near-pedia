@@ -181,6 +181,7 @@ function main() {
     for (const c of extractCuts(f)) {
       cuts++;
       if (/\border\s+by\b/i.test(c.sql)) { accepted.push(`${c.file}:${c.line} orders`); continue; }
+      if (/^select\s+1\s+from\b/i.test(c.sql)) { accepted.push(`${c.file}:${c.line} existence probe: it reads no row, so which row is cut cannot matter`); continue; }
       if (c.orderedByHole) { accepted.push(`${c.file}:${c.line} orders via an interpolated fragment`); continue; }
       if (c.ranked) { accepted.push(`${c.file}:${c.line} ranked in code`); continue; }
       const ok = ALLOWED.find(a => a.file === c.file && c.sql.includes(a.match));

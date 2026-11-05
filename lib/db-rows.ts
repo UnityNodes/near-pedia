@@ -11,6 +11,12 @@
 //
 // scripts/check-db-rows.ts re-renders this and fails on any difference.
 
+export interface AlertStateRow {
+  key: string;
+  value: string;
+  updated_at: string;
+}
+
 export interface BlogPostsRow {
   id: string;
   title: string;
@@ -89,6 +95,22 @@ export interface CspViolationLogRow {
   blocked_uri: string | null;
   source_file: string | null;
   line_number: number | null;
+}
+
+export interface DbAnchorsRow {
+  date: string;
+  hash: string;
+  tables: number;
+  rows: number;
+  manifest: string;
+  computed_at: string;
+  status: string;
+  network: string | null;
+  contract: string | null;
+  account: string | null;
+  tx_hash: string | null;
+  block_height: number | null;
+  error: string | null;
 }
 
 export interface DeprecationEvidenceRow {
@@ -267,6 +289,15 @@ export interface EmbeddingVectorsRowidsRow {
 export interface EmbeddingVectorsVectorChunks00Row {
   rowid: unknown;
   vectors: Buffer;
+}
+
+export interface FailureEventsRow {
+  id: number;
+  at: number;
+  surface: string;
+  kind: string;
+  detail: string | null;
+  caller: string | null;
 }
 
 export interface ForumFtsRow {
@@ -670,23 +701,8 @@ export interface YoutubeVideosFtsIdxRow {
   pgno: unknown | null;
 }
 
-export interface DbAnchorsRow {
-  date: string;
-  hash: string;
-  tables: number;
-  rows: number;
-  manifest: string;
-  computed_at: string;
-  status: string;
-  network: string | null;
-  contract: string | null;
-  account: string | null;
-  tx_hash: string | null;
-  block_height: number | null;
-  error: string | null;
-}
-
 export interface DbRowByTable {
+  "alert_state": AlertStateRow;
   "blog_posts": BlogPostsRow;
   "blog_posts_fts": BlogPostsFtsRow;
   "blog_posts_fts_config": BlogPostsFtsConfigRow;
@@ -697,6 +713,7 @@ export interface DbRowByTable {
   "change_events": ChangeEventsRow;
   "contact_submissions": ContactSubmissionsRow;
   "csp_violation_log": CspViolationLogRow;
+  "db_anchors": DbAnchorsRow;
   "deprecation_evidence": DeprecationEvidenceRow;
   "deprecations": DeprecationsRow;
   "doc_pages": DocPagesRow;
@@ -718,6 +735,7 @@ export interface DbRowByTable {
   "embedding_vectors_info": EmbeddingVectorsInfoRow;
   "embedding_vectors_rowids": EmbeddingVectorsRowidsRow;
   "embedding_vectors_vector_chunks00": EmbeddingVectorsVectorChunks00Row;
+  "failure_events": FailureEventsRow;
   "forum_fts": ForumFtsRow;
   "forum_fts_config": ForumFtsConfigRow;
   "forum_fts_data": ForumFtsDataRow;
@@ -732,8 +750,10 @@ export interface DbRowByTable {
   "hos_proposals": HosProposalsRow;
   "hos_stats": HosStatsRow;
   "http_validators": HttpValidatorsRow;
+  "incidents": IncidentsRow;
   "log_rollup": LogRollupRow;
   "mcp_calls": McpCallsRow;
+  "nep_standards": NepStandardsRow;
   "network_stats": NetworkStatsRow;
   "package_versions": PackageVersionsRow;
   "packages": PackagesRow;

@@ -318,7 +318,7 @@ server.tool('get_discussion', 'Read a gov.near.org forum thread in full: House o
         const head = `[#${p.post_number} · ${fenceUntrustedInline(p.username ?? 'anon')} · ${p.created_at?.slice(0, 10) ?? ''}${p.like_count ? ` · ${p.like_count} likes` : ''}]`;
         return full.length <= DISCUSSION_POST_CHARS
           ? `${head}\n${fenceUntrusted(full)}`
-          : `${head}\n${fenceUntrusted(full.slice(0, DISCUSSION_POST_CHARS))}\n[cut at ${DISCUSSION_POST_CHARS} of ${full.length} characters; the whole post is in the thread above]`;
+          : `${head}\n${fenceUntrusted(full.slice(0, DISCUSSION_POST_CHARS))}\n[truncated at ${DISCUSSION_POST_CHARS} of ${full.length} chars; whole post at ${FORUM_ORIGIN}/t/${id}/${p.post_number}]`;
       }),
       more > 0 ? `${more} more post(s): call get_discussion again with from_post: ${last + 1}.` : '',
       posts.length === 0 && held > 0 ? `No post from #${first} on: the thread holds ${held} post(s); start from from_post: 1.` : '',
@@ -1080,7 +1080,12 @@ server.tool('find_code_examples',
   async ({ topic, limit }) => {
     try {
       const r = findCodeExamples(getDb(), topic, limit ?? 4);
-      return { content: [{ type: 'text', text: `${UNTRUSTED_INLINE_LEGEND}\n\n${renderExamples(topic, r, fenceUntrustedInline, fenceUntrusted)}` }] };
+      const shown = [...r.live, ...r.stale];
+      const terms = likeTokens(tokenizeQuery(topic).map((t) => t.toLowerCase()));
+      const note = shown.length
+        ? tokenMatchNote(tokenizeQuery(topic), shown.flatMap((e) => [e.title, e.code]))
+        : terms.length ? `\n_None of these terms appear in any code block held: ${terms.join(', ')}._` : '';
+      return { content: [{ type: 'text', text: `${UNTRUSTED_INLINE_LEGEND}\n\n${renderExamples(topic, r, fenceUntrustedInline, fenceUntrusted)}${note}` }] };
     } catch (e) {
       return { content: [{ type: 'text', text: `find_code_examples failed: ${(e as Error).message}` }] };
     }
@@ -1480,7 +1485,7 @@ server.tool('get_contract_info',
       let project: string | null = null;
       let deprecations: string[] = [];
       try {
-        const p = db.prepare('SELECT slug, title FROM ecosystem_projects WHERE tokens LIKE ? ESCAPE \'\\\' LIMIT 1').get(`%"near":"${escLike(id)}"%`) as { slug: string; title: string } | undefined;
+        const p = db.prepare("SELECT slug, title FROM ecosystem_projects WHERE tokens LIKE ? ESCAPE '\\' LIMIT 1").get(`%"near":"${escLike(id)}"%`) as { slug: string; title: string } | undefined;
         project = p ? `${p.title} (${p.slug})` : null;
         deprecations = findDeprecations(db, id, 3).filter((d) => d.match === 'exact').map((d) => `${d.title}, ${d.status}`);
       } catch { /* catalog or deprecations not synced */ }
@@ -2585,6 +2590,11 @@ app.get('/api/v1/sources', (_req, res) => {
     // undeclared" shape check-sources.ts exists to catch, just below the
     // row count that check bothers to flag on its own.
     { type: 'radar_item',         desc: 'Breaking changes and deadlines',         count: safeCount('SELECT COUNT(*) c FROM radar_items'),             last_synced: safeMax("SELECT MAX(created_at) t FROM radar_items") },
+    { type: 'package',            desc: 'npm and crates.io packages, every version with its deprecation and yank flags', count: safeCount('SELECT COUNT(*) c FROM packages'), last_synced: safeMax("SELECT MAX(synced_at) t FROM packages") },
+    { type: 'github_repo',        desc: 'Repositories in the NEAR GitHub orgs, archived state and README notices', count: safeCount('SELECT COUNT(*) c FROM github_repos'), last_synced: safeMax("SELECT MAX(synced_at) t FROM github_repos") },
+    { type: 'hos_proposal',       desc: 'House of Stake proposals and their votes', count: safeCount('SELECT COUNT(*) c FROM hos_proposals'),          last_synced: safeMax("SELECT MAX(synced_at) t FROM hos_proposals") },
+    { type: 'nep_standard',       desc: 'NEAR Enhancement Proposals (standards)', count: safeCount('SELECT COUNT(*) c FROM nep_standards'),          last_synced: safeMax("SELECT MAX(synced_at) t FROM nep_standards") },
+    { type: 'incident',           desc: 'Security incidents of NEAR protocols and catalog projects', count: safeCount('SELECT COUNT(*) c FROM incidents'), last_synced: safeMax("SELECT MAX(synced_at) t FROM incidents") },
   ];
   // Only expose sources that actually have data, then append the RAG index.
   const sources = allSources.filter((s) => s.count > 0);
@@ -2647,7 +2657,7 @@ app.get('/api/v1/changes', (req, res) => {
 
   const newBlog: ActivityItem[] = safe(() => (db.prepare(`
     SELECT id, title, url, published_at, tags FROM blog_posts
-    WHERE published_at >= ? ORDER BY published_at DESC LIMIT ?
+    WHERE published_at >= ? AND ${KIND_SQL} != 'release' ORDER BY published_at DESC LIMIT ?
   `).all(sinceIso, cap) as Array<{ id: string; title: string; url: string; published_at: string; tags: string | null }>).map(r => ({
     kind: 'new_blog_post' as const,
     when: r.published_at,

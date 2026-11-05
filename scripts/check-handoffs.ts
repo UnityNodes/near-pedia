@@ -65,7 +65,7 @@ interface Handoff {
  */
 const HANDOFFS: Handoff[] = [
   { producer: 'search', producerArgs: { query: 'validator', type: 'discussion', limit: 5 },
-    consumer: 'get_discussion', param: 'id', knownGoodSql: 'SELECT id FROM forum_topics LIMIT 1' },
+    consumer: 'get_discussion', param: 'topic', knownGoodSql: 'SELECT id FROM forum_topics LIMIT 1' },
   { producer: 'search', producerArgs: { query: 'node', type: 'doc', limit: 5 },
     consumer: 'get_doc', param: 'id', knownGoodSql: 'SELECT id FROM doc_pages LIMIT 1' },
   { producer: 'semantic_search', producerArgs: { query: 'how does node syncing work', limit: 3, source_types: ['doc_page'] },
@@ -87,6 +87,12 @@ const HANDOFFS: Handoff[] = [
   // real coverage even though nothing in prose asserts the pair.
   { producer: 'list_repos', producerArgs: {},
     consumer: 'get_latest_release', param: 'package', knownGoodSql: 'SELECT repo FROM github_releases LIMIT 1' },
+
+  { producer: 'check_code', producerArgs: { code: '{"dependencies":{"near-api-js":"^2.1.4","@near-js/accounts":"^1.2.0"}}', filename: 'package.json' },
+    consumer: 'resolve_package', param: 'package', knownGoodSql: 'SELECT name FROM packages LIMIT 1' },
+
+  { producer: 'list_incidents', producerArgs: { relevance: 'all', limit: 5 },
+    consumer: 'get_incident', param: 'id', knownGoodSql: 'SELECT id FROM incidents LIMIT 1' },
 ];
 
 /**
