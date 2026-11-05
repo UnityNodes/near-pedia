@@ -61,6 +61,12 @@ The deprecation engine is fed by six signals: archived repositories, "deprecated
 claude mcp add --transport http nearpedia https://near-pedia.xyz/mcp
 ```
 
+Or, in Claude Code, the plugin: the same server plus a skill that checks NEAR code before and after writing it.
+
+```
+/plugin install nearpedia --marketplace UnityNodes/near-pedia
+```
+
 Then ask Claude Code to write a NEAR contract in JavaScript with meta-transactions and to check it with the nearpedia tools: `check_code` names near-sdk-js and `DelegateV2` with their replacements.
 
 <details>
