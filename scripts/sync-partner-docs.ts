@@ -37,7 +37,9 @@ async function syncPartner(p: Partner, feed: NonNullable<Partner['docs_feed']>, 
   if (r.kind !== 'ok') return { pages: 0, problem: `${feed.url}: ${r.kind}` };
   const text = await r.res.text();
   const parsed = feed.single ? [singleDocPage(text, feed.url)].filter((pg): pg is NearDocPage => pg !== null) : parseLlmsFull(text, feed.origin);
-  const { pages, problems: specProblems } = await expandOpenApiPages(parsed, feed.origin, (url) => fetchSpec(url, UA));
+  const held = new Map((getDb().prepare('SELECT url, content_text, content_hash FROM doc_pages WHERE source = ? AND url LIKE ?')
+    .all(SOURCE, `${feed.origin}/%`) as Array<{ url: string; content_text: string | null; content_hash: string | null }>).map((r) => [r.url, r]));
+  const { pages, problems: specProblems } = await expandOpenApiPages(parsed, feed.origin, (url) => fetchSpec(url, UA), (url) => held.get(url));
   const announced = feed.single ? pages.map((pg) => pg.url) : announcedUrls(text, feed.origin);
   if (pages.length === 0) return { pages: 0, problem: `${feed.url}: no pages parsed` };
 
