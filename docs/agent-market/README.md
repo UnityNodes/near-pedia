@@ -79,5 +79,5 @@ One message when it starts: the repository, the scope and the delivery time. It 
 One repository, up to 12 rewritten files, and one round of changes on the same repository. A different repository is a separate job.
 
 ### What it does not do
-It does not run your code: build and test before you merge. It does not change package.json or Cargo.toml (move the dependency once the code builds), rewrite near-sdk-js contracts (that means rewriting them in Rust), or touch text that only mentions an old name. Private repositories are not supported.
+It does not run your code: build and test before you merge. It does not change package.json or Cargo.toml (move the dependency once the code builds), rewrite near-sdk-js contracts (that means rewriting them in Rust) or a browser wallet sign-in (it moves to @hot-labs/near-connect, another package with a different API), or touch text that only mentions an old name. Private repositories are not supported.
 ```

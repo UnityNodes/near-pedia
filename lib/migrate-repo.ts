@@ -8,10 +8,18 @@ import { fenceUntrusted } from './untrusted-fence';
 import { listCodeFiles } from './repo-files';
 import { clip } from '../github-action/lib.mjs';
 import { excerptAround } from './ask';
+import { addedImports, rpcHints, rpcParamProblems, rpcShapeLookup } from './migrate-checks';
 import ts from 'typescript';
 
 export const MIGRATION_GUIDE_URL = 'https://raw.githubusercontent.com/near/near-api-js/master/MIGRATION.md';
-export const MANUAL_ENTRIES = new Set(['near-sdk-js']);
+const BROWSER_WALLET = 'browser wallet sign-in moves to @hot-labs/near-connect, another package with a different API';
+export const MANUAL_ENTRIES = new Map([
+  ['near-sdk-js', 'moving a contract off near-sdk-js means rewriting it in Rust with near-sdk'],
+  ['near-api-js-wallet-connection', BROWSER_WALLET],
+  ['near-wallet-web', BROWSER_WALLET],
+  ['wallet-selector', BROWSER_WALLET],
+  ['fast-auth-signer', BROWSER_WALLET],
+]);
 export const MAX_FILES = 12;
 const TRANSIENT_RETRY_MS = 5000;
 
@@ -32,7 +40,7 @@ const SAMPLING = { temperature: 0.2, chat_template_kwargs: { enable_thinking: fa
 const DOC_EXCERPTS = 3;
 const DOC_EXCERPT_CHARS = 3500;
 const MAX_NEW_COMMENT_LINES = 2;
-const MAX_ATTEMPTS = 2;
+const MAX_ATTEMPTS = 3;
 const SCRIPT = /\.(?:[cm]?[jt]sx?)$/;
 const MIN_DOC_CHARS = 1000;
 const IDENTIFIER = /\b(?:[a-z][a-z0-9]*_[a-z0-9_]+|[A-Z][a-z0-9]+[A-Z][A-Za-z0-9]+)\b/g;
@@ -86,8 +94,12 @@ export function counted(findings: readonly Finding[]): Finding[] {
 
 const key = (f: Finding) => `${f.entry?.id ?? f.via}:${f.matched}`;
 
-export function needsHand(findings: readonly Finding[]): boolean {
-  return findings.length > 0 && findings.every((f) => MANUAL_ENTRIES.has(f.entry?.id ?? ''));
+export function needsHand(findings: readonly Finding[]): string | null {
+  for (const f of findings) {
+    const reason = MANUAL_ENTRIES.get(f.entry?.id ?? '');
+    if (reason) return reason;
+  }
+  return null;
 }
 
 export function isImprovement(before: readonly Finding[], after: readonly Finding[]): boolean {
@@ -328,6 +340,12 @@ function checkCandidate(db: Database.Database, file: string, original: string, b
   const already = new Set(api ? missingNearApi(file, original, api) : []);
   const missing = api ? missingNearApi(file, updated, api).filter((n) => !already.has(n)) : [];
   if (missing.length) return { ok: false, reason: `the rewrite uses what near-api-js ${api!.version} does not have: ${missing.join(', ')}`, retryWith: `near-api-js ${api!.version} has none of these: ${missing.join(', ')}. Its exports are: ${api!.names.join(', ')}.` };
+  const imports = addedImports(file, original, updated);
+  if (imports.length) return { ok: false, reason: `the rewrite imports from ${imports.join(', ')}, whose exports this check cannot verify`, retryWith: `Do not import from ${imports.join(', ')}: only near-api-js and the modules the file already imports can be checked. Leave code that needs another package as it is.` };
+  const shapeOf = rpcShapeLookup(db);
+  const knownShapes = new Set(rpcParamProblems(file, original, shapeOf));
+  const shapes = rpcParamProblems(file, updated, shapeOf).filter((p) => !knownShapes.has(p));
+  if (shapes.length) return { ok: false, reason: `the rewrite calls ${shapes.join('; ')}`, retryWith: `With those edits the file calls ${shapes.join('; ')} (NEAR RPC reference). Pass params in that shape.` };
   const after = counted(checkCode(db, updated, { filename: file }).findings);
   if (!mentionsKept(file, original, updated, before, after)) {
     return { ok: false, reason: 'the rewrite changed text that only mentions an old name', retryWith: 'Those edits change strings or comments that only mention an old name. Leave text as it is and change only code.' };
@@ -353,11 +371,14 @@ async function migrateFile(db: Database.Database, cfg: NearAiConfig, dir: string
   const ranges = SCRIPT.test(file) ? textRanges(file, original) : null;
   const inCode = before.filter((f) => !mentionOnly(file, original, f, ranges));
   if (inCode.length === 0) return { ...base, status: 'unchanged', reason: MENTION_REASON };
-  if (needsHand(inCode)) return { ...base, status: 'manual', reason: 'moving a contract off near-sdk-js means rewriting it in Rust with near-sdk' };
+  const byHand = needsHand(inCode);
+  if (byHand) return { ...base, status: 'manual', reason: byHand };
   if (MANIFEST.test(file)) return { ...base, status: 'manual', reason: 'change the dependency once the code builds and its tests pass against the new API' };
   if (original.length > MAX_REWRITE_CHARS) return { ...base, status: 'manual', reason: `over ${MAX_REWRITE_CHARS.toLocaleString('en')} characters, too long to rewrite in one pass` };
   const api = SCRIPT.test(file) ? await nearApiExports() : null;
-  const messages: ChatMessage[] = migrateMessages(file, original, inCode, guide, feedback, docsFor(db, inCode));
+  const hints = rpcHints(replacementNames(inCode), rpcShapeLookup(db));
+  const docs = [...(hints.length ? [{ url: 'https://docs.near.org/api-reference', text: hints.join('\n') }] : []), ...docsFor(db, inCode)];
+  const messages: ChatMessage[] = migrateMessages(file, original, inCode, guide, feedback, docs);
   let last: { reason: string; receipt: AnswerReceipt | null } = { reason: 'no attempt', receipt: null };
   for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
     const { text, truncated, receipt } = await verifiedChat(cfg, messages, { maxTokens: MAX_TOKENS, timeoutMs: REWRITE_TIMEOUT_MS, model: MIGRATE_MODEL, extra: SAMPLING });
