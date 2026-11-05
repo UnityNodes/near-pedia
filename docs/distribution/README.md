@@ -8,7 +8,7 @@ All of them carry the production domain, `near-pedia.xyz`.
 | One command, any MCP client | works; configurations on `/for-ai` |
 | Official MCP Registry | listed since 2026-11-05 as `io.github.UnityNodes/near-pedia` |
 | Claude Code plugin marketplace | this repository; validates |
-| Anthropic plugin directory | not submitted |
+| Claude directory | MCP connector submitted 2026-11-05, in review; plugin not submitted |
 | IronClaw registry | file prepared, not submitted |
 | `llms.txt`, `SKILL.md` | served |
 
@@ -63,8 +63,10 @@ plugin carries the icon (`plugin/.claude-plugin/icon.png`, 512 px) and the
 privacy policy URL the plugin directory asks for; it has no `version`, so
 installs follow the repository's commits.
 
-The Anthropic plugin directory is a separate, reviewed listing submitted from
-the developer portal. Its first submission fixes the listing icon for good.
+The Claude directory is a separate, reviewed listing submitted from
+https://claude.ai/directory/manage. The MCP connector (`https://near-pedia.xyz/mcp`,
+no authentication, read only) was submitted on 2026-11-05; review takes weeks.
+The plugin can be submitted from the same portal and linked to the connector.
 
 ## 4. IronClaw registry
 
