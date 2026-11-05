@@ -23,10 +23,8 @@
  * map, the vocabulary from the code that produces the values being looked
  * up.
  *
- * PAIRS is empty today: nearpedia's lib/rank.ts is a slim idf-weighted
- * reordering pass with no PRIOR map, so no lookup/domain pair applies yet.
- * This is the mechanism, ready the moment a real lookup/domain pair is worth
- * declaring.
+ * PAIRS holds the sources widget's TYPE_MAP against the types
+ * /api/v1/sources publishes.
  *
  *   npx tsx scripts/check-lookups.ts
  */
@@ -47,18 +45,32 @@ interface Pair {
   keysWithoutValues?: Record<string, string>;
 }
 
-const PAIRS: Pair[] = [];
+const PAIRS: Pair[] = [
+  {
+    what: 'the sources widget on the home page and /sources drops a source type TYPE_MAP has no entry for, so an unmapped type vanishes from the page without a trace (NEPs did, 2026-11-05)',
+    lookup: { file: 'components/sources-live.tsx', name: 'TYPE_MAP' },
+    domain: { file: 'mcp-server.ts', re: /\{ type: '((?!embedding_chunk')[a-z_]+)',\s+desc:/g, what: 'source type /api/v1/sources publishes' },
+  },
+];
 
 /** The keys of an object literal assigned to `name`, read from real source. */
 function lookupKeys(file: string, name: string): string[] {
   const src = stripJsComments(fs.readFileSync(repoPath(file), 'utf8'));
   const at = src.indexOf(`const ${name}`);
   if (at === -1) throw new Error(`${file} has no ${name}`);
-  const open = src.indexOf('{', at);
+  const assign = src.indexOf('=', at);
+  const open = assign === -1 ? -1 : src.indexOf('{', assign);
   const close = src.indexOf('};', open);
   if (open === -1 || close === -1) throw new Error(`${file}: could not read the body of ${name}`);
-  const body = src.slice(open, close);
-  return [...new Set([...body.matchAll(/([a-z_][a-z_0-9]*)\s*:/gi)].map(m => m[1]))];
+  const body = src.slice(open + 1, close);
+  let depth = 0;
+  let top = '';
+  for (const ch of body) {
+    if (ch === '{' || ch === '[' || ch === '(') depth++;
+    else if (ch === '}' || ch === ']' || ch === ')') depth--;
+    else if (depth === 0) top += ch;
+  }
+  return [...new Set([...top.matchAll(/(?:^|[,\n])\s*['"]?([a-z_][a-z_0-9]*)['"]?\s*:/gi)].map(m => m[1]))];
 }
 
 async function main(): Promise<void> {
