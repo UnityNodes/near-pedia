@@ -59,6 +59,33 @@ export const MCP_TOOLS_FALLBACK: ToolItem[] = [
 
 export const IDE_CONFIGS: ClientConfig[] = [
   {
+    tab: 'Claude Code',
+    name: 'Claude Code CLI',
+    path: 'one-liner',
+    lang: 'shell',
+    code: `claude mcp add --transport http --scope user nearpedia ${MCP_URL}`,
+    note: 'Drop --scope user for the default (local, current project only), or use --scope project to share via .mcp.json.',
+  },
+  {
+    tab: 'Claude.ai',
+    name: 'Claude.ai (web/mobile)',
+    path: 'Customize → Connectors → Add custom connector',
+    lang: 'shell',
+    code: `URL: ${MCP_URL}
+Auth: none
+Available on Free, Pro, Max, Team and Enterprise plans. Free is limited to one custom connector total.`,
+  },
+  {
+    tab: 'ChatGPT',
+    name: 'ChatGPT (Plus / Pro / Team / Enterprise / Edu)',
+    path: 'Settings → Connectors → Advanced settings → enable Developer mode, then Connectors → Create',
+    lang: 'shell',
+    code: `URL: ${MCP_URL}
+Transport: Streamable HTTP
+Auth: none
+Read-only tools auto-allowed; the server has no write tools.`,
+  },
+  {
     tab: 'Claude Desktop',
     name: 'Claude Desktop',
     path: '~/Library/Application Support/Claude/claude_desktop_config.json (macOS) · %APPDATA%\\Claude\\claude_desktop_config.json (Windows)',
@@ -72,23 +99,6 @@ export const IDE_CONFIGS: ClientConfig[] = [
   }
 }`,
     note: 'Claude Desktop expects stdio, not HTTP. mcp-remote bridges the two. A bare "type": "http" entry can silently drop your whole mcpServers block on startup.',
-  },
-  {
-    tab: 'Claude.ai',
-    name: 'Claude.ai (web/mobile)',
-    path: 'Customize → Connectors → Add custom connector',
-    lang: 'shell',
-    code: `URL: ${MCP_URL}
-Auth: none
-Available on Free, Pro, Max, Team and Enterprise plans. Free is limited to one custom connector total.`,
-  },
-  {
-    tab: 'Claude Code',
-    name: 'Claude Code CLI',
-    path: 'one-liner',
-    lang: 'shell',
-    code: `claude mcp add --transport http --scope user nearpedia ${MCP_URL}`,
-    note: 'Drop --scope user for the default (local, current project only), or use --scope project to share via .mcp.json.',
   },
   {
     tab: 'Cursor',
@@ -182,16 +192,6 @@ mcpServers:
     code: `URL: ${MCP_URL}
 Transport: HTTP
 Auth: none`,
-  },
-  {
-    tab: 'ChatGPT',
-    name: 'ChatGPT (Plus / Pro / Team / Enterprise / Edu)',
-    path: 'Settings → Connectors → Advanced settings → enable Developer mode, then Connectors → Create',
-    lang: 'shell',
-    code: `URL: ${MCP_URL}
-Transport: Streamable HTTP
-Auth: none
-Read-only tools auto-allowed; the server has no write tools.`,
   },
 ];
 

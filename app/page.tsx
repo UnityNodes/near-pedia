@@ -176,7 +176,7 @@ export default async function Home() {
             <div className="dp-agents-copy">
               <span className="dp-kicker">FOR AI AGENTS</span>
               <h2>Let your agent check before it writes.</h2>
-              <p>{toolsLine} No API key, no signup, read only.</p>
+              <p>{toolsLine} No API key, no signup, read only. Works as a Claude.ai or ChatGPT connector too.</p>
               <div className="dp-agents-cta">
                 <Link href="/for-ai" className="dp-btn-dark">MCP Setup →</Link>
                 <a href="/api/v1/reference" className="dp-btn-line">Open the REST API</a>
