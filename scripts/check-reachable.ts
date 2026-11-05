@@ -2,13 +2,8 @@
  * Is every tool that requires an identifier reachable at all?
  *
  * The mechanism is fully behavioural and reads nothing NEAR-specific.
- * Only COVERED_BY_HANDOFFS is app-specific, and here it is EMPTY: the one
- * tool that could need an entry is this app's own get_issue_status(repo,
- * number) - checked directly (PRAGMA index_list on github_items) and
- * neither `repo` nor `number` is a single-column unique index here, so
- * identifierColumns() never offers them as identifier-shaped candidates in
- * the first place. They report unclassified on their own, honestly, with
- * no declaration needed.
+ * Only COVERED_BY_HANDOFFS is app-specific: each entry names a pair that
+ * check-handoffs proves round-trips, and must point at one.
  *
  * THE GAP THIS FILLS. check-handoffs proves that a DECLARED pair works: the
  * listing prints an id and the getter takes it. Its list of pairs is
@@ -122,7 +117,11 @@ const isNumeric = (t: string) => /INT/i.test(t);
  * has an obvious place to be declared, with the check-handoffs pair it
  * points at proven to exist by assertCoveredElsewhere below.
  */
-const COVERED_BY_HANDOFFS: Record<string, string> = {};
+const COVERED_BY_HANDOFFS: Record<string, string> = {
+  'get_discussion.topic': 'search prints topic numbers get_discussion accepts; topic numbers overlap release ids in value, which is why the classifier above files it under github_releases.id',
+  'get_doc.id': 'search and semantic_search print get_doc(<id>); doc ids overlap release ids in value',
+  'resolve_package.package': 'check_code prints the package names it reads from a package.json or Cargo.toml, and a caller already holds the name of a package it depends on',
+};
 
 function handoffPairs(): Set<string> {
   const src = fs.readFileSync(repoPath('scripts', 'check-handoffs.ts'), 'utf-8');
@@ -234,9 +233,9 @@ async function main(): Promise<void> {
           console.log(`  ${tool}.${param}: accepts ${accepted.length}/${probed.length} (${(share * 100).toFixed(0)}%)`
             + (accepted.length && accepted.length <= 3 ? ` — ${accepted.map(c => `${c.table}.${c.column}`).join(', ')}` : ''));
         }
+        const covered = COVERED_BY_HANDOFFS[`${tool}.${param}`];
+        if (covered) { coveredElsewhere.push(`${tool}.${param} (${covered})`); continue; }
         if (accepted.length === 0) {
-          const covered = COVERED_BY_HANDOFFS[`${tool}.${param}`];
-          if (covered) { coveredElsewhere.push(`${tool}.${param} (${covered})`); continue; }
           notes.push(`${tool}.${param}: no identifier column in this database produced a value it accepts`);
           continue;
         }

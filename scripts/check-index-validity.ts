@@ -47,17 +47,18 @@ const SOURCES: StatusSource[] = [
   },
 ];
 
-/** The body of the semantic_search render switch, bounded to that one tool. */
+/** The render switch semantic_search reads each chunk's title and status through. */
 function semanticSwitchSource(): string {
-  const src = fs.readFileSync(repoPath('mcp-server.ts'), 'utf8');
-  const start = src.indexOf("server.tool('semantic_search'");
+  const tool = fs.readFileSync(repoPath('mcp-server.ts'), 'utf8');
+  const start = tool.indexOf("server.tool('semantic_search'");
   if (start < 0) throw new Error('semantic_search tool not found in mcp-server.ts');
-  const next = src.indexOf('server.tool(', start + 25);
-  return src.slice(start, next > 0 ? next : undefined);
+  const next = tool.indexOf('server.tool(', start + 25);
+  if (!/chunkSource\(/.test(tool.slice(start, next > 0 ? next : undefined))) throw new Error('semantic_search no longer renders through chunkSource; point this check at its render code');
+  return fs.readFileSync(repoPath('lib', 'chunk-source.ts'), 'utf8');
 }
 
 function caseBlock(sw: string, type: string): string | null {
-  const m = sw.match(new RegExp(`case '${type}':([\\s\\S]*?)\\bbreak;`));
+  const m = sw.match(new RegExp(`case '${type}':([\\s\\S]*?)(?:\\bbreak;|\\n\\s*case '|\\n\\s*default:)`));
   return m ? m[1] : null;
 }
 

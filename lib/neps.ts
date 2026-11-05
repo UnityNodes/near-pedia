@@ -45,6 +45,17 @@ export function isNepPath(path: string): boolean {
   return /^neps\/(?:archive\/)?(?:nep-)?\d{4}[\w-]*\.md$/.test(path);
 }
 
+const MONTHS = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+
+function isoDate(raw: string | undefined): string | null {
+  if (!raw) return null;
+  const v = raw.trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(v)) return v;
+  const m = /^(\d{1,2})-([A-Za-z]{3})-(\d{4})$/.exec(v);
+  const month = m ? MONTHS.indexOf(m[2].toLowerCase()) : -1;
+  return m && month >= 0 ? `${m[3]}-${String(month + 1).padStart(2, '0')}-${m[1].padStart(2, '0')}` : v;
+}
+
 export function parseNep(path: string, text: string): Nep | null {
   const fm = text.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?/);
   const fields: Record<string, string> = {};
@@ -66,7 +77,7 @@ export function parseNep(path: string, text: string): Nep | null {
     type: fields.type || null,
     category: fields.category || null,
     authors: fields.author || fields.authors || null,
-    created: fields.created || null,
+    created: isoDate(fields.created),
     replaces: nums(fields.replaces),
     requires: nums(fields.requires),
     superseded_by: nums(fields.supersededby ?? fields['superseded-by']),
