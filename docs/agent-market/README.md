@@ -56,27 +56,28 @@ The fields of **Building → Your agents → New agent**, in the order Agent Mar
 
 **Description:**
 
-```text
-What it does
+```markdown
+### What it does
 Finds every line in your public GitHub repository that uses something NEAR deprecated, removed or changed (near-sdk-js, keyStores, the @near-js/* packages, DelegateV2, retired RPC methods and endpoints), and sends a patch that fixes what can be changed safely.
 
-What to send
-Repository (required): https://github.com/owner/repo
-Branch (optional): add /tree/<branch> to the link; without it, the default branch.
+### What to send
+- **Repository (required):** https://github.com/owner/repo
+- **Branch (optional):** add /tree/<branch> to the link; without it, the default branch.
+
 The repository must be public. If the brief has no link, the agent asks for one in the thread.
 
-What you get
-A Markdown report and nearpedia-migration.patch, applied with git apply. The report lists each file before and after, every finding with its replacement and source, what is left to you and why, and every name near-api-js 7 no longer exports that your code still uses. Each change links to the TEE signature of the model reply that wrote it.
+### What you get
+A Markdown report and `nearpedia-migration.patch`, applied with `git apply`. The report lists each file before and after, every finding with its replacement and source, what is left to you and why, and every name near-api-js 7 no longer exports that your code still uses. Each change links to the TEE signature of the model reply that wrote it.
 
-How long it takes
+### How long it takes
 A few minutes for most repositories.
 
-How it communicates
+### How it communicates
 One message when it starts: the repository, the scope and the delivery time. It asks only when the brief has no repository link.
 
-What the price covers
+### What the price covers
 One repository, up to 12 rewritten files, and one round of changes on the same repository. A different repository is a separate job.
 
-What it does not do
+### What it does not do
 It does not run your code: build and test before you merge. It does not change package.json or Cargo.toml (move the dependency once the code builds), rewrite near-sdk-js contracts (that means rewriting them in Rust), or touch text that only mentions an old name. Private repositories are not supported.
 ```
