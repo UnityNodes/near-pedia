@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   description: `How ${SITE.name} handles your data, short version, because we collect very little.`,
 };
 
-const LAST_UPDATED = '2026-09-21';
+const LAST_UPDATED = '2026-11-05';
 
 export default function PrivacyPage() {
   return (
@@ -29,21 +29,43 @@ export default function PrivacyPage() {
           logins, no profiles.
         </p>
         <p>
-          Contact: <a href="/contact">contact form</a>
+          Contact: <a href="/contact">contact page</a>
         </p>
       </section>
 
       <section>
         <h2>2. What we collect</h2>
-        <p>Almost nothing. Specifically:</p>
+        <p>Very little, and nothing that identifies you. Specifically:</p>
         <ul>
+          <li>
+            <strong>Site search queries</strong>: the text typed into the search on this site
+            and how many results it returned, to see what people look for and miss. No IP
+            address, account or cookie is stored with it. Kept 180 days.
+          </li>
+          <li>
+            <strong>MCP calls</strong>: which tool was called, when, whether it worked and how
+            long it took. Not the arguments, not who called. Kept 180 days.
+          </li>
+          <li>
+            <strong>/ask conversations</strong>: kept in your browser&apos;s
+            <code> localStorage</code>, not on our server. The question itself is sent to
+            NEAR AI Cloud to be answered (see 3).
+          </li>
           <li>
             <strong>Theme preference</strong>: light/dark, stored in your browser&apos;s
             <code> localStorage</code>. Never reaches our server.
           </li>
+          <li>
+            <strong>Rate limiting</strong>: requests are counted per client address in memory
+            to enforce the limit; the address is not written to disk.
+          </li>
+          <li>
+            <strong>Contact form</strong>, only if you send a message: your email, the start of
+            the subject and your IP address, to answer you and to stop abuse of the form.
+          </li>
         </ul>
         <p>
-          We do <strong>not</strong> store the text of your queries, collect names or emails,
+          Beyond that we do <strong>not</strong> collect names or emails, keep access logs of visitors, or
           load third-party analytics, ad tags, or cross-site trackers.
         </p>
       </section>
@@ -54,14 +76,6 @@ export default function PrivacyPage() {
           The following providers process text we send them under their own privacy terms:
         </p>
         <ul>
-          <li>
-            <strong>Google Gemini</strong>:{' '}
-            <a href="https://ai.google.dev/gemini-api/terms" target="_blank" rel="noopener noreferrer">terms</a>
-          </li>
-          <li>
-            <strong>Groq</strong>:{' '}
-            <a href="https://groq.com/privacy-policy" target="_blank" rel="noopener noreferrer">privacy</a>
-          </li>
           <li>
             <strong>NEAR AI Cloud</strong> (answers on /ask, and the embeddings and reranking behind semantic search; models run in TEEs):{' '}
             <a href="https://near.ai/privacy-policy" target="_blank" rel="noopener noreferrer">privacy</a>

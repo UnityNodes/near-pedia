@@ -155,11 +155,15 @@ describe('getDocSources', () => {
 describe('getDocsGlance', () => {
   beforeEach(() => { resetDb(); });
 
-  it('counts the pages changed upstream in the last seven days and names the newest', () => {
+  it('counts the pages whose text changed upstream in the last seven days, not the ones first read then', () => {
     const db = getDb();
-    insertDoc(db, { id: 1, url: 'https://docs.example.com/a', title: 'Old', last_modified: '2026-09-01T00:00:00Z' });
-    insertDoc(db, { id: 2, url: 'https://docs.example.com/b', title: 'Fresh', last_modified: '2026-10-23T10:00:00Z' });
-    insertDoc(db, { id: 3, url: 'https://docs.example.com/c', title: 'Also fresh', last_modified: '2026-10-20T10:00:00Z' });
+    insertDoc(db, { id: 1, url: 'https://docs.example.com/a', title: 'Old', last_modified: '2026-10-22T00:00:00Z' });
+    insertDoc(db, { id: 2, url: 'https://docs.example.com/b', title: 'Fresh', last_modified: '2026-10-22T00:00:00Z' });
+    insertDoc(db, { id: 3, url: 'https://docs.example.com/c', title: 'Also fresh', last_modified: '2026-10-22T00:00:00Z' });
+    const ev = db.prepare('INSERT INTO change_events (kind, subject, observed_at, dedupe_key) VALUES (?, ?, ?, ?)');
+    ev.run('doc_changed', 'doc:https://docs.example.com/b', '2026-10-23T10:00:00Z', 'b1');
+    ev.run('doc_added', 'doc:https://docs.example.com/c', '2026-10-20T10:00:00Z', 'c1');
+    ev.run('doc_changed', 'doc:https://docs.example.com/a', '2026-09-01T00:00:00Z', 'a1');
     const g = getDocsGlance(new Date('2026-10-24T12:00:00Z'));
     expect(g.updatedThisWeek).toBe(2);
     expect(g.newest).toEqual({ id: 2, title: 'Fresh', last_modified: '2026-10-23T10:00:00Z' });
