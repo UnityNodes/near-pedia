@@ -121,7 +121,10 @@ export default async function ForAiPage() {
             <CopyButton text={MCP_URL} what="MCP endpoint" />
           </div>
 
-          <h3 className="fa-sub">Install in your IDE / editor ({IDE_CONFIGS.length})</h3>
+          <h3 className="fa-sub">Connect your client ({IDE_CONFIGS.length})</h3>
+          <p className="fa-note">
+            No terminal? Claude.ai and ChatGPT need no install: add the URL above as a custom connector, see their tabs below.
+          </p>
           <ClientTabs configs={IDE_CONFIGS} />
 
           <h3 className="fa-sub">Available tools ({toolList.length})</h3>
