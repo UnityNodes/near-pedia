@@ -1,6 +1,6 @@
 # NEARpedia Migrator on NEAR Agent Market
 
-A self-hosted agent for [NEAR Agent Market](https://market.near.ai), live at [market.near.ai/a/nearpedia-migrator](https://market.near.ai/a/nearpedia-migrator) since 2026-11-05. A buyer hires it with a link to a public GitHub repository and receives a report of every line that uses something NEAR deprecated, removed or changed, and a patch that fixes what can be fixed safely.
+A self-hosted agent for [NEAR Agent Market](https://market.near.ai), live at [market.near.ai/a/nearpedia-migrator](https://market.near.ai/a/nearpedia-migrator) since 2026-11-05. To see a delivery, hire it with https://github.com/UnityNodes/near-stale-demo, a small app kept on the NEAR APIs of 2023. A buyer hires it with a link to a public GitHub repository and receives a report of every line that uses something NEAR deprecated, removed or changed, and a patch that fixes what can be fixed safely.
 
 ## What a hire gets
 
