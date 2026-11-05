@@ -58,6 +58,7 @@ export async function getSourceInventory(): Promise<SourceInventory> {
     { type: 'hos_proposal',      table: 'hos_proposals',       synced: 'synced_at' },
     { type: 'incident',          table: 'incidents',           synced: 'synced_at' },
     { type: 'nep_standard',      table: 'nep_standards',       synced: 'synced_at' },
+    { type: 'radar_item',        table: 'radar_items',         synced: 'created_at' },
   ];
 
   function countFor(type: string, table: string): number {

@@ -2579,7 +2579,7 @@ app.get('/api/v1/sources', (_req, res) => {
   const allSources = [
     { type: 'forum_topic',        desc: 'NEAR forum threads',           count: safeCount('SELECT COUNT(*) c FROM forum_topics'),            last_synced: safeMax("SELECT MAX(last_post_at) t FROM forum_topics") },
     { type: 'doc',                desc: 'Documentation pages (docs.near.org and partner docs)', count: safeCount('SELECT COUNT(*) c FROM doc_pages'),               last_synced: safeMax("SELECT MAX(synced_at) t FROM doc_pages") },
-    { type: 'blog_post',          desc: 'NEAR and ecosystem blogs',          count: safeCount('SELECT COUNT(*) c FROM blog_posts'),              last_synced: safeMax("SELECT MAX(published_at) t FROM blog_posts") },
+    { type: 'blog_post',          desc: 'NEAR and ecosystem blogs',          count: safeCount(`SELECT COUNT(*) c FROM blog_posts WHERE ${KIND_SQL} != 'release'`), last_synced: safeMax(`SELECT MAX(published_at) t FROM blog_posts WHERE ${KIND_SQL} != 'release'`) },
     { type: 'youtube_video',      desc: 'YouTube videos + transcripts',           count: safeCount('SELECT COUNT(*) c FROM youtube_videos'),          last_synced: safeMax("SELECT MAX(published_at) t FROM youtube_videos") },
     { type: 'github_item',        desc: 'GitHub issues + PRs',                    count: safeCount('SELECT COUNT(*) c FROM github_items'),            last_synced: safeMax("SELECT MAX(synced_at) t FROM github_items") },
     { type: 'github_release',     desc: 'GitHub releases across NEAR repos',  count: safeCount('SELECT COUNT(*) c FROM github_releases'),         last_synced: safeMax("SELECT MAX(published_at) t FROM github_releases") },
