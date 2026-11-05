@@ -65,8 +65,13 @@ describe('what the model may change', () => {
   });
 
   it('leaves a near-sdk-js contract to a person: moving it means rewriting it in Rust', () => {
-    expect(needsHand([finding({ entry: { ...finding().entry!, id: 'near-sdk-js' } })])).toBe(true);
-    expect(needsHand([finding()])).toBe(false);
+    expect(needsHand([finding({ entry: { ...finding().entry!, id: 'near-sdk-js' } })])).toMatch(/rewriting it in Rust/);
+    expect(needsHand([finding()])).toBeNull();
+  });
+
+  it('leaves a browser wallet sign-in to a person, the whole file, since its replacement is another package', () => {
+    const wallet = finding({ line: 6, matched: 'WalletConnection', entry: { ...finding().entry!, id: 'near-api-js-wallet-connection' } });
+    expect(needsHand([finding(), wallet])).toMatch(/@hot-labs\/near-connect/);
   });
 });
 

@@ -1,7 +1,7 @@
 # Tests
 
 ```bash
-npm test                 # 917 tests in 84 files, about 5 seconds, no network and no keys
+npm test                 # 928 tests in 85 files, about 5 seconds, no network and no keys
 npx tsc --noEmit         # the app
 npm run typecheck:scripts
 npm run lint
