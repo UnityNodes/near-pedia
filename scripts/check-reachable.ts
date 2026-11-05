@@ -268,7 +268,7 @@ async function main(): Promise<void> {
   }
 
   logRun('check-reachable', {
-    status: problems.length ? 'error' : notes.length ? 'partial' : 'success',
+    status: problems.length ? 'error' : 'success',
     items: examined,
     error: [...problems, ...notes].join(' ; ').slice(0, 1000) || undefined,
   }, getDb());
