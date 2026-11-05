@@ -169,10 +169,15 @@ export function getDocsGlance(now: Date = new Date()): DocsGlance {
   const db = getDb();
   const weekAgo = new Date(now.getTime() - 7 * 86_400_000).toISOString();
   const week = db.prepare(
-    `SELECT COUNT(*) as n FROM doc_pages d WHERE d.last_modified >= ? ${TITLE_FILTER} ${DEDUP_CLAUSE}`
+    `SELECT COUNT(*) as n FROM doc_pages d WHERE EXISTS (
+       SELECT 1 FROM change_events e WHERE e.subject = 'doc:' || d.url AND e.kind IN ('doc_added', 'doc_changed') AND e.observed_at >= ?
+     ) ${TITLE_FILTER} ${DEDUP_CLAUSE}`
   ).get(weekAgo) as { n: number };
   const newest = db.prepare(
-    `SELECT d.id, d.title, d.last_modified FROM doc_pages d WHERE d.last_modified IS NOT NULL AND d.last_modified != '' ${TITLE_FILTER} ${DEDUP_CLAUSE} ORDER BY ${UPDATED_ORDER} LIMIT 1`
+    `SELECT d.id, d.title, MAX(e.observed_at) AS last_modified FROM doc_pages d
+       JOIN change_events e ON e.subject = 'doc:' || d.url AND e.kind IN ('doc_added', 'doc_changed')
+      WHERE 1 = 1 ${TITLE_FILTER} ${DEDUP_CLAUSE}
+      GROUP BY d.id ORDER BY last_modified DESC, d.id LIMIT 1`
   ).get() as DocsGlance['newest'] | undefined;
   const synced = db.prepare('SELECT MAX(synced_at) as s FROM doc_pages').get() as { s: string | null };
   return { updatedThisWeek: week.n, newest: newest ?? null, synced: synced.s };

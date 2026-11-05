@@ -27,8 +27,17 @@ function paragraphsOf(text: string | null): string[] {
   return (text ?? '').split(/\n\n+/).map(p => p.trim()).filter(Boolean);
 }
 
-export function BlogPostPageContent({ id }: { id: string }) {
-  const post = getBlogPost(id);
+function postId(raw: string): string | null {
+  try {
+    return decodeURIComponent(raw);
+  } catch {
+    return null;
+  }
+}
+
+export function BlogPostPageContent({ id: raw }: { id: string }) {
+  const id = postId(raw);
+  const post = id ? getBlogPost(id) : null;
   if (!post) notFound();
   if (post.kind === 'release') permanentRedirect(`/releases/${id}`);
 
@@ -176,8 +185,9 @@ export function BlogPostPageContent({ id }: { id: string }) {
   );
 }
 
-export function getBlogPostMetadata(id: string) {
-  const post: BlogPost | null = getBlogPost(id);
+export function getBlogPostMetadata(raw: string) {
+  const id = postId(raw);
+  const post: BlogPost | null = id ? getBlogPost(id) : null;
   if (!post || post.kind === 'release') return { title: 'Not Found' };
   const fullText = servesFullText(post.kind);
   const brandedTitle = `${post.title} | ${SITE.name}`;

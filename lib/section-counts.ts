@@ -23,6 +23,16 @@ export function getSectionCounts(): Record<string, number> {
   return out;
 }
 
+/** When a sync last ran and wrote its state, whether or not it found anything new: the right freshness for a table that only grows on events. */
+export function getLastRun(source: string): string | null {
+  try {
+    const row = getDb().prepare(`SELECT MAX(ran_at) m FROM sync_log WHERE source = ? AND status IN ('success', 'partial')`).get(source) as { m: string | null };
+    return row.m;
+  } catch {
+    return null;
+  }
+}
+
 export function getLastSync(table: string, column = 'synced_at'): string | null {
   try {
     const row = getDb().prepare(`SELECT MAX("${column}") m FROM "${table}"`).get() as { m: string | null };
