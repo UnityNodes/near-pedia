@@ -70,8 +70,10 @@ interface ChunkTarget { type: string; id: string; phrase: string }
 function sentenceAround(text: string, w: string): string {
   const at = text.indexOf(w);
   if (at < 0) return w;
-  const before = text.lastIndexOf('.', at);
-  const afterDot = text.indexOf('.', at);
+  const ends = [...text.slice(0, at).matchAll(/[.!?](?=\s)/g)];
+  const before = ends.length ? ends[ends.length - 1].index! : -1;
+  const next = /[.!?](?=\s|$)/.exec(text.slice(at + w.length));
+  const afterDot = next ? at + w.length + next.index : -1;
   const start = before >= 0 && at - before < 200 ? before + 1 : Math.max(0, at - 100);
   const end = afterDot >= 0 && afterDot - at < 200 ? afterDot + 1 : Math.min(text.length, at + w.length + 100);
   const s = text.slice(start, end).replace(/\s+/g, ' ').trim();

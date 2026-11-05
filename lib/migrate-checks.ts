@@ -36,7 +36,7 @@ export function rpcHints(methods: readonly string[], shapeOf: (method: string) =
 }
 
 export function rpcShapeLookup(db: Database.Database): (method: string) => RpcShape | null {
-  const page = db.prepare(`SELECT content_text FROM doc_pages WHERE substr(content_text, 1, ?) = ? LIMIT 1`);
+  const page = db.prepare(`SELECT content_text FROM doc_pages WHERE substr(content_text, 1, ?) = ? ORDER BY source = 'docs' DESC, synced_at DESC LIMIT 1`);
   const cache = new Map<string, RpcShape | null>();
   return (method) => {
     if (!cache.has(method)) {

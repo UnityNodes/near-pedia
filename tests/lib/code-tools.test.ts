@@ -93,6 +93,12 @@ describe('NEP parsing', () => {
     expect(parseNep('neps/nep-0141.md', text)).toMatchObject({ nep: 141, title: 'Fungible Token Standard', status: 'Final', category: 'Contract', replaces: [21], requires: [297], archived: false, url: 'https://github.com/near/NEPs/blob/master/neps/nep-0141.md' });
   });
 
+  it('stores the created date as YYYY-MM-DD whichever way the NEP writes it', () => {
+    const nep = (created: string) => parseNep('neps/nep-0141.md', `---\nNEP: 141\nTitle: Fungible Token Standard\nCreated: ${created}\n---\n`)?.created;
+    expect(['29-Oct-2019', '8-Sep-2021', '2022-03-03', '03-Mar-2022'].map(nep)).toEqual(['2019-10-29', '2021-09-08', '2022-03-03', '2022-03-03']);
+    expect(nep('sometime in 2020')).toBe('sometime in 2020');
+  });
+
   it('names an archive file from its path, not its first section', () => {
     expect(parseNep('neps/archive/0005-access-keys.md', '# Summary\n\nAccess keys.')).toMatchObject({ nep: 5, title: 'access keys', status: 'Archived', archived: true });
   });

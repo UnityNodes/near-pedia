@@ -138,7 +138,7 @@ function stripComments(src: string): string {
  *       is vacuous. Only single-table: with a JOIN, grouping by one side's
  *       key is the normal way to collapse the fan-out.
  */
-function sweepSource(db: ReturnType<typeof getDb>, problems: string[]): { g1: number; g2: number } {
+function sweepSource(db: ReturnType<typeof getDb>, problems: string[]): { g1: number; g2: number; tools: number } {
   const server = stripComments(source('mcp-server.ts'));
 
   // G1, scoped per tool registration: `rows` in one tool is not `rows` in
@@ -223,7 +223,7 @@ function sweepSource(db: ReturnType<typeof getDb>, problems: string[]): { g1: nu
       }
     }
   }
-  return { g1, g2 };
+  return { g1, g2, tools: starts.length };
 }
 
 function main(): void {
@@ -282,7 +282,7 @@ function main(): void {
 
   logRun('check-qualifiers', {
     status: problems.length ? 'partial' : 'success',
-    items: checked,
+    items: checked + swept.tools,
     error: problems.length ? problems.join(' ; ').slice(0, 1000) : undefined,
   }, db);
 

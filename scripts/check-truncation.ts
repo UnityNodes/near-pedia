@@ -73,10 +73,10 @@ const SITES: Site[] = [
   {
     where: 'get_discussion forum_posts.cooked, per post',
     tool: 'get_discussion',
-    cut: 600,
+    cut: 2000,
     longest: (db) => {
-      const r = one<{ topic_id: number; n: number }>(db, 'SELECT topic_id, length(cooked) n FROM forum_posts ORDER BY n DESC LIMIT 1');
-      return r ? { args: { id: r.topic_id }, len: r.n } : null;
+      const r = one<{ topic_id: number; post_number: number; n: number }>(db, 'SELECT topic_id, post_number, length(cooked) n FROM forum_posts ORDER BY n DESC LIMIT 1');
+      return r ? { args: { topic: r.topic_id, from_post: r.post_number }, len: r.n } : null;
     },
   },
   {

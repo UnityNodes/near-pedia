@@ -81,6 +81,23 @@ export const EPOCH_UNITS: Exception[] = [
  */
 export const OPAQUE: Exception[] = [
   {
+    table: 'forum_topics', column: 'title', format: 'opaque',
+    why:
+      'A thread title as its author wrote it. Monthly reports put the month in it ("[Report] MotionDAO April 2022"), ' +
+      'which reads as a date to a sniffer; it is fenced and shown as text, never parsed.',
+  },
+  {
+    table: 'github_discussions', column: 'body', format: 'opaque',
+    why:
+      'A GitHub Discussion body in Markdown. Some are a bare link to a proposal; all are fenced and shown as text, never parsed as a URL.',
+  },
+  {
+    table: 'deprecations', column: 'replacement', format: 'opaque',
+    why:
+      'What to use instead, as a sentence ("send_tx", "a KeyPairSigner, or ..."); a few entries name a successor repository by its URL. ' +
+      'The URL that is followed lives in replacement_url; this column is shown as text.',
+  },
+  {
     table: 'csp_violation_log', column: 'blocked_uri', format: 'opaque',
     why:
       'CSP report field. The spec puts literal tokens here - "inline", "eval", "wasm-eval" - ' +

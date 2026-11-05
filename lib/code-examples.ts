@@ -12,7 +12,7 @@
 import type Database from 'better-sqlite3';
 import { checkCode, type Finding } from './check-code';
 import type { Language } from './code-scan';
-import { likeTokens, tokenize } from './rank';
+import { escLike, likeTokens, tokenize } from './rank';
 
 export interface CodeExample {
   source: 'docs' | 'forum';
@@ -106,8 +106,8 @@ export function findCodeExamples(db: Database.Database, topic: string, limit: nu
   }
   try {
     const posts = db.prepare(`SELECT ft.title, ft.url, fp.cooked FROM forum_posts fp JOIN forum_topics ft ON ft.id = fp.topic_id
-      WHERE fp.cooked LIKE '%<pre>%' AND (${terms.map(() => "(lower(fp.cooked) LIKE ? OR lower(ft.title) LIKE ?)").join(' OR ')}) ORDER BY fp.created_at DESC LIMIT 20`)
-      .all(...terms.flatMap((t) => [`%${t}%`, `%${t}%`])) as Array<{ title: string; url: string; cooked: string }>;
+      WHERE fp.cooked LIKE '%<pre>%' AND (${terms.map(() => "(lower(fp.cooked) LIKE ? ESCAPE '\\' OR lower(ft.title) LIKE ? ESCAPE '\\')").join(' OR ')}) ORDER BY fp.created_at DESC LIMIT 20`)
+      .all(...terms.flatMap((t) => [`%${escLike(t)}%`, `%${escLike(t)}%`])) as Array<{ title: string; url: string; cooked: string }>;
     for (const p of posts) for (const b of htmlBlocks(p.cooked)) if (relevant(b.code)) candidates.push({ source: 'forum', title: p.title, url: p.url, ...b });
   } catch (e) {
     if (!/no such table/.test((e as Error).message)) throw e;

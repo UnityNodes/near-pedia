@@ -36,12 +36,7 @@ const ROOTS = ['scripts', 'lib', 'app'];
  * target on blog_posts passed silently. A declaration that grows to cover
  * whatever appears next is the same silence this file exists to break.
  */
-const DECLARED: Record<string, { targets: string[]; why: string }> = {
-  doc_pages: {
-    targets: ['url', 'id'],
-    why: 'sync-docs.ts (the live, scheduled writer) conflicts on url, the actual UNIQUE column. migrate-from-nearpedia.ts conflicts on id on purpose, to preserve stable /docs/{id} links across the one-time schema migration it performs; it is not wired into any cron/tick and its own header documents why re-running it would be unsafe. A live second writer disagreeing on id would still be a real bug — this exception covers only the one-time script.',
-  },
-};
+const DECLARED: Record<string, { targets: string[]; why: string }> = {};
 
 interface Site { file: string; target: string }
 
