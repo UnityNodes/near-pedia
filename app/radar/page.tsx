@@ -5,7 +5,7 @@ import { getDb } from '@/lib/db';
 import { pageMetadata } from '@/lib/seo';
 import { radarLiveSql } from '@/lib/constants';
 import { escLike } from '@/lib/rank';
-import { getLastSync } from '@/lib/section-counts';
+import { getLastRun } from '@/lib/section-counts';
 import type { Tone } from '@/lib/status';
 import { EmptyAnimation } from '@/components/resources-empty-animation';
 import { PageShell, PgFoot, PgList } from '@/components/page-shell';
@@ -156,7 +156,7 @@ export default async function RadarPage({ searchParams }: PageProps) {
       title="Radar"
       description={description}
       stat={{ value: allItems.length, unit: allItems.length === 1 ? 'live item' : 'live items' }}
-      synced={getLastSync('radar_items', 'created_at')}
+      synced={getLastRun('radar')}
       source="radar"
     >
       <div className="pg-tools rd-filters">

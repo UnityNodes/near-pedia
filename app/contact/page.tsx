@@ -35,9 +35,9 @@ export default function ContactPage() {
           </p>
         ) : (
           <p>
-            The message form is temporarily unavailable. For general inquiries, content
-            corrections, GDPR data-subject requests, or business questions, please use one
-            of the channels below instead.
+            Write to us through GitHub: open an issue for a wrong deprecation, a NEAR source we
+            missed, a content correction or a feature request, and use the channels below for
+            anything else, including GDPR data-subject requests.
           </p>
         )}
         <p>
