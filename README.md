@@ -21,7 +21,7 @@ Live NEAR knowledge for AI agents. NEARpedia is an MCP server and REST API that 
 
 Built for the NEAR Hackathon (1–14 November 2026, tracks `open` and `agents`). Live at [near-pedia.xyz](https://near-pedia.xyz) since 2 November 2026; the MCP endpoint `https://near-pedia.xyz/mcp` needs no key.
 
-Demo video, 81 seconds: [youtu.be/L1mbTEWWraE](https://youtu.be/L1mbTEWWraE).
+Demo video, 81 seconds: [youtu.be/L1mbTEWWraE](https://youtu.be/L1mbTEWWraE). Submission post on X, with a 45-second promo: [x.com/UnityNodes/status/2118447685397291123](https://x.com/UnityNodes/status/2118447685397291123).
 
 > [!TIP]
 > Agents write NEAR code from what they remember, and NEAR keeps moving. A few changes from the last year, the first two in the weeks before this hackathon, that a model trained earlier cannot know about:
