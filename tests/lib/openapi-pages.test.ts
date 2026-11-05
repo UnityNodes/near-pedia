@@ -112,6 +112,18 @@ describe('filling the stub pages of a docs feed', () => {
     expect(problems).toEqual(['https://docs.near.org/openapi.json: could not be read']);
   });
 
+  it('keeps the text it wrote last time when the spec cannot be read, so a failed fetch rewrites nothing', async () => {
+    const stub = parseLlmsFull(feed);
+    const { pages: written } = await expandOpenApiPages(stub, 'https://docs.near.org', async () => spec);
+    const held = new Map(written.map((p) => [p.url, { content_text: p.content_text, content_hash: p.content_hash }]));
+    const { pages, problems } = await expandOpenApiPages(parseLlmsFull(feed), 'https://docs.near.org', async () => null, (url) => held.get(url));
+    expect(pages[0].content_text).toBe(written[0].content_text);
+    expect(pages[0].content_hash).toBe(written[0].content_hash);
+    expect(problems).toEqual(['https://docs.near.org/openapi.json: could not be read']);
+    const stored = written.map((p) => ({ url: p.url, title: p.title, content_hash: p.content_hash }));
+    expect(diffPages(stored, pages)).toEqual([]);
+  });
+
   it('records no rewrite the first time a stored stub is filled in', async () => {
     const stub = parseLlmsFull(feed);
     const { pages } = await expandOpenApiPages(stub, 'https://docs.near.org', async () => spec);
