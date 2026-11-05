@@ -46,6 +46,7 @@ import { REPOS as RELEASE_REPOS } from './sync-github-releases';
 import { SOURCES as ITEM_SOURCES } from './sync-github-items';
 import { REPOS as DISCUSSION_REPOS } from './sync-github-discussions';
 import { SITE } from '../lib/site.config';
+import { SLUG_RE } from '../lib/near-catalog';
 
 const UA = `${SITE.name}-Bot/1.0 (+${SITE.url})`;
 const POLITE_MS = 800;
@@ -96,8 +97,8 @@ async function checkEcosystem(): Promise<Outcome> {
   if (!raw) return judge('ecosystem_projects', ours, null);
   try {
     // The same NEAR Catalog list sync-ecosystem.ts reads, one entry per project.
-    const list = JSON.parse(raw) as Record<string, unknown> | null;
-    return judge('ecosystem_projects', ours, list && typeof list === 'object' ? Object.keys(list).length : null);
+    const list = JSON.parse(raw) as Record<string, { slug?: string } | null> | null;
+    return judge('ecosystem_projects', ours, list && typeof list === 'object' ? Object.entries(list).filter(([key, e]) => SLUG_RE.test(e?.slug || key)).length : null);
   } catch {
     return judge('ecosystem_projects', ours, null);
   }
