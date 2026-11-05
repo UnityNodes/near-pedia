@@ -1,6 +1,8 @@
 # Demo video (81 s)
 
-Eight scenes at 1920×1080. The voice is Piper (`en_US-ryan-high`); every line is also on screen, so the video works muted. Scenes 4–7 are the live sites, recorded on 2026-11-05.
+On YouTube: https://youtu.be/L1mbTEWWraE
+
+Eight scenes at 1920×1080. The voice is Piper (`en_US-ryan-high`) over the track "Inspiring Journey", which dips under each line; every line is also in a caption strip below the picture, so the video works muted. Scenes 4–7 are the live sites, recorded on 2026-11-05.
 
 | # | Seconds | On screen | Voice |
 | - | - | - | - |
