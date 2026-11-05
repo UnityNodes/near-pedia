@@ -6,6 +6,7 @@
 import type Database from 'better-sqlite3';
 import { HOS_PROPOSAL_URL, percent, veNear } from './house-of-stake';
 import { hspNumber } from './gov-forum';
+import { escLike } from './rank';
 
 export interface ProposalRow {
   id: number;
@@ -107,7 +108,7 @@ function filters(opts: { status?: string; q?: string }): { where: string; params
   const conds: string[] = [];
   const params: (string | number)[] = [];
   if (opts.status) { conds.push('status = ? COLLATE NOCASE'); params.push(opts.status); }
-  if (opts.q) { conds.push("(title LIKE ? ESCAPE '\\' OR description LIKE ? ESCAPE '\\')"); const like = `%${opts.q.replace(/[\\%_]/g, '\\$&')}%`; params.push(like, like); }
+  if (opts.q) { conds.push("(title LIKE ? ESCAPE '\\' OR description LIKE ? ESCAPE '\\')"); const like = `%${escLike(opts.q)}%`; params.push(like, like); }
   return { where: conds.length ? `WHERE ${conds.join(' AND ')}` : '', params };
 }
 

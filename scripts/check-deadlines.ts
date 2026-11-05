@@ -53,7 +53,7 @@ const OUTBOUND: Array<{ re: RegExp; what: string }> = [
 ];
 
 /** Anything that bounds the wait, however the SDK spells it. */
-const DEADLINE = /\btimeout\s*:|timeoutInSeconds\s*:|AbortSignal\.timeout|\bsignal\s*:/;
+const DEADLINE = /\btimeout\s*:|timeoutInSeconds\s*:|AbortSignal\.timeout|\bsignal\s*[:,}]/;
 
 /**
  * Call sites that legitimately have no deadline, with the reason. A blanket

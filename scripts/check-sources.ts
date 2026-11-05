@@ -67,6 +67,16 @@ const NOT_A_SOURCE: Record<string, string> = {
   // (sync-network-stats.ts / lib/onchain.ts), but a snapshot every 6h is a
   // measurement, not a record someone wrote.
   network_stats: 'content-growth metric snapshots (time series, not documents)',
+  protocol_snapshots: 'protocol version and vote readings from RPC every 15 minutes (time series, served by get_protocol_status and /protocol)',
+  validator_stakes: 'per-validator stake inside each protocol snapshot',
+  validator_votes: 'per-validator version vote inside each protocol snapshot',
+  hos_stats: 'House of Stake totals per reading (time series, served by /governance)',
+
+  // Built from the sources above, so counting them would count the same evidence twice.
+  deprecations: 'built by build-deprecations from repositories, packages, releases and docs; published on /deprecations with its own count',
+  deprecation_evidence: 'the evidence rows behind each deprecation entry',
+  package_versions: 'versions inside packages, which is the counted unit',
+  change_events: 'the change feed written when a sync sees an item change, over sources already counted',
 };
 
 interface PublishedSource { type: string; count: number }

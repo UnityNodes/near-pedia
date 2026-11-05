@@ -16,6 +16,7 @@
  *   npx tsx scripts/check-changes-parity.ts --verbose
  */
 
+import { KIND_SQL } from '../lib/blog';
 import { startScratchMcp } from '../lib/mcp-probe';
 import { logRun } from '../lib/sync-log';
 import { getDb } from '../lib/db';
@@ -40,7 +41,7 @@ async function main(): Promise<void> {
       // Independent raw anchor: the five kinds.
       const anchor = {
         new_forum_topic: c('SELECT COUNT(*) c FROM forum_topics WHERE created_at >= ?', since),
-        new_blog_post: c('SELECT COUNT(*) c FROM blog_posts WHERE published_at >= ?', since),
+        new_blog_post: c(`SELECT COUNT(*) c FROM blog_posts WHERE published_at >= ? AND ${KIND_SQL} != 'release'`, since),
         new_release: c('SELECT COUNT(*) c FROM github_releases WHERE published_at >= ?', since),
         new_radar_item: c('SELECT COUNT(*) c FROM radar_items WHERE published_at >= ?', since),
         change_event: c('SELECT COUNT(*) c FROM change_events WHERE observed_at >= ?', since),
