@@ -9,7 +9,7 @@ beforeAll(() => {
 });
 
 vi.mock('openai', () => ({
-  default: vi.fn().mockImplementation((opts: unknown) => {
+  default: vi.fn().mockImplementation(function (opts: unknown) {
     ctor(opts);
     return {
       embeddings: {

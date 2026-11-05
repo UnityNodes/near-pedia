@@ -65,7 +65,6 @@ const nextConfig: NextConfig = {
   turbopack: {
     resolveAlias: {
       voyageai: './node_modules/voyageai/dist/cjs/extended/index.js',
-      '@huggingface/transformers': './lib/stubs/huggingface-transformers.js',
     },
   },
   outputFileTracingIncludes: {
