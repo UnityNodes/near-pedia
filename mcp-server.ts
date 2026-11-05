@@ -1480,7 +1480,7 @@ server.tool('get_contract_info',
       let project: string | null = null;
       let deprecations: string[] = [];
       try {
-        const p = db.prepare('SELECT slug, title FROM ecosystem_projects WHERE tokens LIKE ? ESCAPE \'\\\' LIMIT 1').get(`%"near":"${escLike(id)}"%`) as { slug: string; title: string } | undefined;
+        const p = db.prepare("SELECT slug, title FROM ecosystem_projects WHERE tokens LIKE ? ESCAPE '\\' LIMIT 1").get(`%"near":"${escLike(id)}"%`) as { slug: string; title: string } | undefined;
         project = p ? `${p.title} (${p.slug})` : null;
         deprecations = findDeprecations(db, id, 3).filter((d) => d.match === 'exact').map((d) => `${d.title}, ${d.status}`);
       } catch { /* catalog or deprecations not synced */ }
@@ -2585,6 +2585,11 @@ app.get('/api/v1/sources', (_req, res) => {
     // undeclared" shape check-sources.ts exists to catch, just below the
     // row count that check bothers to flag on its own.
     { type: 'radar_item',         desc: 'Breaking changes and deadlines',         count: safeCount('SELECT COUNT(*) c FROM radar_items'),             last_synced: safeMax("SELECT MAX(created_at) t FROM radar_items") },
+    { type: 'package',            desc: 'npm and crates.io packages, every version with its deprecation and yank flags', count: safeCount('SELECT COUNT(*) c FROM packages'), last_synced: safeMax("SELECT MAX(synced_at) t FROM packages") },
+    { type: 'github_repo',        desc: 'Repositories in the NEAR GitHub orgs, archived state and README notices', count: safeCount('SELECT COUNT(*) c FROM github_repos'), last_synced: safeMax("SELECT MAX(synced_at) t FROM github_repos") },
+    { type: 'hos_proposal',       desc: 'House of Stake proposals and their votes', count: safeCount('SELECT COUNT(*) c FROM hos_proposals'),          last_synced: safeMax("SELECT MAX(synced_at) t FROM hos_proposals") },
+    { type: 'nep_standard',       desc: 'NEAR Enhancement Proposals (standards)', count: safeCount('SELECT COUNT(*) c FROM nep_standards'),          last_synced: safeMax("SELECT MAX(synced_at) t FROM nep_standards") },
+    { type: 'incident',           desc: 'Security incidents of NEAR protocols and catalog projects', count: safeCount('SELECT COUNT(*) c FROM incidents'), last_synced: safeMax("SELECT MAX(synced_at) t FROM incidents") },
   ];
   // Only expose sources that actually have data, then append the RAG index.
   const sources = allSources.filter((s) => s.count > 0);
@@ -2647,7 +2652,7 @@ app.get('/api/v1/changes', (req, res) => {
 
   const newBlog: ActivityItem[] = safe(() => (db.prepare(`
     SELECT id, title, url, published_at, tags FROM blog_posts
-    WHERE published_at >= ? ORDER BY published_at DESC LIMIT ?
+    WHERE published_at >= ? AND ${KIND_SQL} != 'release' ORDER BY published_at DESC LIMIT ?
   `).all(sinceIso, cap) as Array<{ id: string; title: string; url: string; published_at: string; tags: string | null }>).map(r => ({
     kind: 'new_blog_post' as const,
     when: r.published_at,

@@ -9,6 +9,7 @@ import type { Entry, EntryKind, Evidence, Matchers } from './deprecation-types';
 import { extractDocsMarker, extractReleaseRemovals } from './deprecation-extract';
 import { productOfTag } from './release-sources';
 import { DOCS_ORIGIN } from './near-docs';
+import { escLike } from './rank';
 
 export function slug(s: string): string {
   return s.toLowerCase().replace(/^@/, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 80);
@@ -178,8 +179,8 @@ export function releaseCandidates(db: Database.Database, now: Date): Entry[] {
 
 /** Signal 5: the `[Deprecated]` marker of the RPC reference, generated from nearcore's OpenAPI spec. */
 export function docsMarkerCandidates(db: Database.Database): Entry[] {
-  const pages = db.prepare("SELECT url, content_text FROM doc_pages WHERE source = 'docs' AND url LIKE ?")
-    .all(`${DOCS_ORIGIN}/api-reference/%`) as Array<{ url: string; content_text: string }>;
+  const pages = db.prepare("SELECT url, content_text FROM doc_pages WHERE source = 'docs' AND url LIKE ? ESCAPE '\\'")
+    .all(`${escLike(DOCS_ORIGIN)}/api-reference/%`) as Array<{ url: string; content_text: string }>;
   const known = new Set(pages.map((p) => p.url));
   const out: Entry[] = [];
   for (const p of pages) {
