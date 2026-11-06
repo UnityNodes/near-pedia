@@ -148,6 +148,44 @@ async function checkGithubReleases(): Promise<Outcome[]> {
   return out;
 }
 
+async function searchTotal(q: string, headers: Record<string, string>): Promise<number | null> {
+  let total = 0;
+  for (const kind of ['is:issue', 'is:pull-request']) {
+    const raw = await get(`https://api.github.com/search/issues?q=${encodeURIComponent(`${q} ${kind}`)}&per_page=1`, headers);
+    await sleep(SEARCH_PACE_MS);
+    if (!raw) return null;
+    try {
+      const n = (JSON.parse(raw) as { total_count?: number }).total_count;
+      if (typeof n !== 'number') return null;
+      total += n;
+    } catch {
+      return null;
+    }
+  }
+  return total;
+}
+
+function lastWalkOf(repo: string): string | null {
+  try {
+    const row = getDb().prepare("SELECT MIN(synced_at) t FROM github_items WHERE repo = ? AND state = 'open'").get(repo) as { t: string | null } | undefined;
+    return row?.t ?? null;
+  } catch {
+    return null;
+  }
+}
+
+async function openAtWalk(full: string, headers: Record<string, string>): Promise<Outcome | null> {
+  const walk = lastWalkOf(full);
+  if (!walk) return null;
+  const at = walk.replace(/\.\d+Z$/, 'Z');
+  const ours = count(`SELECT COUNT(*) n FROM github_items WHERE repo='${full}' AND state='open' AND created_at <= '${at}'`);
+  const stillOpen = await searchTotal(`repo:${full} is:open created:<=${at}`, headers);
+  const closedSince = await searchTotal(`repo:${full} is:closed created:<=${at} closed:>${at}`, headers);
+  const upstream = stillOpen === null || closedSince === null ? null : stillOpen + closedSince;
+  const outcome = judge(`github_items/${full}`, ours, upstream);
+  return { ...outcome, note: `as of the last sync walk, ${at}` };
+}
+
 async function checkGithubItems(): Promise<Outcome[]> {
   const token = process.env.GITHUB_TOKEN;
   const headers: Record<string, string> = { Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' };
@@ -171,17 +209,13 @@ async function checkGithubItems(): Promise<Outcome[]> {
       // here, which would only prove the walk agrees with itself. Since 2025
       // the endpoint answers 422 unless the query names is:issue or
       // is:pull-request, so the two are asked apart and summed.
-      let upstream: number | null = 0;
-      for (const kind of ['is:issue', 'is:pull-request']) {
-        const raw = await get(`https://api.github.com/search/issues?q=${encodeURIComponent(`${q} ${kind}`)}&per_page=1`, headers);
-        let n: number | null = null;
-        if (raw) {
-          try { n = (JSON.parse(raw) as { total_count?: number }).total_count ?? null; } catch { /* leave null */ }
-        }
-        upstream = n === null || upstream === null ? null : upstream + n;
-        await sleep(SEARCH_PACE_MS);
+      const upstream = await searchTotal(q, headers);
+      const now = judge(`github_items/${full}`, ours, upstream);
+      if (now.verdict === 'ok' || now.verdict === 'unknown' || source.state !== 'open') {
+        out.push(now);
+        continue;
       }
-      out.push(judge(`github_items/${full}`, ours, upstream));
+      out.push(await openAtWalk(full, headers) ?? now);
     }
   }
   return out;

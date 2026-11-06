@@ -7,7 +7,7 @@ import { getDb } from '../lib/db';
 import { capText } from '../lib/cap-text';
 import { descriptionFromWatchPage } from '../lib/video-description';
 import { VIDEO_CHANNELS } from '../lib/video-channels';
-import { NEXT_URL, nextRequestBody, parseNext } from '../lib/youtube-next';
+import { NEXT_URL, NOT_YET_PUBLISHED, nextRequestBody, parseNext } from '../lib/youtube-next';
 
 const CHANNELS = VIDEO_CHANNELS;
 
@@ -21,7 +21,7 @@ const MAX_ENRICH_FAILS_BEFORE_ABORT = 8; // bail the enrich pass on a hard rate-
 const REFRESH_DELAY_MS = 3000;
 const REFRESH_ABORT_AFTER = 4;
 const WEB_CLIENT_VERSION = '2.20260606.02.00';
-/** Held videos still without a description that one run tries to complete, newest first. */
+/** Held videos still without a description or a publish date that one run tries to complete, newest first. */
 const BACKFILL_PER_RUN = Number(process.env.YOUTUBE_BACKFILL ?? 300);
 
 // A discovered video. title comes straight from the playlist/browse JSON
@@ -181,9 +181,9 @@ interface EnrichedMetadata {
 }
 
 function parsePublishDate(s: string | null): string | null {
-  if (!s) return null;
+  if (!s || NOT_YET_PUBLISHED.test(s)) return null;
   const d = new Date(s);
-  if (isNaN(d.getTime())) return null;
+  if (isNaN(d.getTime()) || d.getTime() > Date.now()) return null;
   return d.toISOString();
 }
 
@@ -296,12 +296,15 @@ async function refreshDescriptions(): Promise<void> {
 async function backfillDescriptions(db: ReturnType<typeof getDb>): Promise<{ enriched: number; left: number }> {
   // description NULL: never read. '' : read, and the video has none, so it is not asked again.
   const missing = () => (db.prepare('SELECT COUNT(*) n FROM youtube_videos WHERE description IS NULL').get() as { n: number }).n;
-  const rows = db.prepare(`SELECT id FROM youtube_videos WHERE description IS NULL
-    ORDER BY published_at IS NULL, published_at DESC, rowid DESC LIMIT ?`).all(BACKFILL_PER_RUN) as { id: string }[];
+  const now = new Date().toISOString();
+  const rows = db.prepare(`SELECT id FROM youtube_videos WHERE description IS NULL OR published_at IS NULL OR published_at > ?
+    ORDER BY published_at IS NULL, published_at DESC, rowid DESC LIMIT ?`).all(now, BACKFILL_PER_RUN) as { id: string }[];
   if (rows.length === 0) return { enriched: 0, left: 0 };
-  const update = db.prepare(`UPDATE youtube_videos SET description = @description,
-    published_at = COALESCE(published_at, @published_at), title = COALESCE(@title, title) WHERE id = @id`);
-  console.log(`\n=== Backfill: ${rows.length} held video(s) without a description ===`);
+  const update = db.prepare(`UPDATE youtube_videos SET
+    description = CASE WHEN description IS NULL OR @description <> '' THEN @description ELSE description END,
+    published_at = CASE WHEN published_at IS NULL OR published_at > @now THEN @published_at ELSE published_at END,
+    title = COALESCE(@title, title) WHERE id = @id`);
+  console.log(`\n=== Backfill: ${rows.length} held video(s) without a description or a publish date ===`);
   let enriched = 0;
   let fails = 0;
   for (const { id } of rows) {
@@ -311,7 +314,7 @@ async function backfillDescriptions(db: ReturnType<typeof getDb>): Promise<{ enr
     }
     const meta = await enrichVideo(id);
     if (meta) {
-      update.run({ id, description: meta.description ?? '', published_at: meta.published_at, title: meta.title });
+      update.run({ id, description: meta.description ?? '', published_at: meta.published_at, title: meta.title, now });
       if (meta.description) enriched++;
       fails = 0;
     } else {

@@ -61,12 +61,16 @@ export const PUBLISHED_TO_INDEXED: Record<string, string> = {
 /**
  * Published sources that are deliberately not in the vector index, and why.
  *
- * Empty here: nearpedia's /api/v1/sources endpoint appends
- * its 'embedding_chunk' row with .push() after the literal array this check
- * parses, so it never reaches `published` in the first place - declaring an
- * excuse for it would be an excuse for something never asked about.
+ * 'embedding_chunk' is not here: /api/v1/sources appends it with .push()
+ * after the literal array this check parses, so it never reaches `published`.
  */
-export const NOT_INDEXED: Record<string, string> = {};
+export const NOT_INDEXED: Record<string, string> = {
+  package: 'a registry record (name, version line, deprecation, yank), not prose; looked up by exact name through resolve_package, check_deprecation and check_code',
+  github_repo: 'a repository record (name, archived flag, description line); looked up by exact name through check_deprecation and check_code, and its issues, releases and discussions are indexed as their own sources',
+  hos_proposal: 'a House of Stake proposal whose vote standing changes while it is open, which a meaning index would serve stale; found by text and read through list_proposals and get_proposal',
+  nep_standard: 'a NEAR standard addressed by its number; found by words and read in full through get_standard, and the issues and pull requests of near/NEPs are indexed as github_item',
+  incident: 'a DefiLlama hack record (date, amount, technique), not prose; read through list_incidents and get_incident',
+};
 
 export const INDEXED_SOURCES: IndexedSource[] = [
   { type: 'forum_topic', table: 'forum_topics', keyExpr: 'id', syncedAt: 'synced_at',
