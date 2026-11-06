@@ -90,7 +90,7 @@ export const CONCEPTS: Concept[] = [
     corpusSql: `SELECT DISTINCT published_at v FROM youtube_videos WHERE published_at IS NOT NULL
                 UNION SELECT 'Jul 24, 2026' UNION SELECT 'Oct 28, 2025'
                 UNION SELECT '2025-10-28T00:00:00-07:00' UNION SELECT '2025-10-28'
-                UNION SELECT '' UNION SELECT 'not a date'`,
+                UNION SELECT '' UNION SELECT 'not a date' UNION SELECT 'Scheduled for Nov 12, 2026'`,
   },
   {
     name: 'escLike',

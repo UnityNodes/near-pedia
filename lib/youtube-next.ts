@@ -30,12 +30,14 @@ function results(body: Json): Json[] {
 }
 
 /** "Apr 24, 2024", "Premiered Apr 24, 2024", "Streamed live on Apr 24, 2024": the date, or null. */
+export const NOT_YET_PUBLISHED = /^\s*(Scheduled for|Premieres)\b/i;
+
 export function parseDateText(text: string | null | undefined): string | null {
-  if (!text) return null;
+  if (!text || NOT_YET_PUBLISHED.test(text)) return null;
   const m = /([A-Z][a-z]{2} \d{1,2}, \d{4})/.exec(text);
   if (!m) return null;
   const d = new Date(`${m[1]} 00:00:00 UTC`);
-  return Number.isNaN(d.getTime()) ? null : d.toISOString();
+  return Number.isNaN(d.getTime()) || d.getTime() > Date.now() ? null : d.toISOString();
 }
 
 export function parseNext(body: Json): NextMetadata {
