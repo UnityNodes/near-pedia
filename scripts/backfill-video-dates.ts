@@ -10,6 +10,7 @@
  *   PATH=/root/.nvm/versions/node/v22.18.0/bin:$PATH npx tsx scripts/backfill-video-dates.ts
  */
 import { getDb } from '../lib/db';
+import { NOT_YET_PUBLISHED } from '../lib/youtube-next';
 
 const UA =
   'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36';
@@ -18,9 +19,9 @@ const CONCURRENCY = 5;
 interface Row { id: string; title: string | null; }
 
 function parsePublishDate(s: string | null): string | null {
-  if (!s) return null;
+  if (!s || NOT_YET_PUBLISHED.test(s)) return null;
   const d = new Date(s);
-  if (isNaN(d.getTime())) return null;
+  if (isNaN(d.getTime()) || d.getTime() > Date.now()) return null;
   return d.toISOString();
 }
 
