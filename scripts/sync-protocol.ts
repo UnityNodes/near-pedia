@@ -22,7 +22,7 @@ import { isEntrypoint } from '../lib/is-entrypoint';
 import { SITE } from '../lib/site.config';
 import { rpcClient, type RpcClient } from '../lib/near-rpc';
 import { NETWORKS, type Network } from '../lib/near-sources';
-import { sampleHeights } from '../lib/protocol';
+import { sampleFailureNote, sampleHeights } from '../lib/protocol';
 import { recordEvents } from '../lib/change-events';
 
 const UA = `${SITE.slug}-sync/1.0 (+${SITE.publisher.url})`;
@@ -47,7 +47,7 @@ interface Validators {
 
 const nanosToIso = (ns: string) => new Date(Number(BigInt(ns) / BigInt(1_000_000))).toISOString();
 
-async function syncNetwork(network: Network, rpc: RpcClient, now: string): Promise<{ samples: number; failedSamples: number; upgraded: boolean }> {
+async function syncNetwork(network: Network, rpc: RpcClient, now: string): Promise<{ samples: number; failedSamples: number; firstFailure: string | null; upgraded: boolean }> {
   const db = getDb();
   const status = await rpc.call<Status>('status', []);
   // A misconfigured endpoint answering for the other network would write
@@ -81,6 +81,7 @@ async function syncNetwork(network: Network, rpc: RpcClient, now: string): Promi
       voted_version = excluded.voted_version, block_height = excluded.block_height, block_time = excluded.block_time
       WHERE excluded.block_height > validator_votes.block_height`);
   let failedSamples = 0;
+  let firstFailure: string | null = null;
   for (const h of heights) {
     try {
       const b = await rpc.call<Block>('block', { block_id: h });
@@ -88,7 +89,11 @@ async function syncNetwork(network: Network, rpc: RpcClient, now: string): Promi
       upsert.run(network, epochId, b.author, b.header.latest_protocol_version, b.header.height, nanosToIso(b.header.timestamp_nanosec));
     } catch (e) {
       // A height with no block (skipped by its producer) answers UNKNOWN_BLOCK; that is not a failure.
-      if (!/UNKNOWN_BLOCK|DB Not Found/i.test((e as Error).message)) failedSamples++;
+      const message = (e as Error).message;
+      if (!/UNKNOWN_BLOCK|DB Not Found/i.test(message)) {
+        failedSamples++;
+        firstFailure ??= `height ${h}: ${message}`;
+      }
     }
   }
 
@@ -122,7 +127,7 @@ async function syncNetwork(network: Network, rpc: RpcClient, now: string): Promi
       SELECT DISTINCT epoch_id FROM protocol_snapshots WHERE network = ? AND observed_at >= strftime('%Y-%m-%dT%H:%M:%fZ', 'now', '-3 days'))`).run(network, network);
   db.prepare("DELETE FROM protocol_snapshots WHERE network = ? AND observed_at < strftime('%Y-%m-%dT%H:%M:%fZ', 'now', ?)").run(network, `-${SNAPSHOT_DAYS} days`);
 
-  return { samples: heights.length, failedSamples, upgraded };
+  return { samples: heights.length, failedSamples, firstFailure, upgraded };
 }
 
 async function main(): Promise<void> {
@@ -133,7 +138,7 @@ async function main(): Promise<void> {
     try {
       const r = await syncNetwork(network, rpcClient(network, UA), now);
       ok++;
-      if (r.failedSamples) problems.push(`${network}: ${r.failedSamples} of ${r.samples} sampled blocks failed`);
+      if (r.failedSamples) problems.push(sampleFailureNote(network, r.failedSamples, r.samples, r.firstFailure));
       console.log(`[sync-protocol] ${network}: ${r.samples} blocks sampled${r.upgraded ? ', PROTOCOL UPGRADED' : ''}`);
     } catch (e) {
       problems.push(`${network}: ${(e as Error).message}`);

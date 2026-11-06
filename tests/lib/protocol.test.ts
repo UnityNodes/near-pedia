@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { getDb, resetDb } from '@/lib/db';
-import { effectLine, effectOn, parseUpgradeSchedule, passingVersion, protocolReport, renderProtocol, sampleHeights, tallyVotes } from '@/lib/protocol';
+import { effectLine, effectOn, parseUpgradeSchedule, passingVersion, protocolReport, renderProtocol, sampleFailureNote, sampleHeights, tallyVotes } from '@/lib/protocol';
 
 // nearcore 2.14.0 release notes, 2026-10-26 (CRLF as GitHub serves them).
 const NEARCORE_2_14 = [
@@ -86,6 +86,23 @@ describe('parseUpgradeSchedule robustness', () => {
 
   it('returns null for an unusable release date instead of throwing', () => {
     expect(parseUpgradeSchedule(NEARCORE_2_14, 'not a date')).toBeNull();
+  });
+});
+
+describe('sampleFailureNote', () => {
+  it('names the first failure after the count', () => {
+    expect(sampleFailureNote('testnet', 2, 60, 'block on https://test.rpc.fastnear.com: timeout'))
+      .toBe('testnet: 2 of 60 sampled blocks failed; first: block on https://test.rpc.fastnear.com: timeout');
+  });
+
+  it('keeps the reason on one line and short', () => {
+    const note = sampleFailureNote('mainnet', 1, 60, `block on x:\n${'e'.repeat(500)}`);
+    expect(note).not.toContain('\n');
+    expect(note.length).toBeLessThan(300);
+  });
+
+  it('says only the count when no reason was caught', () => {
+    expect(sampleFailureNote('testnet', 1, 60, null)).toBe('testnet: 1 of 60 sampled blocks failed');
   });
 });
 

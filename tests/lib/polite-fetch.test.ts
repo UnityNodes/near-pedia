@@ -15,6 +15,21 @@ function stubFetch(...responses: Array<() => Response>) {
   return calls;
 }
 
+describe('politeFetch answerStatuses', () => {
+  it('hands back a listed status with its body, once', async () => {
+    const calls = stubFetch(() => Response.json({ error: 'kept' }, { status: 422 }));
+    const r = await politeFetch('https://x/y', { ...opts, answerStatuses: [422] });
+    expect(r.kind).toBe('ok');
+    if (r.kind === 'ok') expect(await r.res.json()).toEqual({ error: 'kept' });
+    expect(calls).toHaveLength(1);
+  });
+
+  it('still throws an unlisted status', async () => {
+    stubFetch(() => new Response('', { status: 422 }));
+    await expect(politeFetch('https://x/y', opts)).rejects.toMatchObject({ status: 422 });
+  });
+});
+
 describe('politeGetJson', () => {
   it('returns null on 404 without retrying', async () => {
     const calls = stubFetch(() => new Response('', { status: 404 }));

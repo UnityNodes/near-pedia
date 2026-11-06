@@ -140,6 +140,14 @@ export function passingVersion(t: Tally, current: number, num: number | null, de
   return hit?.version ?? null;
 }
 
+const FAILURE_REASON_MAX = 200;
+
+export function sampleFailureNote(network: string, failed: number, samples: number, firstReason: string | null): string {
+  const base = `${network}: ${failed} of ${samples} sampled blocks failed`;
+  if (!firstReason) return base;
+  return `${base}; first: ${firstReason.replace(/\s+/g, ' ').trim().slice(0, FAILURE_REASON_MAX)}`;
+}
+
 /**
  * Heights to sample between the last sampled height and the head, evenly
  * spaced. Producers rotate with height, so spread samples reach more of

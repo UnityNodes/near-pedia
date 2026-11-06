@@ -36,6 +36,8 @@ export interface PoliteOptions {
   budgetMs?: number;
   delays?: number[];
   maxRetryAfterMs?: number;
+  /** Statuses whose body is the server's answer (JSON-RPC's 422 HANDLER_ERROR); returned as `ok`, not thrown. */
+  answerStatuses?: readonly number[];
   sleep?: (ms: number) => Promise<void>;
 }
 
@@ -87,7 +89,7 @@ async function attempt(url: string, opts: PoliteOptions): Promise<PoliteResponse
     await sleep(wait);
     throw new HttpError(429, url, res.headers);
   }
-  if (!res.ok) throw new HttpError(res.status, url, res.headers);
+  if (!res.ok && !opts.answerStatuses?.includes(res.status)) throw new HttpError(res.status, url, res.headers);
   return { kind: 'ok', res, etag: res.headers.get('etag') };
 }
 
