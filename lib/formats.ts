@@ -81,6 +81,12 @@ export const EPOCH_UNITS: Exception[] = [
  */
 export const OPAQUE: Exception[] = [
   {
+    table: 'alert_state', column: 'value', format: 'opaque',
+    why:
+      'A key-value store for the pager (lib/failure-alerts.ts): each key holds its own shape, JSON for the open alerts and sent ' +
+      'messages, a YYYY-MM-DD day for the last digest. Only readKey there reads it, by key, and its caller parses what that key wrote.',
+  },
+  {
     table: 'forum_topics', column: 'title', format: 'opaque',
     why:
       'A thread title as its author wrote it. Monthly reports put the month in it ("[Report] MotionDAO April 2022"), ' +

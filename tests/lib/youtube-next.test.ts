@@ -37,6 +37,12 @@ describe('parseDateText', () => {
     expect(parseDateText('Streamed live on Nov 1, 2026')).toBe('2026-11-01T00:00:00.000Z');
   });
 
+  it('gives null for a premiere or stream that has not aired yet', () => {
+    expect(parseDateText('Scheduled for Nov 12, 2026')).toBeNull();
+    expect(parseDateText('Premieres Nov 12, 2026')).toBeNull();
+    expect(parseDateText(`Jan 1, ${new Date().getUTCFullYear() + 1}`)).toBeNull();
+  });
+
   it('gives null for a relative date or nothing', () => {
     expect(parseDateText('2 years ago')).toBeNull();
     expect(parseDateText(null)).toBeNull();
