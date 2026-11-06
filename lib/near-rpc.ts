@@ -37,6 +37,7 @@ export function rpcClient(network: Network, userAgent: string, endpoints: readon
             timeoutMs: 15_000,
             budgetMs: 30_000,
             delays: [1_000, 3_000],
+            answerStatuses: [422],
           });
           if (r.kind !== 'ok') throw new RpcError(method, r.kind, url);
           const body = (await r.res.json()) as { result?: T; error?: { cause?: { name?: string } } };
