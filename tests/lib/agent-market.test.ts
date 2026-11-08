@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { MAX_DELIVERABLE_BYTES, confirmMessage, fitDeliverable, nextStep, withChanges, type AssignmentRow } from '@/lib/agent-market';
+import { MAX_DELIVERABLE_BYTES, confirmMessage, fitDeliverable, isUnreadableRepo, nextStep, unreadableRepoMessage, withChanges, type AssignmentRow } from '@/lib/agent-market';
 
 const row = (over: { assignment?: Partial<AssignmentRow['assignment']>; latestMessage?: AssignmentRow['latestMessage'] } = {}): AssignmentRow => ({
   assignment: { assignmentId: 'a1', status: 'in_progress', startedAt: null, submittedAt: null, deliverableUrl: null, slaDeadlineAt: '2026-11-05T12:00:00Z', ...over.assignment },
@@ -48,5 +48,25 @@ describe('what the buyer reads', () => {
     expect(Buffer.byteLength(fit.markdown)).toBeLessThanOrEqual(MAX_DELIVERABLE_BYTES);
     expect(fit.markdown).toContain('the full report is attached as nearpedia-migration-report.md');
     expect(fit.overflow).toBe(long);
+  });
+});
+
+describe('a repository the worker cannot clone', () => {
+  it('recognises what git prints for a private or missing repository and a missing branch', () => {
+    expect(isUnreadableRepo("Command failed: git clone\nfatal: could not read Username for 'https://github.com': terminal prompts disabled")).toBe(true);
+    expect(isUnreadableRepo("remote: Repository not found.\nfatal: repository 'https://github.com/o/r.git/' not found")).toBe(true);
+    expect(isUnreadableRepo('warning: Could not find remote branch nope to clone.\nfatal: Remote branch nope not found in upstream origin')).toBe(true);
+  });
+
+  it('leaves other failures to the retry path', () => {
+    expect(isUnreadableRepo('Command failed: git clone\nfatal: unable to access: Could not resolve host: github.com')).toBe(false);
+    expect(isUnreadableRepo('NEARAI_API_KEY is not set')).toBe(false);
+    expect(isUnreadableRepo('migration guide 503')).toBe(false);
+  });
+
+  it('asks the buyer for a public link, naming the branch when there is one', () => {
+    const repo = { owner: 'o', repo: 'r', branch: null, url: 'https://github.com/o/r' };
+    expect(unreadableRepoMessage(repo)).toBe('I could not read https://github.com/o/r: private, missing, or branch not found. Send a public link and I will start again.');
+    expect(unreadableRepoMessage({ ...repo, branch: 'dev' })).toContain('https://github.com/o/r/tree/dev:');
   });
 });

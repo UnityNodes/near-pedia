@@ -1,4 +1,5 @@
 import { getDb } from './db';
+import { SOURCE_TABLES, sourceLastSynced } from './source-sync';
 
 // Single source of truth for the live "knowledge layer" inventory.
 // Read by /api/v1/sources (public REST), components/sources-live.tsx (widget),
@@ -23,11 +24,6 @@ function safeCount(db: ReturnType<typeof getDb>, table: string): number {
   catch { return 0; }
 }
 
-function safeMax(db: ReturnType<typeof getDb>, table: string, col: string): string | null {
-  try { return (db.prepare(`SELECT MAX("${col}") m FROM "${table}"`).get() as { m: string | null }).m; }
-  catch { return null; }
-}
-
 async function mcpToolCount(): Promise<number> {
   const url = process.env.MCP_HEALTH_URL ?? 'http://127.0.0.1:3131/health';
   try {
@@ -44,23 +40,6 @@ async function mcpToolCount(): Promise<number> {
 export async function getSourceInventory(): Promise<SourceInventory> {
   const db = getDb();
 
-  const map: { type: string; table: string; synced: string }[] = [
-    { type: 'doc',               table: 'doc_pages',           synced: 'synced_at' },
-    { type: 'blog_post',         table: 'blog_posts',          synced: 'synced_at' },
-    { type: 'forum_topic',       table: 'forum_topics',        synced: 'synced_at' },
-    { type: 'youtube_video',     table: 'youtube_videos',      synced: 'synced_at' },
-    { type: 'github_item',       table: 'github_items',        synced: 'synced_at' },
-    { type: 'github_release',    table: 'github_releases',     synced: 'synced_at' },
-    { type: 'github_discussion', table: 'github_discussions',  synced: 'synced_at' },
-    { type: 'ecosystem_project', table: 'ecosystem_projects',  synced: 'synced_at' },
-    { type: 'package',           table: 'packages',            synced: 'synced_at' },
-    { type: 'github_repo',       table: 'github_repos',        synced: 'synced_at' },
-    { type: 'hos_proposal',      table: 'hos_proposals',       synced: 'synced_at' },
-    { type: 'incident',          table: 'incidents',           synced: 'synced_at' },
-    { type: 'nep_standard',      table: 'nep_standards',       synced: 'synced_at' },
-    { type: 'radar_item',        table: 'radar_items',         synced: 'created_at' },
-  ];
-
   function countFor(type: string, table: string): number {
     if (type === 'blog_post') {
       try { return (db.prepare("SELECT COUNT(*) c FROM blog_posts WHERE tags IS NULL OR tags NOT LIKE '%release-notes%'").get() as { c: number }).c; }
@@ -69,12 +48,12 @@ export async function getSourceInventory(): Promise<SourceInventory> {
     return safeCount(db, table);
   }
 
-  const sources: SourceEntry[] = map
-    .map(({ type, table, synced }) => ({
+  const sources: SourceEntry[] = SOURCE_TABLES
+    .map(({ type, table }) => ({
       type,
       desc: '',
       count: countFor(type, table),
-      last_synced: safeMax(db, table, synced),
+      last_synced: sourceLastSynced(db, type),
     }))
     .filter((s) => s.count > 0);
 

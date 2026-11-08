@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { MARKER, addedLines, annotation, clip, githubError, isChecked, pullRequestOf, renderComment, shouldFail } from '@/github-action/lib.mjs';
+import { MARKER, UnreachableError, addedLines, annotation, clip, githubError, isChecked, pullRequestOf, renderComment, requestCheck, shouldFail, unreachableOutcome } from '@/github-action/lib.mjs';
 
 const blob = (file: string, line: number) => `https://github.com/o/r/blob/abc/${file}#L${line}`;
 const delegate = {
@@ -121,5 +121,53 @@ describe('pullRequestOf', () => {
 
   it('returns null when the event has no pull request', () => {
     expect(pullRequestOf({ push: {} })).toBeNull();
+  });
+});
+
+describe('calling NEARpedia', () => {
+  const reply = (status: number, body: unknown = {}) => new Response(JSON.stringify(body), { status, headers: { 'retry-after': '1' } });
+  const scripted = (steps: Array<Response | Error>) => {
+    const calls: string[] = [];
+    const fetchImpl = async (input: RequestInfo | URL) => {
+      calls.push(String(input));
+      const next = steps.shift();
+      if (next instanceof Error) throw next;
+      return next as Response;
+    };
+    return { calls, fetchImpl };
+  };
+  const waits: number[] = [];
+  const sleep = async (ms: number) => { waits.push(ms); };
+  const offline = () => Object.assign(new TypeError('fetch failed'), { cause: { code: 'ECONNREFUSED' } });
+
+  it('retries a network error like a 5xx and returns the answer', async () => {
+    const { calls, fetchImpl } = scripted([offline(), reply(503), reply(200, { findings: [] })]);
+    await expect(requestCheck({ site: 'https://np.test', file: 'a.ts', code: 'x', fetchImpl, sleep })).resolves.toEqual({ findings: [] });
+    expect(calls).toEqual(Array(3).fill('https://np.test/api/v1/check-code'));
+  });
+
+  it('gives up with UnreachableError and the last reason after three tries', async () => {
+    const { fetchImpl } = scripted([offline(), offline(), offline()]);
+    const err = await requestCheck({ site: 'https://np.test', file: 'a.ts', code: 'x', fetchImpl, sleep }).catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(UnreachableError);
+    expect((err as Error).message).toBe('https://np.test did not answer after 3 tries (last: network error: ECONNREFUSED)');
+  });
+
+  it('does not retry a 4xx and does not call it unreachable', async () => {
+    const { calls, fetchImpl } = scripted([reply(413, { error: 'too big' })]);
+    const err = await requestCheck({ site: 'https://np.test', file: 'a.ts', code: 'x', fetchImpl, sleep }).catch((e: unknown) => e);
+    expect(err).not.toBeInstanceOf(UnreachableError);
+    expect((err as Error).message).toMatch(/^NEARpedia check-code 413/);
+    expect(calls).toHaveLength(1);
+  });
+
+  it('passes with a warning when unreachable, and fails only when fail-on asks', () => {
+    const pass = unreachableOutcome({ reason: 'https://np.test did not answer after 3 tries (last: HTTP 502)', failOn: 'never' });
+    expect(pass.exitCode).toBe(0);
+    expect(pass.annotation).toMatch(/^::warning::NEARpedia unreachable: https:\/\/np.test did not answer/);
+    expect(pass.summary).toMatch(/NEARpedia unreachable: .*No files were checked/);
+    const gated = unreachableOutcome({ reason: 'x', failOn: 'error' });
+    expect(gated.exitCode).toBe(1);
+    expect(gated.annotation).toMatch(/fail-on is error/);
   });
 });

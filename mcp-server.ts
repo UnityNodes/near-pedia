@@ -58,7 +58,10 @@ import { findNeps, getNepRow, nepNumber, renderNep, replacedBy } from './lib/nep
 import { RELEASE_PRODUCT_SPECS } from './lib/release-sources.js';
 import { compareVersions } from './lib/release-version.js';
 import { ACCOUNT_ID_RE, NoSuchAccountError, contractInfo, renderContract } from './lib/contract-info.js';
-import { BusyError, UnverifiedAnswerError, nearAiConfig, verifiedChat } from './lib/near-ai.js';
+import { nearAiConfig, verifiedChat } from './lib/near-ai.js';
+import { askFailure } from './lib/ask-failure.js';
+import { refuseMcpGet } from './lib/mcp-get.js';
+import { sourceLastSynced } from './lib/source-sync.js';
 import { getAnchor, latestAnchor, listAnchors } from './lib/anchors.js';
 import { chainRecord, rpcOf } from './lib/anchor-chain.js';
 import { PARTNERS, parseJson, catalogCategories, catalogSynced, findProjects, projectLine, resolveCategory, getIncident, getPartner, getProject, incidentsSynced, listIncidents, partnerDocsCount, partnerOfProject, renderIncident, renderPartner, renderProject, topByTvl } from './lib/ecosystem-read.js';
@@ -2179,7 +2182,7 @@ const handleMcp = async (req: express.Request, res: express.Response) => {
 };
 
 app.post('/mcp', handleMcp);
-app.get('/mcp', handleMcp);
+app.get('/mcp', refuseMcpGet);
 app.delete('/mcp', handleMcp);
 
 // ── CORS + cache headers for REST API ────────────────────────────────────────
@@ -2380,12 +2383,12 @@ app.post('/api/v1/ask', async (req, res) => {
     const { text, truncated, receipt } = await verifiedChat(cfg, askMessages(question, ctx, code, history), { maxTokens: 1200 });
     res.json({ answer: text, truncated, sources: ctx.sources, check_code: ctx.check, receipt, db_anchor: latestAnchor(db) });
   } catch (e) {
-    const msg = (e as Error).message;
-    // The pasted code is never echoed into a log line: only the failure.
-    if (e instanceof BusyError) return res.status(503).json({ error: msg });
-    console.error(`[ask] ${e instanceof UnverifiedAnswerError ? 'unverified' : 'failed'}: ${msg.slice(0, 300)}`);
-    if (e instanceof UnverifiedAnswerError) return res.status(502).json({ error: 'NEAR AI answered, but the response signature did not verify; no answer is shown', detail: msg.slice(0, 300) });
-    return res.status(502).json({ error: 'NEAR AI did not answer this time. Try again in a moment.', detail: msg.slice(0, 300) });
+    const failure = askFailure(e);
+    if (failure.record) {
+      console.error(`[ask] ${failure.record.kind}: ${failure.record.detail}`);
+      recordFailure(getLogDb(), 'ask', failure.record.kind, failure.record.detail, Date.now(), mcpCaller(req));
+    }
+    return res.status(failure.status).json(failure.body);
   }
 });
 
@@ -2572,29 +2575,26 @@ app.get('/api/v1/sources', (_req, res) => {
   const safeCount = (sql: string, ...params: unknown[]): number => {
     try { return (db.prepare(sql).get(...params) as { c: number }).c; } catch { return 0; }
   };
-  const safeMax = (sql: string): string | null => {
-    try { return (db.prepare(sql).get() as { t: string | null }).t; } catch { return null; }
-  };
 
   const allSources = [
-    { type: 'forum_topic',        desc: 'NEAR forum threads',           count: safeCount('SELECT COUNT(*) c FROM forum_topics'),            last_synced: safeMax("SELECT MAX(last_post_at) t FROM forum_topics") },
-    { type: 'doc',                desc: 'Documentation pages (docs.near.org and partner docs)', count: safeCount('SELECT COUNT(*) c FROM doc_pages'),               last_synced: safeMax("SELECT MAX(synced_at) t FROM doc_pages") },
-    { type: 'blog_post',          desc: 'NEAR and ecosystem blogs',          count: safeCount(`SELECT COUNT(*) c FROM blog_posts WHERE ${KIND_SQL} != 'release'`), last_synced: safeMax(`SELECT MAX(published_at) t FROM blog_posts WHERE ${KIND_SQL} != 'release'`) },
-    { type: 'youtube_video',      desc: 'YouTube videos + transcripts',           count: safeCount('SELECT COUNT(*) c FROM youtube_videos'),          last_synced: safeMax("SELECT MAX(published_at) t FROM youtube_videos") },
-    { type: 'github_item',        desc: 'GitHub issues + PRs',                    count: safeCount('SELECT COUNT(*) c FROM github_items'),            last_synced: safeMax("SELECT MAX(synced_at) t FROM github_items") },
-    { type: 'github_release',     desc: 'GitHub releases across NEAR repos',  count: safeCount('SELECT COUNT(*) c FROM github_releases'),         last_synced: safeMax("SELECT MAX(published_at) t FROM github_releases") },
-    { type: 'github_discussion',  desc: 'GitHub Discussions (NEAR repos)',  count: safeCount('SELECT COUNT(*) c FROM github_discussions'),  last_synced: safeMax("SELECT MAX(created_at) t FROM github_discussions") },
-    { type: 'ecosystem_project',  desc: 'NEAR ecosystem + dev-tool catalog', count: safeCount('SELECT COUNT(*) c FROM ecosystem_projects'),      last_synced: safeMax("SELECT MAX(synced_at) t FROM ecosystem_projects") },
+    { type: 'forum_topic',        desc: 'NEAR forum threads',           count: safeCount('SELECT COUNT(*) c FROM forum_topics'),            last_synced: sourceLastSynced(db, 'forum_topic') },
+    { type: 'doc',                desc: 'Documentation pages (docs.near.org and partner docs)', count: safeCount('SELECT COUNT(*) c FROM doc_pages'),               last_synced: sourceLastSynced(db, 'doc') },
+    { type: 'blog_post',          desc: 'NEAR and ecosystem blogs',          count: safeCount(`SELECT COUNT(*) c FROM blog_posts WHERE ${KIND_SQL} != 'release'`), last_synced: sourceLastSynced(db, 'blog_post') },
+    { type: 'youtube_video',      desc: 'YouTube videos + transcripts',           count: safeCount('SELECT COUNT(*) c FROM youtube_videos'),          last_synced: sourceLastSynced(db, 'youtube_video') },
+    { type: 'github_item',        desc: 'GitHub issues + PRs',                    count: safeCount('SELECT COUNT(*) c FROM github_items'),            last_synced: sourceLastSynced(db, 'github_item') },
+    { type: 'github_release',     desc: 'GitHub releases across NEAR repos',  count: safeCount('SELECT COUNT(*) c FROM github_releases'),         last_synced: sourceLastSynced(db, 'github_release') },
+    { type: 'github_discussion',  desc: 'GitHub Discussions (NEAR repos)',  count: safeCount('SELECT COUNT(*) c FROM github_discussions'),  last_synced: sourceLastSynced(db, 'github_discussion') },
+    { type: 'ecosystem_project',  desc: 'NEAR ecosystem + dev-tool catalog', count: safeCount('SELECT COUNT(*) c FROM ecosystem_projects'),      last_synced: sourceLastSynced(db, 'ecosystem_project') },
     // Small (17 rows) but genuinely served (get_radar, /api/v1/radar) and
     // absent from this inventory until now - the same "served but
     // undeclared" shape check-sources.ts exists to catch, just below the
     // row count that check bothers to flag on its own.
-    { type: 'radar_item',         desc: 'Breaking changes and deadlines',         count: safeCount('SELECT COUNT(*) c FROM radar_items'),             last_synced: safeMax("SELECT MAX(created_at) t FROM radar_items") },
-    { type: 'package',            desc: 'npm and crates.io packages, every version with its deprecation and yank flags', count: safeCount('SELECT COUNT(*) c FROM packages'), last_synced: safeMax("SELECT MAX(synced_at) t FROM packages") },
-    { type: 'github_repo',        desc: 'Repositories in the NEAR GitHub orgs, archived state and README notices', count: safeCount('SELECT COUNT(*) c FROM github_repos'), last_synced: safeMax("SELECT MAX(synced_at) t FROM github_repos") },
-    { type: 'hos_proposal',       desc: 'House of Stake proposals and their votes', count: safeCount('SELECT COUNT(*) c FROM hos_proposals'),          last_synced: safeMax("SELECT MAX(synced_at) t FROM hos_proposals") },
-    { type: 'nep_standard',       desc: 'NEAR Enhancement Proposals (standards)', count: safeCount('SELECT COUNT(*) c FROM nep_standards'),          last_synced: safeMax("SELECT MAX(synced_at) t FROM nep_standards") },
-    { type: 'incident',           desc: 'Security incidents of NEAR protocols and catalog projects', count: safeCount('SELECT COUNT(*) c FROM incidents'), last_synced: safeMax("SELECT MAX(synced_at) t FROM incidents") },
+    { type: 'radar_item',         desc: 'Breaking changes and deadlines',         count: safeCount('SELECT COUNT(*) c FROM radar_items'),             last_synced: sourceLastSynced(db, 'radar_item') },
+    { type: 'package',            desc: 'npm and crates.io packages, every version with its deprecation and yank flags', count: safeCount('SELECT COUNT(*) c FROM packages'), last_synced: sourceLastSynced(db, 'package') },
+    { type: 'github_repo',        desc: 'Repositories in the NEAR GitHub orgs, archived state and README notices', count: safeCount('SELECT COUNT(*) c FROM github_repos'), last_synced: sourceLastSynced(db, 'github_repo') },
+    { type: 'hos_proposal',       desc: 'House of Stake proposals and their votes', count: safeCount('SELECT COUNT(*) c FROM hos_proposals'),          last_synced: sourceLastSynced(db, 'hos_proposal') },
+    { type: 'nep_standard',       desc: 'NEAR Enhancement Proposals (standards)', count: safeCount('SELECT COUNT(*) c FROM nep_standards'),          last_synced: sourceLastSynced(db, 'nep_standard') },
+    { type: 'incident',           desc: 'Security incidents of NEAR protocols and catalog projects', count: safeCount('SELECT COUNT(*) c FROM incidents'), last_synced: sourceLastSynced(db, 'incident') },
   ];
   // Only expose sources that actually have data, then append the RAG index.
   const sources = allSources.filter((s) => s.count > 0);

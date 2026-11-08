@@ -5,7 +5,7 @@ import { getDb } from '../lib/db';
 import { logRun } from '../lib/sync-log';
 import { nearAiConfig } from '../lib/near-ai';
 import { MIGRATION_GUIDE_URL, migrateRepo, renderReport, repoFrom, type RepoRef } from '../lib/migrate-repo';
-import { REPORT_FILE, confirmMessage, fitDeliverable, nextStep, withChanges, type AssignmentRow } from '../lib/agent-market';
+import { REPORT_FILE, confirmMessage, fitDeliverable, isUnreadableRepo, nextStep, unreadableRepoMessage, withChanges, type AssignmentRow } from '../lib/agent-market';
 
 const BASE = (process.env.MARKET_BASE_URL ?? 'https://market.near.ai').replace(/\/+$/, '');
 const TOKEN = process.env.AGENT_API_TOKEN ?? '';
@@ -60,7 +60,17 @@ async function work(row: AssignmentRow, mark: string, feedback?: string): Promis
     return;
   }
   await api('POST', `/v1/assignments/${id}/messages`, { body: confirmMessage(repo, row.assignment.slaDeadlineAt, feedback !== undefined), clientRequestId: `${mark}-confirm` });
-  const result = await migrate(repo, id, feedback);
+  let result: Awaited<ReturnType<typeof migrate>>;
+  try {
+    result = await migrate(repo, id, feedback);
+  } catch (e) {
+    const { message, stderr } = e as { message?: string; stderr?: unknown };
+    if (!isUnreadableRepo(`${message ?? ''}\n${typeof stderr === 'string' ? stderr : ''}`)) throw e;
+    await api('POST', `/v1/assignments/${id}/messages`, { body: unreadableRepoMessage(repo), clientRequestId: `${mark}-unreadable` });
+    fs.rmSync(path.join(WORK_ROOT, id), { recursive: true, force: true });
+    console.log(`[agent] ${id}: could not clone ${repo.url}, asked the buyer for a public link`);
+    return;
+  }
   const report = renderReport(result, PATCH_NAME);
   const fit = fitDeliverable(feedback !== undefined ? withChanges(report, feedback) : report);
   const files = [

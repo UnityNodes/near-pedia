@@ -30,6 +30,15 @@ No key is needed. Pin `@main` to a commit SHA if you want the action itself to s
 
 Outputs: `findings` (all findings in the changed files) and `new-findings` (on added lines).
 
+If NEARpedia cannot be reached (a network error, a timeout, or 429/5xx on all three tries), the run checks no files, writes the reason to the job summary and a `::warning::`, and passes. With `fail-on: warning` or `fail-on: error` it fails instead, since nothing was checked; add `continue-on-error: true` to the step if an outage on our side should never block a merge:
+
+```yaml
+      - uses: UnityNodes/near-pedia/github-action@main
+        continue-on-error: true
+        with:
+          fail-on: error
+```
+
 ## What it sends where
 
 The action reads the pull request's changed files through the GitHub API with the job's token, and sends each checked file, one per request and at most 20,000 characters, to `POST <api-url>/api/v1/check-code`. NEARpedia checks it in memory and does not store it. Nothing else leaves the runner. On a pull request from a fork the job's token cannot comment, so the report goes to the job summary and to annotations on the changed lines.
