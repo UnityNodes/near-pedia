@@ -21,9 +21,9 @@ CI runs all four on every push to `main` and every pull request (`.github/workfl
 
 | File | What it checks |
 | --- | --- |
-| `lib/check-code.test.ts` | The demo file a model writes from memory (near-sdk-js, `DelegateV2`) gets exactly the findings it should, on the right lines. RPC method names, manifests, yanked pins and dependencies whole breaking lines behind are flagged. A name in a comment is not |
+| `lib/check-code.test.ts` | The demo file a model writes from memory (near-sdk-js, `DelegateV2`) gets exactly the findings it should, on the right lines. RPC method names, manifests, yanked pins and dependencies whole breaking lines behind are flagged, and so are near-api-js 4 `connect()` and near-sdk 4 names (`env::block_index`, `ValidAccountId`, `store::UnorderedMap`) only where the file imports that library. A name in a comment is not |
 | `lib/code-scan.test.ts` | Language detection, and which imports, identifiers and RPC calls are read from JS/TS and Rust |
-| `lib/deprecation-engine.test.ts` | Each of the six signals is collected; entries from several signals merge into one; curated quotes are re-checked against the synced sources; a build writes and retires entries |
+| `lib/deprecation-engine.test.ts` | Each of the six signals is collected; entries from several signals merge into one; curated quotes are re-checked against the synced sources; a build writes and retires entries; a replacement that is itself archived is followed to the end of its chain or dropped |
 | `lib/deprecation-extract.test.ts` | What release notes say was removed, read from real nearcore, near-api-js and near-sdk notes. Context words around the change are skipped, and "remove feature gates" is not read as removing the feature |
 | `lib/deprecations.test.ts` | Lookup by name, alias and package, as `check_deprecation` and `/api/v1/deprecations` answer it |
 | `lib/code-tools.test.ts` | `resolve_package`, `get_breaking_changes` (breaking lines in changelogs) and `explain_error` |
@@ -69,5 +69,6 @@ CI runs all four on every push to `main` and every pull request (`.github/workfl
 ## Beyond the unit tests
 
 - **`scripts/check-*.ts`** (dozens, in the daily bucket) check the live database against its sources, for example counts against upstream totals, radar alerts that are no longer true, fencing and citations. Each writes its outcome to `sync_log`.
+- **`scripts/check-replacements.ts`** (daily, after the index is built) fails when a served deprecation entry recommends a replacement that the index itself marks deprecated or removed with strong evidence.
 - **`scripts/post-deploy-check.sh`** hits every page, API, feed and security header of a deployed site.
 - **`scripts/backup-restore-drill.sh`** restores the newest local and Drive backups every week and compares them with the live database.

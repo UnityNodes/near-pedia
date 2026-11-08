@@ -68,7 +68,7 @@ export function verifyQuote(db: Database.Database, e: SeedEvidence): boolean | n
 
 function unionMatchers(a: Matchers, b: Matchers): Matchers {
   const out: Matchers = {};
-  for (const k of ['npm', 'crates', 'imports', 'identifiers', 'rpc', 'urls', 'config', 'unlessNearby'] as const) {
+  for (const k of ['npm', 'crates', 'imports', 'identifiers', 'rpc', 'urls', 'config', 'unlessNearby', 'requiresImport'] as const) {
     const v = [...new Set([...(a[k] ?? []), ...(b[k] ?? [])])];
     if (v.length) out[k] = v;
   }
@@ -192,6 +192,104 @@ export function finalize(db: Database.Database, drafts: readonly Draft[], now: D
   });
 }
 
+export function subjectsOfUrl(url: string): string[] {
+  let u: URL;
+  try { u = new URL(url.trim()); } catch { return []; }
+  if (!/^https?:$/.test(u.protocol)) return [];
+  const host = u.hostname.toLowerCase().replace(/^www\./, '').replace(/\.$/, '');
+  const parts = u.pathname.split('/').filter(Boolean);
+  const out: string[] = [];
+  if (host === 'github.com' && parts.length === 2) out.push(`github:${parts[0]}/${parts[1].replace(/\.git$/i, '')}`);
+  if (host === 'npmjs.com' && parts[0] === 'package') {
+    const name = parts[1]?.startsWith('@') ? parts.slice(1, 3).join('/') : parts[1];
+    const rest = parts.slice(parts[1]?.startsWith('@') ? 3 : 2);
+    if (name && rest.length === 0) out.push(`npm:${decodeURIComponent(name)}`);
+  }
+  if (host === 'crates.io' && parts[0] === 'crates' && parts.length === 2) out.push(`crates:${parts[1]}`);
+  const labels = host.split('.');
+  for (let i = 0; i <= labels.length - 2; i++) out.push(`host:${labels.slice(i).join('.')}`);
+  return out.map((k) => k.toLowerCase());
+}
+
+export interface ReplacementNode {
+  id: string;
+  status: Status;
+  strength: Strength;
+  stale: boolean;
+  subjects: string[];
+  replacement: string | null;
+  replacement_url: string | null;
+}
+
+export const isDeadEnd = (e: Pick<ReplacementNode, 'status' | 'strength' | 'stale'>): boolean =>
+  !e.stale && e.strength === 'strong' && (e.status === 'deprecated' || e.status === 'removed');
+
+export function subjectOwners<T extends ReplacementNode>(entries: readonly T[]): Map<string, T> {
+  const owners = new Map<string, T>();
+  for (const e of entries) for (const s of e.subjects) if (!owners.has(s.toLowerCase())) owners.set(s.toLowerCase(), e);
+  return owners;
+}
+
+export function ownerOfUrl<T extends ReplacementNode>(owners: Map<string, T>, url: string): T | null {
+  for (const key of subjectsOfUrl(url)) {
+    const e = owners.get(key);
+    if (e) return e;
+  }
+  return null;
+}
+
+export function replacementChain<T extends ReplacementNode>(entry: T, owners: Map<string, T>): { chain: T[]; cycle: boolean } {
+  const chain: T[] = [];
+  const visited = new Set([entry.id]);
+  let cur: T = entry;
+  while (cur.replacement_url) {
+    const next = ownerOfUrl(owners, cur.replacement_url);
+    if (!next || next.id === cur.id) break;
+    if (visited.has(next.id)) return { chain, cycle: true };
+    if (!isDeadEnd(next)) break;
+    chain.push(next);
+    visited.add(next.id);
+    cur = next;
+  }
+  return { chain, cycle: false };
+}
+
+function deadWord(e: BuiltEntry): string {
+  return e.evidence.some((v) => v.signal === 'repo_archived' && v.supports) ? 'archived' : e.status;
+}
+
+function missingRepoNote(db: Database.Database, url: string, who: string): string | null {
+  const key = subjectsOfUrl(url).find((k) => k.startsWith('github:'));
+  if (!key) return null;
+  const fullName = key.slice('github:'.length);
+  const org = fullName.split('/')[0];
+  const synced = db.prepare('SELECT 1 FROM github_repos WHERE lower(org) = ? LIMIT 1').get(org);
+  const present = db.prepare('SELECT 1 FROM github_repos WHERE lower(full_name) = ? LIMIT 1').get(fullName);
+  if (!synced || present) return null;
+  return `${who} suggested replacement ${url} is not among the ${org} repositories on GitHub any more: it was renamed or removed.`;
+}
+
+export function resolveReplacements(db: Database.Database, entries: readonly BuiltEntry[]): BuiltEntry[] {
+  const owners = subjectOwners(entries);
+  return entries.map((e) => {
+    if (!e.replacement_url) return e;
+    const who = e.origin === 'signal' ? "The README's" : 'The';
+    const { chain, cycle } = replacementChain(e, owners);
+    if (!chain.length) {
+      const note = ownerOfUrl(owners, e.replacement_url) ? null : missingRepoNote(db, e.replacement_url, who);
+      return note ? { ...e, summary: `${e.summary} ${note}` } : e;
+    }
+    const first = chain[0];
+    const last = chain[chain.length - 1];
+    const suggested = e.replacement ?? e.replacement_url;
+    const said = `${who} suggested replacement ${suggested} is itself ${deadWord(first)} (see check_deprecation("${first.id}")).`;
+    if (!cycle && last.replacement_url) {
+      return { ...e, replacement: last.replacement, replacement_url: last.replacement_url, summary: `${e.summary} ${said} Its own recommendation is used instead.` };
+    }
+    return { ...e, replacement: null, replacement_url: null, summary: `${e.summary} ${said}` };
+  });
+}
+
 /** The synced tables the engine reads; a build over an empty one would mark half the seeds stale and overwrite a good table. */
 export const SOURCE_TABLES = ['github_repos', 'packages', 'github_releases', 'doc_pages'] as const;
 
@@ -206,7 +304,7 @@ export function buildEntries(db: Database.Database, now: Date = new Date()): Bui
     ...repoCandidates(db),
     ...registryCandidates(db),
   ];
-  return finalize(db, mergeBySubject(SEEDS, candidates), now);
+  return resolveReplacements(db, finalize(db, mergeBySubject(SEEDS, candidates), now));
 }
 
 export interface WriteResult { entries: number; stale: string[]; added: number }

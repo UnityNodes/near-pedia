@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { getDb, resetDb } from '@/lib/db';
-import { emptySources, finalize, mergeBySubject, verifyQuote, writeEntries, buildEntries } from '@/lib/deprecation-engine';
+import { emptySources, finalize, mergeBySubject, verifyQuote, writeEntries, buildEntries, subjectsOfUrl } from '@/lib/deprecation-engine';
 import { docsMarkerCandidates, dormancyEvidence, releaseCandidates, repoCandidates } from '@/lib/deprecation-signals';
 import type { Seed } from '@/lib/deprecation-seeds';
 import { SEEDS } from '@/lib/deprecation-seeds';
@@ -230,5 +230,61 @@ describe('review fixes (2026-11-01)', () => {
 
   it('names the empty source tables a build must not run over', () => {
     expect(emptySources(getDb())).toEqual(['github_repos', 'packages', 'github_releases', 'doc_pages']);
+  });
+});
+
+describe('replacements that are themselves dead', () => {
+  beforeEach(() => resetDb());
+
+  const byId = (id: string) => buildEntries(getDb(), NOW).find((e) => e.id === id)!;
+
+  it('drops a replacement whose chain ends at an archived repository, and says why', () => {
+    repo('near/indexer-wallet', { archived: 1, strength: 'strong', notice: 'DEPRECATED. Use the explorer indexer', replacement: 'Explorer indexer (https://github.com/near/indexer-explorer)' });
+    repo('near/indexer-explorer', { archived: 1 });
+    const e = byId('repo-near-indexer-wallet');
+    expect(e.replacement).toBeNull();
+    expect(e.replacement_url).toBeNull();
+    expect(e.summary).toContain("The README's suggested replacement Explorer indexer (https://github.com/near/indexer-explorer) is itself archived (see check_deprecation(\"repo-near-indexer-explorer\")).");
+  });
+
+  it('follows a chain to the first live recommendation', () => {
+    repo('near/a', { archived: 1, strength: 'strong', notice: 'deprecated', replacement: 'https://github.com/near/b' });
+    repo('near/b', { archived: 1, strength: 'strong', notice: 'deprecated', replacement: 'https://github.com/near/c' });
+    repo('near/c');
+    const e = byId('repo-near-a');
+    expect(e).toMatchObject({ replacement: 'https://github.com/near/c', replacement_url: 'https://github.com/near/c' });
+    expect(e.summary).toContain('is itself archived (see check_deprecation("repo-near-b")). Its own recommendation is used instead.');
+  });
+
+  it('maps any near.social host to the BOS record and takes its recommendation', () => {
+    repo('near/bounties', { archived: 1, strength: 'strong', notice: 'deprecated', replacement: 'Gigs Board (https://devgovgigs.near.social)' });
+    doc('/primitives/social', 'While the BOS framework (components/widgets) is deprecated, the social graph stored in SocialDB is still live and maintained.');
+    const e = byId('repo-near-bounties');
+    expect(e.replacement_url).toBe('https://docs.near.org/primitives/social');
+    expect(e.summary).toContain('is itself deprecated (see check_deprecation("bos-components"))');
+  });
+
+  it('leaves a live replacement alone and notes one that is gone from a synced org', () => {
+    repo('near/old', { archived: 1, strength: 'strong', notice: 'deprecated', replacement: 'https://github.com/near/new' });
+    repo('near/new');
+    repo('near/tools', { archived: 1, strength: 'strong', notice: 'deprecated', replacement: 'https://github.com/near/workspaces' });
+    expect(byId('repo-near-old')).toMatchObject({ replacement_url: 'https://github.com/near/new', summary: expect.not.stringContaining('itself') });
+    const t = byId('repo-near-tools');
+    expect(t.replacement_url).toBe('https://github.com/near/workspaces');
+    expect(t.summary).toContain('https://github.com/near/workspaces is not among the near repositories on GitHub any more');
+  });
+
+  it('stops on a cycle instead of looping', () => {
+    repo('near/x1', { archived: 1, strength: 'strong', notice: 'deprecated', replacement: 'https://github.com/near/x2' });
+    repo('near/x2', { archived: 1, strength: 'strong', notice: 'deprecated', replacement: 'https://github.com/near/x1' });
+    expect(byId('repo-near-x1')).toMatchObject({ replacement: null, replacement_url: null });
+  });
+
+  it('reads only repository roots, package pages and hosts as subjects', () => {
+    expect(subjectsOfUrl('https://github.com/near/near-api-js/blob/master/MIGRATION.md')).toEqual(['host:github.com']);
+    expect(subjectsOfUrl('https://www.github.com/Near/Repo.git/')).toEqual(['github:near/repo', 'host:github.com']);
+    expect(subjectsOfUrl('https://www.npmjs.com/package/@near-js/accounts')).toEqual(['npm:@near-js/accounts', 'host:npmjs.com']);
+    expect(subjectsOfUrl('https://devgovgigs.near.social')).toEqual(['host:devgovgigs.near.social', 'host:near.social']);
+    expect(subjectsOfUrl('not a url')).toEqual([]);
   });
 });
