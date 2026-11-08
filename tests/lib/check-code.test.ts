@@ -195,3 +195,21 @@ describe('review fixes (check_code)', () => {
     expect(text).not.toMatch(/yanked on crates\.io: ignore/);
   });
 });
+
+describe('renderCheck hints and sources', () => {
+  beforeEach(() => resetDb());
+
+  it('never fences the entry id in the check_deprecation hint and lists each source once', () => {
+    const db = getDb();
+    db.prepare(`INSERT INTO github_repos (full_name, org, html_url, fork, archived, readme_notice, readme_marker, readme_strength, readme_replacement, synced_at)
+      VALUES ('near/old-lib', 'near', 'https://github.com/near/old-lib', 0, 1, 'DEPRECATED', 'DEPRECATED', 'strong', null, 't')`).run();
+    pkg('npm', 'old-lib', '1.0.0', '2024-01-01T00:00:00Z', 'https://github.com/near/old-lib');
+    writeEntries(db, buildEntries(db, NOW), NOW.toISOString());
+    const r = checkCode(db, "import x from 'old-lib';", { filename: 'a.ts' });
+    const f = r.findings.find((x) => x.entry?.id === 'repo-near-old-lib')!;
+    expect(f.sources.map((s) => s.url)).toEqual(['https://github.com/near/old-lib']);
+    const text = renderCheck(r, (s) => `<<${s}>>`);
+    expect(text).toContain('Details: check_deprecation("repo-near-old-lib")');
+    expect(text).toContain('<<near/old-lib>>');
+  });
+});

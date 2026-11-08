@@ -300,7 +300,7 @@ export function checkCode(db: Database.Database, code: string, opts: { filename?
       continue;
     }
     if (!evidenceCache.has(e.id)) {
-      evidenceCache.set(e.id, evidenceOf(db, e.id).filter((v) => v.supports).slice(0, 2).map((v) => ({ url: v.source_url, date: v.upstream_date, signal: v.signal })));
+      evidenceCache.set(e.id, uniqueSources(evidenceOf(db, e.id).filter((v) => v.supports).map((v) => ({ url: v.source_url, date: v.upstream_date, signal: v.signal }))).slice(0, 2));
     }
     findings.push({
       severity: severityOf(e),
@@ -332,6 +332,16 @@ export function checkCode(db: Database.Database, code: string, opts: { filename?
   return { language: scan.language, findings, basis: { entries: entries.length, built_at: meta.at, packages }, notes };
 }
 
+export function uniqueSources(sources: Finding['sources']): Finding['sources'] {
+  const seen = new Set<string>();
+  return sources.filter((s) => {
+    const key = `${s.url}|${s.date ?? ''}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
 /** Inputs beyond this are refused rather than cut: a partial check would read as a clean one for the part never read. */
 export const MAX_CODE_CHARS = 100_000;
 
@@ -352,7 +362,7 @@ export function renderCheck(r: CheckResult, fence: (s: string) => string = (s) =
       if (e.replacement) lines.push(`  Use instead: ${own(e.replacement)}${e.replacement_url ? ` — ${own(e.replacement_url)}` : ''}`);
       if (e.effective) lines.push(`  Effective: ${own(e.effective)}`);
       if (f.live) lines.push(`  ${f.live}`);
-      lines.push(`  Details: check_deprecation("${own(e.id)}")`);
+      lines.push(`  Details: check_deprecation("${e.id}")`);
     } else {
       lines.push(`  ${f.message}`);
       if (f.upstream) lines.push(`  Publisher's note: ${fence(f.upstream)}`);
