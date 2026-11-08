@@ -37,8 +37,8 @@ const LEVELS: readonly RadarLevel[] = ['critical', 'important', 'ecosystem'];
 const SOURCE_LABEL: Record<string, string> = {
   protocol_upgrade: 'Protocol',
   node_release:     'nearcore',
-  hos_vote:         'House of Stake',
-  hos_timelock:     'House of Stake',
+  hos_vote:         'HoS vote',
+  hos_timelock:     'HoS timelock',
   hsp_draft:        'Forum',
   incident:         'Incident',
   event:            'Event',

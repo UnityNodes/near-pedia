@@ -7,6 +7,7 @@ import {
   MessagesSquare, Package, PenLine, Plug, Radar, ScrollText, Tag, Zap,
   type LucideIcon,
 } from 'lucide-react';
+import { countSyncedWithin, DAY_MS } from '@/lib/synced-within';
 
 type GroupKey = 'code' | 'learn' | 'governance' | 'ecosystem';
 
@@ -34,7 +35,6 @@ const TYPE_MAP: Record<string, { name: string; Icon: LucideIcon; group: GroupKey
   radar_item:        { name: 'Radar',        Icon: Radar,          group: 'ecosystem',  href: '/radar' },
 };
 
-const DAY_MS = 86_400_000;
 const COUNT_UP_MS = 1400;
 
 interface SourcesResponse {
@@ -76,11 +76,6 @@ function normalize(data: SourcesResponse): NormalizedSource[] {
   return data.sources
     .filter((s) => TYPE_MAP[s.type])
     .map((s) => ({ type: s.type, ...TYPE_MAP[s.type], count: s.count, lastSynced: s.last_synced }));
-}
-
-function countSyncedWithin(sources: NormalizedSource[], windowMs: number): number {
-  const now = Date.now();
-  return sources.filter((s) => s.lastSynced && now - new Date(s.lastSynced).getTime() < windowMs).length;
 }
 
 function fmt(n: number): string {
@@ -130,7 +125,7 @@ function ModePill({ mode }: { mode: Mode }) {
 }
 
 export function SourcesLive({
-  refreshInterval = 60_000,
+  refreshInterval = 300_000,
   endpoint = '/api/v1/sources',
   initial = null,
   stickers = false,
@@ -139,6 +134,7 @@ export function SourcesLive({
   const [mode, setMode] = useState<Mode>(initial ? 'server' : 'unavailable');
   const [group, setGroup] = useState<GroupKey>('code');
   const [userPicked, setUserPicked] = useState(false);
+  const [now, setNow] = useState(() => Date.now());
 
   const sources = normalize(data);
   const totals = Object.fromEntries(
@@ -149,7 +145,7 @@ export function SourcesLive({
   const rows = sources.filter((s) => s.group === activeGroup).sort((a, b) => b.count - a.count);
   const maxCount = Math.max(1, ...rows.map((r) => r.count));
   const total = sources.reduce((sum, s) => sum + s.count, 0);
-  const syncedToday = countSyncedWithin(sources, DAY_MS);
+  const syncedToday = countSyncedWithin(data.sources, DAY_MS, now);
 
   const shownTotal = useCountUp(total);
   const shownTab = useCountUp(totals[activeGroup] ?? 0);
@@ -158,15 +154,15 @@ export function SourcesLive({
     let cancelled = false;
     const load = async () => {
       try {
-        const res = await fetch(endpoint, { cache: 'no-store' });
-        if (!res.ok) throw new Error(String(res.status));
+        const res = await fetch(endpoint);
+        if (!res.ok || cancelled) return;
         const json = (await res.json()) as SourcesResponse;
         if (cancelled) return;
         setData(json);
+        setNow(Date.now());
         setMode('live');
       } catch {
-        if (cancelled) return;
-        setMode(initial ? 'server' : 'unavailable');
+        return;
       }
     };
     load();
@@ -175,7 +171,7 @@ export function SourcesLive({
       return () => { cancelled = true; clearInterval(id); };
     }
     return () => { cancelled = true; };
-  }, [refreshInterval, endpoint, initial]);
+  }, [refreshInterval, endpoint]);
 
   const visibleKeys = visibleGroups.map((g) => g.key).join('|');
 
@@ -218,10 +214,12 @@ export function SourcesLive({
               <b>{data.mcp_tools_count > 0 ? data.mcp_tools_count : '-'}</b>
               <span>MCP TOOLS</span>
             </span>
-            <span>
-              <b>{data.avg_latency_ms != null ? `${data.avg_latency_ms}ms` : '-'}</b>
-              <span>AVG LATENCY</span>
-            </span>
+            {data.avg_latency_ms != null && (
+              <span>
+                <b>{data.avg_latency_ms}ms</b>
+                <span>AVG LATENCY</span>
+              </span>
+            )}
             <ModePill mode={mode} />
           </div>
         </div>

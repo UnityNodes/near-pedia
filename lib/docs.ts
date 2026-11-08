@@ -5,6 +5,7 @@ import { titleCaseSlug } from './utils';
 export const DOC_SOURCE_LABELS: Record<string, string> = {
   docs: 'docs.near.org',
   nomicon: 'Nomicon',
+  'partner-docs': 'Partner docs',
 };
 
 export function docHost(url: string | null | undefined): string | null {

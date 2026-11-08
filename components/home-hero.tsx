@@ -55,10 +55,12 @@ function useTypedPlaceholder(): string {
 
 export function HomeHero({
   sourceCount,
+  syncedToday,
   headline,
   panel,
 }: {
   sourceCount: number;
+  syncedToday: number;
   headline: string;
   panel: ReactNode;
 }) {
@@ -93,7 +95,7 @@ export function HomeHero({
                 <span className="dp-ping-ring" />
                 <span className="dp-ping-core" />
               </span>
-              {sourceCount} of {sourceCount} sources syncing
+              {sourceCount} sources · {syncedToday} synced today
             </Link>
           )}
           <h1 className="dp-h1 dp-rise" style={{ animationDelay: '.12s' }}>
@@ -105,11 +107,11 @@ export function HomeHero({
             every answer.
           </p>
           <nav className="dp-doors dp-rise" style={{ animationDelay: '.24s' }} aria-label="Choose how you use NEARpedia">
-            <Link href="/for-ai" className="dp-door">
+            <Link href="/check" className="dp-door">
               <span className="dp-door-k"><Code2 size={14} aria-hidden="true" />I write NEAR code</span>
               <b>Check code before it breaks</b>
-              <span className="dp-door-d">Connect your agent over MCP: it learns what NEAR removed and what replaced it.</span>
-              <span className="dp-door-go">Connect an agent →</span>
+              <span className="dp-door-d">Paste a contract or package.json: each stale line comes back with its replacement and source. Agents get the same over MCP.</span>
+              <span className="dp-door-go">Check a file →</span>
             </Link>
             <Link href="/ask" className="dp-door">
               <span className="dp-door-k"><Compass size={14} aria-hidden="true" />I&apos;m researching NEAR</span>

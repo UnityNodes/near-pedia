@@ -15,6 +15,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
   const staticRoutes: MetadataRoute.Sitemap = [
     { url: BASE, lastModified: now, changeFrequency: 'daily', priority: 1 },
+    { url: `${BASE}/check`, lastModified: now, changeFrequency: 'weekly', priority: 0.9 },
     { url: `${BASE}/deprecations`, lastModified: now, changeFrequency: 'daily', priority: 0.9 },
     { url: `${BASE}/radar`, lastModified: now, changeFrequency: 'hourly', priority: 0.8 },
     { url: `${BASE}/protocol`, lastModified: now, changeFrequency: 'hourly', priority: 0.8 },

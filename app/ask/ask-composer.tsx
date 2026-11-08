@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useId, useRef, useState } from 'react';
 import type { FormEvent, KeyboardEvent } from 'react';
 import { ArrowUp, FileCode2, X } from 'lucide-react';
@@ -53,6 +54,7 @@ export function AskComposer({ busy, onSend }: { busy: boolean; onSend: (draft: D
           <label htmlFor={ids.code} className="pg-sr">Code to check</label>
           <textarea id={ids.code} rows={7} maxLength={MAX_CODE} value={code} spellCheck={false} onChange={(e) => setCode(e.target.value)}
             placeholder="Paste one contract, script, package.json or Cargo.toml: check_code runs on it before the model answers" />
+          <p className="ak-codebox-foot">No question about it? <Link href="/check">Check the file on its own</Link>, with each finding, its replacement and sources.</p>
         </div>
       )}
       <div className="ak-inputrow">
@@ -66,7 +68,7 @@ export function AskComposer({ busy, onSend }: { busy: boolean; onSend: (draft: D
           <ArrowUp size={18} />
         </button>
       </div>
-      <p className="ak-hint">Answers come only from the cited sources. Check them before you rely on one.</p>
+      <p className="ak-hint">Answers come only from the cited sources. Check them before you rely on one. To check a file, use <Link href="/check">Check code</Link>.</p>
     </form>
   );
 }

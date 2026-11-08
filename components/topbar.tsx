@@ -40,6 +40,13 @@ function MobileMenu({
         </div>
         <nav className="mobile-nav">
           <Link
+            href="/check"
+            className={`mobile-nav-item${pathname.startsWith('/check') ? ' active' : ''}`}
+            onClick={onClose}
+          >
+            Check code
+          </Link>
+          <Link
             href="/deprecations"
             className={`mobile-nav-item${pathname.startsWith('/deprecations') ? ' active' : ''}`}
             onClick={onClose}
@@ -179,6 +186,9 @@ export function Topbar() {
           </Link>
 
           <nav className="nav-list">
+            <Link href="/check" className={pathname.startsWith('/check') ? 'active' : ''}>
+              <span className="nav-label">Check code</span>
+            </Link>
             <Link href="/deprecations" className={pathname.startsWith('/deprecations') ? 'active' : ''}>
               <span className="nav-label">Deprecations</span>
             </Link>

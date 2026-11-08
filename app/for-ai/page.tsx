@@ -1,5 +1,6 @@
 import { Activity, Boxes, ChevronRight, Code2, Users } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import { LATEST_PROTOCOL_VERSION } from '@modelcontextprotocol/server';
 import { pageMetadata } from '@/lib/seo';
 import { getDb } from '@/lib/db';
 import { MCP_TOOL_COUNT, REST_ENDPOINT_COUNT, listMcpTools, shortDesc } from '@/lib/mcp-meta';
@@ -59,7 +60,7 @@ const GROUP_ICONS: Record<string, LucideIcon> = {
 };
 
 const PROTOCOL: { k: string; v: string }[] = [
-  { k: 'Version', v: '2024-11-05' },
+  { k: 'Version', v: LATEST_PROTOCOL_VERSION },
   { k: 'Transport', v: 'HTTP' },
   { k: 'Auth', v: 'None' },
   { k: 'CORS', v: '*' },

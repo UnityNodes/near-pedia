@@ -370,7 +370,7 @@
 .pg-stat span { font-size: 12px; color: var(--fg-mute); }
 .pg-stat--sync { min-width: 150px; }
 .pg-stat .pg-sync-line { display: flex; align-items: center; gap: 8px; font-size: 14px; margin-top: 6px; color: var(--fg); }
-.pg-stat .pg-stat-src { display: block; margin-top: 6px; max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pg-stat .pg-stat-src { display: block; margin-top: 6px; overflow-wrap: anywhere; }
 
 .pg-tools { display: flex; flex-direction: column; gap: 14px; }
 .pg-tools-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
@@ -441,11 +441,12 @@
   .pg-side-item--on { box-shadow: none; border-color: var(--accent-line); }
 }
 @media (max-width: 640px) {
-  .pg-row { padding: 16px 16px; gap: 12px; }
+  .pg-row { padding: 16px 16px; gap: 12px; grid-template-columns: minmax(0, 1fr); }
   .pg-row:hover { padding-left: 20px; }
+  .pg-row-end { justify-content: flex-start; }
 }
 
-.pg-row-sub { margin-top: 6px; font-size: 14px; line-height: 1.5; color: var(--fg-mute); max-width: 76ch; }
+.pg-row-sub { margin-top: 6px; font-size: 14px; line-height: 1.5; color: var(--fg-mute); max-width: 76ch; overflow-wrap: anywhere; }
 .pg-feature {
   display: flex; flex-direction: column; gap: 12px; padding: 24px; border-radius: 16px;
   background: linear-gradient(160deg, color-mix(in srgb, var(--accent) 8%, var(--bg-card)), var(--bg-card));

@@ -1,11 +1,12 @@
 import Link from 'next/link';
 import {
   ArrowRight, BookOpen, Boxes, Code2, Gauge, MessageCircleQuestion, MessagesSquare,
-  Landmark, Plug, Radar, ShieldAlert, Tag, type LucideIcon,
+  FileCheck2, Landmark, Plug, Radar, ShieldAlert, Tag, type LucideIcon,
 } from 'lucide-react';
 import { HomeHero } from '@/components/home-hero';
 import { SourcesLive } from '@/components/sources-live';
 import { getSourceInventory } from '@/lib/sources';
+import { countSyncedToday } from '@/lib/synced-within';
 import { getLatestReleases, getRecentFeed } from '@/lib/home-feed';
 import { SITE, SITE_TITLE } from '@/lib/site.config';
 import type { Metadata } from 'next';
@@ -55,6 +56,7 @@ const PATHS: { k: string; t: string; d: string; links: { href: string; label: st
     t: 'Is my NEAR code current?',
     d: 'SDKs, packages, RPC methods and protocol features NEAR removed or replaced, each with its evidence and what to use instead, plus the docs, release notes and open issues behind them.',
     links: [
+      { href: '/check', label: 'Check a file', Icon: FileCheck2 },
       { href: '/for-ai', label: 'Connect an agent (MCP)', Icon: Plug },
       { href: '/deprecations', label: 'Deprecations', Icon: ShieldAlert },
       { href: '/docs', label: 'Docs', Icon: BookOpen },
@@ -100,6 +102,7 @@ export default async function Home() {
       <main className="dp-home">
         <HomeHero
           sourceCount={sourcesInventory.source_count}
+          syncedToday={countSyncedToday(sourcesInventory.sources)}
           headline={HERO_HEADLINE}
           panel={<SourcesLive stickers initial={{ ...sourcesInventory, avg_latency_ms: null }} />}
         />
