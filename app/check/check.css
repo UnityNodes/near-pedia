@@ -42,6 +42,8 @@
   color: var(--bad); background: var(--bad-bg); border: 1px solid var(--bad-line);
 }
 
+.ck-anchor { scroll-margin-top: 84px; min-width: 0; }
+.ck-anchor:empty { display: none; }
 .ck-results { display: flex; flex-direction: column; gap: 14px; animation: dp-rise 0.4s both; }
 .ck-results-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
 .ck-h2 { margin: 0; font-size: 22px; font-weight: 600; letter-spacing: -0.02em; }

@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useId, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import { ArrowUpRight, FileCode2, RotateCcw } from 'lucide-react';
 import type { CheckResult, Finding, Severity } from '@/lib/check-code';
@@ -150,6 +150,13 @@ export function CheckApp({ exampleCode, exampleFilename, maxChars }: Props) {
   const [filename, setFilename] = useState(exampleFilename);
   const [language, setLanguage] = useState<'' | Language>('');
   const [state, setState] = useState<State>({ kind: 'idle' });
+  const resultsRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (state.kind !== 'done' && state.kind !== 'failed') return;
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    resultsRef.current?.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
+  }, [state]);
 
   const tooLong = code.length > maxChars;
   const canSend = state.kind !== 'busy' && code.trim().length > 0 && !tooLong;
@@ -202,8 +209,10 @@ export function CheckApp({ exampleCode, exampleFilename, maxChars }: Props) {
         {tooLong && <p className="ck-error" role="alert">One file per check, at most {maxChars.toLocaleString('en-US')} characters.</p>}
       </form>
 
-      {state.kind === 'failed' && <p className="ck-error" role="alert">The check failed: {state.message}</p>}
-      {state.kind === 'done' && <Results result={state.result} checked={state.checked} />}
+      <div ref={resultsRef} className="ck-anchor">
+        {state.kind === 'failed' && <p className="ck-error" role="alert">The check failed: {state.message}</p>}
+        {state.kind === 'done' && <Results result={state.result} checked={state.checked} />}
+      </div>
       {state.kind === 'idle' && (
         <p className="ck-basis">The example is a near-sdk-js counter contract with a near-api-js v4 client, the kind of file an agent writes from memory. Press Check to see what is stale in it.</p>
       )}
