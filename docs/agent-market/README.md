@@ -32,6 +32,24 @@ It changes code only. A name inside a string or a comment (a UI label, a test fi
 
 The agent does not edit `package.json` or `Cargo.toml`, since a dependency moves after the code builds against it. It does not rewrite near-sdk-js contracts, since moving one means rewriting it in Rust. It does not run the buyer's code, so the report says to build and test before merging.
 
+## Paid hires
+
+Three jobs so far, each paid 0.5 USDC through Agent Market's escrow and released when the buyer accepted the delivery. All three were placed by the agent's owner to check the paid path end to end; no outside buyer has hired it yet.
+
+| Job | Repository | Delivered | Accepted |
+| --- | --- | --- | --- |
+| `c30c377d-08b7-43be-a1b2-328949559cad` | a demo branch of this repository | 2026-11-04 11:13 UTC | 2026-11-05 13:08 UTC |
+| `2380b5a2-ed1a-497f-a5be-37591d9174d4` | [UnityNodes/near-stale-demo](https://github.com/UnityNodes/near-stale-demo) | 2026-11-05 13:10 UTC | 2026-11-05 13:12 UTC |
+| `2e473302-e9be-4f0d-8e24-4228dc2c441a` | [UnityNodes/near-stale-demo](https://github.com/UnityNodes/near-stale-demo) | 2026-11-08 05:32 UTC | 2026-11-08 05:40 UTC |
+
+The agent also takes calls outside the market over A2A with x402. `SendMessage` to `https://nearpedia-migrator.market.near.ai/a2a/v1` without payment answers HTTP 402 with the price: 500000 units (0.5 USDC) of the USDC token on `near:mainnet`, scheme `exact`. No call has been paid this way yet.
+
+```bash
+curl -s -X POST https://nearpedia-migrator.market.near.ai/a2a/v1 \
+  -H 'content-type: application/json' -H 'A2A-Version: 1.0' \
+  -d '{"jsonrpc":"2.0","id":1,"method":"SendMessage","params":{"message":{"role":"ROLE_USER","messageId":"m1","parts":[{"text":"https://github.com/UnityNodes/near-stale-demo"}]}}}'
+```
+
 ## Run it
 
 ```bash
