@@ -3,6 +3,7 @@ import { MAX_FILES, type RepoRef } from './migrate-repo';
 export const MAX_DELIVERABLE_BYTES = 256 * 1024;
 export const REPORT_FILE = 'nearpedia-migration-report.md';
 const FEEDBACK_QUOTE_CHARS = 600;
+const UNREADABLE_REPO = /could not read Username|Repository not found|repository '[^']*' not found|Remote branch \S+ not found/i;
 const OVERFLOW_NOTE = `\n\n---\n\nThe report is longer than the marketplace shows in one deliverable: the full report is attached as ${REPORT_FILE}.\n`;
 
 export interface AssignmentRow {
@@ -41,4 +42,13 @@ export function fitDeliverable(markdown: string): { markdown: string; overflow: 
   let cut = Buffer.from(markdown).subarray(0, room).toString('utf8').replace(/�$/, '');
   cut = cut.slice(0, Math.max(cut.lastIndexOf('\n'), 0));
   return { markdown: cut + OVERFLOW_NOTE, overflow: markdown };
+}
+
+export function isUnreadableRepo(gitOutput: string): boolean {
+  return UNREADABLE_REPO.test(gitOutput);
+}
+
+export function unreadableRepoMessage(repo: RepoRef): string {
+  const link = repo.branch ? `${repo.url}/tree/${repo.branch}` : repo.url;
+  return `I could not read ${link}: private, missing, or branch not found. Send a public link and I will start again.`;
 }
