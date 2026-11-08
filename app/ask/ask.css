@@ -212,6 +212,8 @@ a.ak-card:hover { border-color: var(--accent-line); }
   display: block; width: 100%; resize: vertical; border: 0; outline: 0; background: transparent; color: var(--fg);
   font-family: var(--mono); font-size: 13px; line-height: 1.55; padding: 12px 14px; min-height: 120px; max-height: 32vh;
 }
+.ak-codebox-foot { margin: 0; padding: 8px 14px; border-top: 1px solid var(--rule); font-size: 12.5px; color: var(--fg-mute); }
+.ak-codebox-foot a, .ak-hint a { color: var(--accent-text); text-decoration: underline; text-underline-offset: 2px; }
 
 @media (max-width: 900px) {
   .ak-side {
