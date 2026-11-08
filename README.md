@@ -194,7 +194,7 @@ rm -f data/nearpedia.db    # the seed only fills a new database
 GITHUB_TOKEN=<token> npm run sync:near
 ```
 
-The same curls against `https://near-pedia.xyz` instead of `http://127.0.0.1:3131` answer from the live index. `npm test` runs 963 tests without network or keys; [`docs/TESTING.md`](docs/TESTING.md) says what each part checks.
+The same curls against `https://near-pedia.xyz` instead of `http://127.0.0.1:3131` answer from the live index. `npm test` runs 1002 tests without network or keys; [`docs/TESTING.md`](docs/TESTING.md) says what each part checks.
 
 **You need**
 
