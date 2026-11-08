@@ -15,6 +15,7 @@
 
 import { SITE } from './site.config';
 import { ASK_QUOTA_TEXT } from './ask-quota';
+import { VERSION } from './version';
 
 const COMMON_400 = {
   description: 'Bad request - invalid path / query param',
@@ -29,7 +30,7 @@ export const OPENAPI_SPEC = {
   openapi: '3.1.0',
   info: {
     title: `${SITE.name} REST API`,
-    version: '1.0.0',
+    version: VERSION,
     summary: 'NEAR knowledge base - machine-readable access',
     description:
       `Public, unauthenticated REST API over the ${SITE.name} corpus: ` +

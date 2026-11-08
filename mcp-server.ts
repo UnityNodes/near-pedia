@@ -16,6 +16,7 @@ import { fileURLToPath } from 'url';
 import { execFileSync } from 'node:child_process';
 import rateLimit from 'express-rate-limit';
 import { askLimiters, limiter } from './lib/express-limits.js';
+import { VERSION } from './lib/version.js';
 import { unifiedSearch } from './lib/search.js';
 import { aggregateCspGroups, type CspViolationRow } from './lib/csp-aggregate.js';
 import { fenceUntrusted, fenceUntrustedInline, fenceUntrustedRun, UNTRUSTED_INLINE_LEGEND } from './lib/untrusted-fence.js';
@@ -244,7 +245,7 @@ function resolveRepoAlias(pkg: string): string {
 function createServer(): McpServer {
 const sdk = new McpServer({
   name: 'nearpedia',
-  version: '1.0.0',
+  version: VERSION,
   description: 'NEARpedia: what NEAR looks like today, for agents writing NEAR code. Check code and packages against deprecations and breaking changes, explain errors, read standards, docs and live protocol and contract state, and follow the radar, governance, incidents and ecosystem, every answer with a source and a date.',
 });
 const server = registrarFor(sdk, toolFilter());
@@ -3096,7 +3097,7 @@ app.get('/api/v1', (_req, res) => {
 });
 
 app.get(['/health', '/api/v1/health'], (_req, res) => {
-  res.json({ status:'ok', service:'nearpedia-mcp', version:'1.7.0', commit: MCP_COMMIT || null, tools: MCP_TOOLS_COUNT, endpoint:`${SITE.url}/mcp`, api:`${SITE.url}/api/v1` });
+  res.json({ status:'ok', service:'nearpedia-mcp', version: VERSION, commit: MCP_COMMIT || null, tools: MCP_TOOLS_COUNT, endpoint:`${SITE.url}/mcp`, api:`${SITE.url}/api/v1` });
 });
 
 // Final error handler - keeps the JSON contract on uncaught route errors
