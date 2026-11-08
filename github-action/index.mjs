@@ -1,5 +1,5 @@
 import { appendFileSync, readFileSync } from 'node:fs';
-import { MARKER, addedLines, annotation, clip, isChecked, renderComment, shouldFail } from './lib.mjs';
+import { MARKER, addedLines, annotation, clip, githubError, isChecked, pullRequestOf, renderComment, shouldFail } from './lib.mjs';
 
 const input = (name, fallback = '') => (process.env[`INPUT_${name.toUpperCase().replace(/ /g, '_')}`] ?? fallback).trim() || fallback;
 
@@ -18,7 +18,17 @@ async function gh(path, init = {}) {
     ...init,
     headers: { Accept: 'application/vnd.github+json', ...(token ? { Authorization: `Bearer ${token}` } : {}), 'X-GitHub-Api-Version': '2022-11-28', ...(init.headers ?? {}) },
   });
-  if (!res.ok) throw new Error(`GitHub ${init.method ?? 'GET'} ${path}: ${res.status} ${(await res.text()).slice(0, 200)}`);
+  if (!res.ok) {
+    throw new Error(githubError({
+      status: res.status,
+      path,
+      method: init.method ?? 'GET',
+      body: await res.text(),
+      remaining: res.headers.get('x-ratelimit-remaining'),
+      reset: res.headers.get('x-ratelimit-reset'),
+      hasToken: Boolean(token),
+    }));
+  }
   return res;
 }
 
@@ -57,7 +67,7 @@ async function upsertComment(repo, number, body) {
 
 async function main() {
   const event = JSON.parse(readFileSync(process.env.GITHUB_EVENT_PATH, 'utf8'));
-  const pr = event.pull_request;
+  const pr = pullRequestOf(event);
   if (!pr) {
     console.log('NEARpedia check runs on pull_request events; nothing to do here.');
     return;

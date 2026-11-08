@@ -41,6 +41,16 @@ Demo video, 81 seconds: [youtu.be/L1mbTEWWraE](https://youtu.be/L1mbTEWWraE). Su
 
 The deprecation engine is fed by six signals: archived repositories, "deprecated / do not use" in a README, npm and crates.io deprecation or yank flags, removals in release notes, the docs' own deprecation markers and deleted pages, and long-dormant packages with a live successor. Weak signals are reported as "possibly deprecated". The radar keeps only what is true now: every alert ends when its subject resolves.
 
+### NEAR's role
+
+NEAR is the data and part of the runtime, not a logo:
+
+- The content is NEAR's own: docs.near.org, the GitHub orgs of NEAR, npm and crates.io packages of NEAR, gov.near.org and NEAR Catalog. Without it there is nothing to check code against.
+- NEAR RPC (FastNEAR, then NEAR's own endpoint) gives the protocol version, the validator vote, contract methods and the House of Stake proposals (view calls on `vote.dao` and `venear.dao`). Without it `get_protocol_status`, `get_validators`, `get_contract_info` and the proposal readers serve their last snapshot, marked stale, and `check_code` cannot say whether `DelegateV2`'s removal is live on a network.
+- NEAR AI Cloud runs `/ask` (a model in a TEE whose attestation is verified before an answer is shown) and the embeddings and reranker behind `semantic_search`. Without it `/ask` answers 503 and `semantic_search` matches words only.
+- NEAR mainnet holds one hash of the database a day in `contracts/db-anchor`, an account with no keys. Without it nobody outside this server can check that a copy of the index is the one recorded on a given date.
+- NEAR Agent Market sells the migrator agent (`scripts/agent-market-worker.ts`); without it that agent has no buyers' channel.
+
 ## Three ways in
 
 <p align="center">
@@ -63,10 +73,17 @@ The deprecation engine is fed by six signals: archived repositories, "deprecated
 claude mcp add --transport http nearpedia https://near-pedia.xyz/mcp
 ```
 
-Or, in Claude Code, the plugin: the same server plus a skill that checks NEAR code before and after writing it.
+Or, in Claude Code, the plugin: the same server plus a skill that checks NEAR code before and after writing it. From a shell:
+
+```bash
+claude plugin install nearpedia --marketplace UnityNodes/near-pedia
+```
+
+Or inside a Claude Code session:
 
 ```
-/plugin install nearpedia --marketplace UnityNodes/near-pedia
+/plugin marketplace add UnityNodes/near-pedia
+/plugin install nearpedia@nearpedia
 ```
 
 Then ask Claude Code to write a NEAR contract in JavaScript with meta-transactions and to check it with the nearpedia tools: `check_code` names near-sdk-js and `DelegateV2` with their replacements.
@@ -91,9 +108,11 @@ Cursor, in `~/.cursor/mcp.json` or `.cursor/mcp.json`:
 }
 ```
 
-Claude.ai and ChatGPT take the URL as a custom connector, with no install. Claude Desktop, Cursor, VS Code, Windsurf, Cline, Continue, Zed and JetBrains each name the fields differently; [near-pedia.xyz/for-ai](https://near-pedia.xyz/for-ai) has the exact block for each. The public endpoint allows 300 tool calls per 15 minutes per client.
+Claude.ai and ChatGPT take the URL as a custom connector, with no install. Claude Desktop, Cursor, VS Code, Windsurf, Cline, Continue, Zed and JetBrains each name the fields differently; [near-pedia.xyz/for-ai](https://near-pedia.xyz/for-ai) has the exact block for each.
 
 </details>
+
+Rate limits, per address, from `mcp-server.ts`: `/mcp` allows 300 tool calls per 15 minutes (`initialize`, `tools/list` and notifications do not count). Every `/api/v1/*` route shares 120 requests per 15 minutes; on top of that `/api/v1/search` allows 20 a minute and `/api/v1/ask` 30 an hour. A refusal is a 429 with a `Retry-After` header. `https://near-pedia.xyz/api/v1/health` answers whether the server is up.
 
 ## Check every pull request
 
@@ -136,14 +155,13 @@ curl -s https://near-pedia.xyz/api/v1/radar | head -c 600
 
 ## Run it yourself
 
-The judge path, from a clean clone:
+The judge path, from a clean clone. It needs no key and, after `npm ci`, no network:
 
 ```bash
 git clone https://github.com/UnityNodes/near-pedia
 cd near-pedia
 npm ci
-npm run db:init
-npm run sync:near          # every source is read live, about 25 minutes
+npm run db:seed            # a local database from scripts/fixtures/near-seed.json, under a second
 npx tsx mcp-server.ts      # MCP and REST on :3131, leave it running
 ```
 
@@ -153,20 +171,34 @@ In another terminal:
 curl -s -X POST http://127.0.0.1:3131/api/v1/check-code -H 'Content-Type: application/json' \
   -d '{"filename":"contract.ts","code":"import { near } from \"near-sdk-js\";\nconst a = { DelegateV2: signed };"}'
 curl -s 'http://127.0.0.1:3131/api/v1/protocol?network=mainnet' | head -c 600
-curl -s -X POST http://127.0.0.1:3131/api/v1/explain-error -H 'Content-Type: application/json' \
-  -d '{"error_text":"wasm execution failed with error: MethodResolveError(MethodNotFound)"}'
-curl -s http://127.0.0.1:3131/api/v1/contracts/intents.near | head -c 600
+curl -s http://127.0.0.1:3131/api/v1/deprecations/delegate-v2 | head -c 600
+curl -s http://127.0.0.1:3131/api/v1/health
 claude mcp add --transport http nearpedia http://127.0.0.1:3131/mcp
 ```
 
-No time for the 25-minute sync? The same curls against `https://near-pedia.xyz` instead of `http://127.0.0.1:3131` answer from the live index, and `npm test` needs neither. Without the sync, a local server answers `explain-error` and `contracts` (curated data and live RPC) but has an empty deprecation index and no protocol snapshot yet.
+You see two `check_code` findings (near-sdk-js on line 1, `DelegateV2` on line 2, each with its replacement and sources), the mainnet protocol version with the validator vote and the voting schedule from the nearcore 2.14.0 release notes, and the `DelegateV2` entry with the docs sentence it is built from. `npm run build && npm run start` serves the site on :3130 from the same database, `/protocol` and `/deprecations` included.
 
-You see two `check_code` findings (near-sdk-js on line 1, `DelegateV2` on line 2, each with its sources, dated where the source has a date), the mainnet upgrade with its voting dates and the share of stake that has voted, what the `MethodNotFound` error means and how to fix it, and the methods deployed on `intents.near` read live from RPC. `npm run build && npm run start` serves the site on :3130 from the same database. `npm test` runs 938 tests without network or keys; [`docs/TESTING.md`](docs/TESTING.md) says what each part checks.
+The seed is a copy of real rows, not invented ones: the docs pages and release notes the curated deprecations quote, the NEAR packages and repositories they name, and one protocol snapshot per network, taken from the live syncs by `scripts/build-seed-fixture.ts` on the date in the fixture's `recorded_at`. The deprecation index is built from them by the same engine the server runs, so 21 entries come out instead of about 136, and the protocol snapshot is reported as stale: it is the network as it was on that date. Two steps refresh parts of it from live sources with no key: `npx tsx scripts/sync-protocol.ts` (RPC, about 10 seconds) and `npx tsx scripts/sync-docs.ts` (docs.near.org, a few seconds). `explain-error` and `contracts/:account` answer from curated data and live RPC either way:
+
+```bash
+curl -s -X POST http://127.0.0.1:3131/api/v1/explain-error -H 'Content-Type: application/json' \
+  -d '{"error_text":"wasm execution failed with error: MethodResolveError(MethodNotFound)"}'
+curl -s http://127.0.0.1:3131/api/v1/contracts/intents.near | head -c 600
+```
+
+The full index reads every source live instead. It needs `GITHUB_TOKEN` (a token with no scopes is enough; without one GitHub allows 60 calls an hour, and the run stops before its first step and says so) and takes 45 to 60 minutes, most of it the YouTube step, plus about 50 minutes more with `NEARAI_API_KEY` for the embeddings:
+
+```bash
+rm -f data/nearpedia.db    # the seed only fills a new database
+GITHUB_TOKEN=<token> npm run sync:near
+```
+
+The same curls against `https://near-pedia.xyz` instead of `http://127.0.0.1:3131` answer from the live index. `npm test` runs 963 tests without network or keys; [`docs/TESTING.md`](docs/TESTING.md) says what each part checks.
 
 **You need**
 
 - Node 22 (`better-sqlite3` is built against its ABI, see `.nvmrc`)
-- No key for the steps above. `NEARAI_API_KEY` embeds the corpus for `semantic_search` (otherwise it matches words; embedding adds about 50 minutes) and turns on `/ask`; `GITHUB_TOKEN` adds the open issues and discussions of the NEAR repositories
+- No key for the seed path. `GITHUB_TOKEN` for `npm run sync:near`. `NEARAI_API_KEY` embeds the corpus for `semantic_search` (otherwise it matches words) and turns on `/ask`
 
 ## What is done
 
@@ -230,6 +262,28 @@ tests/          Vitest
 ```
 
 </details>
+
+## Who pays, what it costs
+
+The MCP endpoint, the REST API and the site are free and need no key; the team pays for what runs them:
+
+- One server, shared with the team's other sites, runs both processes, the database and the sync schedule. There is no per-request cost.
+- The domain `near-pedia.xyz`, bought on 2 November 2026, behind Cloudflare.
+- NEAR AI Cloud credits for `/ask` (each answer is a model call, capped at 30 an hour per address and a daily total, 300 by default) and for embeddings (about $0.07 for the first index of 17,867 chunks; new items are embedded as they sync).
+- About 0.0023 NEAR a day of contract storage for the database hash (230 bytes a record, paid by the contract account). Its 0.19 NEAR spare lasts to about late January 2027; after that it needs a plain transfer, which needs no key.
+- `GITHUB_TOKEN` is a free token with no scopes.
+
+The migrator agent on NEAR Agent Market charges 0.5 USDC a job, paid by whoever hires it through the market's escrow.
+
+## Limits
+
+- `check_code` reads one file per call and only the names written in it. It does not read lockfiles or transitive dependencies, compile or run the code, or catch a behaviour change that has no name in the code (the gas rebate is caught only where `burnt_gas_reward` appears).
+- It knows NEAR only: the packages, repositories, RPC methods, protocol features and hosted services in the deprecation index. Code for other chains passes without findings.
+- An entry is only as current as the last sync: protocol state, releases, the forum and House of Stake every 15 minutes, docs and packages every 6 hours, repositories, READMEs, videos and the catalog once a day. A weak signal (a long-dormant package) is reported as "possibly deprecated", not as a fact.
+- It is not a security scanner or an audit; incidents come from DefiLlama's hacks dataset and are listed, not analysed.
+- `/ask` is told to answer only from the sources it retrieves from this index and to say what is missing when they do not cover a question; it is a model, so check the numbered sources it cites.
+- Not in: Potlock rounds (no working mainnet source on 2026-11-01), forum posts outside the governance, staking, developer, ecosystem and education categories, and closed GitHub issues.
+- The migrator's patch leaves a browser wallet sign-in and manifest changes to a person.
 
 ## What was built before the hackathon, and what during it
 

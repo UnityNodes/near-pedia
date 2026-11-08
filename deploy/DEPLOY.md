@@ -75,8 +75,8 @@ curl -fs --max-time 10 http://127.0.0.1:3131/health      >/dev/null 2>&1 || syst
 
 ## 7. Post-deploy check
 ```bash
-curl -s http://127.0.0.1:3130/api/health            # live counts, status ok (NOT /api/v1/health — that path 404s)
-curl -s http://127.0.0.1:3131/health                # MCP up
+curl -s http://127.0.0.1:3130/api/health            # live counts, status ok (Next)
+curl -s http://127.0.0.1:3131/health                # MCP up; public as https://near-pedia.xyz/api/v1/health
 curl -s https://near-pedia.xyz/api/v1/sources        # via Caddy
 ```
 

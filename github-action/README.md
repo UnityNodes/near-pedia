@@ -36,7 +36,7 @@ The action reads the pull request's changed files through the GitHub API with th
 
 ## Try it without a repository
 
-Run it against any public pull request, no token needed (for a private one, or past GitHub's 60 unauthenticated calls an hour, start the second line with `env INPUT_GITHUB-TOKEN=<token>`):
+Run it against any public pull request, no token needed (for a private one, or past GitHub's 60 unauthenticated calls an hour, start the second line with `env INPUT_GITHUB-TOKEN=<token>` and add `-H "Authorization: Bearer <token>"` to the curl). When the hour's 60 calls are used up, the run stops on the first 403 and says so, with the time the limit resets:
 
 ```bash
 echo "{\"pull_request\":$(curl -s https://api.github.com/repos/near-examples/coin-flip-examples/pulls/37)}" > /tmp/event.json

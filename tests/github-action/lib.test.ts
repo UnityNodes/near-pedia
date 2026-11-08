@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { MARKER, addedLines, annotation, clip, isChecked, renderComment, shouldFail } from '@/github-action/lib.mjs';
+import { MARKER, addedLines, annotation, clip, githubError, isChecked, pullRequestOf, renderComment, shouldFail } from '@/github-action/lib.mjs';
 
 const blob = (file: string, line: number) => `https://github.com/o/r/blob/abc/${file}#L${line}`;
 const delegate = {
@@ -82,5 +82,44 @@ describe('annotations and the exit code', () => {
     expect(shouldFail([{ ...oldVersion, isNew: true }], 'warning')).toBe(true);
     expect(shouldFail([{ ...oldVersion, isNew: true }], 'error')).toBe(false);
     expect(shouldFail([delegate], 'never')).toBe(false);
+  });
+});
+
+describe('githubError', () => {
+  it('names the unauthenticated rate limit and how to pass a token on a 403 with no calls left', () => {
+    const msg = githubError({ status: 403, path: '/repos/o/r/pulls/1/files', body: '{"message":"API rate limit exceeded for 1.2.3.4."}', remaining: '0', reset: '1794121304', hasToken: false });
+    expect(msg).toMatch(/60 calls an hour/);
+    expect(msg).toMatch(/INPUT_GITHUB-TOKEN/);
+    expect(msg).toMatch(/2026-11-0\dT\d\d:\d\d UTC/);
+  });
+
+  it('says the token is out of calls when one was given', () => {
+    const msg = githubError({ status: 403, path: '/x', body: '', remaining: '0', reset: null, hasToken: true });
+    expect(msg).toMatch(/token has no calls left/);
+    expect(msg).not.toMatch(/INPUT_GITHUB-TOKEN/);
+  });
+
+  it('keeps a plain 403 that is not the rate limit as a permission problem', () => {
+    const msg = githubError({ status: 403, path: '/x', body: '{"message":"Resource not accessible by integration"}', remaining: '4999', reset: null, hasToken: true });
+    expect(msg).toMatch(/permission/);
+    expect(msg).toContain('Resource not accessible by integration');
+  });
+
+  it('falls back to the status and the start of the body otherwise', () => {
+    expect(githubError({ status: 404, path: '/x', body: 'Not Found', remaining: null, reset: null, hasToken: false })).toBe('GitHub GET /x: 404 Not Found');
+  });
+});
+
+describe('pullRequestOf', () => {
+  it('returns the pull request of a normal event', () => {
+    expect(pullRequestOf({ pull_request: { number: 3, head: {} } })).toMatchObject({ number: 3 });
+  });
+
+  it('turns a dry-run event built from a rate-limited curl into a clear error', () => {
+    expect(() => pullRequestOf({ pull_request: { message: 'API rate limit exceeded for 1.2.3.4.' } })).toThrow(/rate limit.*curl/i);
+  });
+
+  it('returns null when the event has no pull request', () => {
+    expect(pullRequestOf({ push: {} })).toBeNull();
   });
 });

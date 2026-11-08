@@ -20,6 +20,7 @@
     "sync:github-items": "tsx scripts/sync-github-items.ts",
     "sync:blog": "tsx scripts/sync-blog.ts",
     "db:init": "tsx scripts/init-db.ts",
+    "db:seed": "tsx scripts/seed-db.ts",
     "audit:forum-spam": "tsx scripts/audit-forum-spam.ts",
     "embed": "tsx scripts/build-embeddings.ts",
     "sync:discussions": "tsx scripts/sync-github-discussions.ts",
