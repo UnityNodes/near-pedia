@@ -15,6 +15,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { execFileSync } from 'node:child_process';
 import rateLimit from 'express-rate-limit';
+import { askLimiters, limiter } from './lib/express-limits.js';
 import { unifiedSearch } from './lib/search.js';
 import { aggregateCspGroups, type CspViolationRow } from './lib/csp-aggregate.js';
 import { fenceUntrusted, fenceUntrustedInline, fenceUntrustedRun, UNTRUSTED_INLINE_LEGEND } from './lib/untrusted-fence.js';
@@ -1875,16 +1876,6 @@ app.use('/mcp', (req, res, next) => {
 app.use(express.json());
 
 // ── Rate limiting ─────────────────────────────────────────────────────────────
-const rateLimitResponse = (max: number, windowMin: number) => ({
-  statusCode: 429,
-  message: {
-    error: 'Too many requests',
-    limit: max,
-    window: `${windowMin} minutes`,
-    retry_after: 'See Retry-After header',
-  },
-});
-
 // MCP: 300 tool calls / 15 min per IP. Only tools/call counts: an agent that
 // walks the 21 tools sends initialize, tools/list and notifications too, and at
 // 60 messages a reviewer exercising every tool was locked out halfway. A refusal
@@ -1909,28 +1900,15 @@ const mcpLimiter = rateLimit({
 });
 
 // REST API: 120 req / 15 min per IP - a little looser, for scripts
-const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 120,
-  standardHeaders: true,
-  legacyHeaders: false,
-  ...rateLimitResponse(120, 15),
-});
+const apiLimiter = limiter(120, 15 * 60 * 1000);
 
 // Search is limited separately: it is the heaviest query
-const searchLimiter = rateLimit({
-  windowMs: 1 * 60 * 1000,
-  max: 20,
-  standardHeaders: true,
-  legacyHeaders: false,
-  ...rateLimitResponse(20, 1),
-});
+const searchLimiter = limiter(20, 60 * 1000);
 
 app.use('/mcp', mcpLimiter);
-app.use('/api/v1/search', searchLimiter);
-// /ask spends NEAR AI credits on every call: 30 an hour per address.
-app.use('/api/v1/ask', rateLimit({ windowMs: 60 * 60 * 1000, max: 30, standardHeaders: true, legacyHeaders: false, ...rateLimitResponse(30, 60) }));
 app.use('/api/v1', apiLimiter);
+app.use('/api/v1/search', searchLimiter);
+app.use('/api/v1/ask', ...askLimiters());
 
 // ── MCP usage logging ────────────────────────────────────────────────────────
 // The main handle is readonly, so logging needs its own writable connection.

@@ -13,7 +13,7 @@ export interface Notifier {
   restore(): boolean;
 }
 
-export function notifier(env: NodeJS.ProcessEnv = process.env, pid = process.pid, run: Runner = spawnSync): Notifier {
+export function notifier(env: Record<string, string | undefined> = process.env, pid = process.pid, run: Runner = spawnSync): Notifier {
   const enabled = Boolean(env.NOTIFY_SOCKET);
   const watchdogUsec = Number(env.WATCHDOG_USEC) || 0;
   const send = (state: Record<string, string | number>): boolean => {

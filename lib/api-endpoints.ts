@@ -8,6 +8,7 @@
  * without going through the Next.js build - the same reason every
  * scripts/*.ts file uses relative imports instead of `@/`.
  */
+import { ASK_QUOTA_TEXT } from './ask-quota';
 export const ENDPOINTS = [
   { path: '/api/v1/proposals', desc: 'House of Stake proposals from vote.dao with vote standing and forum thread', params: 'status, q, limit' },
   { path: '/api/v1/proposals/:ref', desc: 'One House of Stake proposal with its text', params: 'on-chain id or HSP number, e.g. "27" or "HSP-027"' },
@@ -25,7 +26,7 @@ export const ENDPOINTS = [
   { path: '/api/v1/contracts/:account', desc: 'What is deployed on an account, live from RPC: methods, standards, NEP-330 source metadata, token metadata', params: 'account id; network (mainnet|testnet)' },
   { path: '/api/v1/anchors', desc: 'Daily database hashes, each with where it is recorded on NEAR (contract, transaction, block)', params: 'limit' },
   { path: '/api/v1/anchors/:date', desc: 'One day\'s database hash with its per-table manifest', params: 'date, YYYY-MM-DD' },
-  { path: 'POST /api/v1/ask', desc: 'Answer a NEAR question (optionally about one pasted file) through NEAR AI Cloud, from this index\'s sources, with a verified response signature and a link to NEAR AI\'s Verification Center', params: 'Body: { question: string (≤2000 chars), code?: string (≤20000 chars), filename?, history?: [{ question, answer }] (the last 3 turns, so a follow-up can refer to them) }. 30 an hour per address' },
+  { path: 'POST /api/v1/ask', desc: 'Answer a NEAR question (optionally about one pasted file) through NEAR AI Cloud, from this index\'s sources, with a verified response signature and a link to NEAR AI\'s Verification Center', params: `Body: { question: string (≤2000 chars), code?: string (≤20000 chars), filename?, history?: [{ question, answer }] (the last 3 turns, so a follow-up can refer to them) }. ${ASK_QUOTA_TEXT}` },
   { path: 'POST /api/v1/check-code', desc: 'Check one NEAR source file or manifest for removed, deprecated, changed or superseded APIs and outdated dependencies', params: 'Body: { code: string (≤100000 chars), filename?, language? (js|rust|cargo|package-json|json|toml|text) }' },
   { path: '/api/v1/deprecations', desc: 'Deprecated, removed and changed NEAR packages, APIs and services, each with evidence', params: 'q, kind, status, limit, offset' },
   { path: '/api/v1/deprecations/:id', desc: 'One deprecation entry with every piece of evidence', params: 'entry id, e.g. "near-sdk-js"' },

@@ -36,7 +36,7 @@ function harness(cap: number, script: string) {
   if (!fn) throw new Error('exec_script not found in sync-tick.sh');
   const prog = `BUCKET=medium; CAP=${cap}; KILL_GRACE=1; stamp() { date -Iseconds; }\n${fn}\nexec_script ${script} ${script}`;
   const started = Date.now();
-  const r = spawnSync('bash', ['-c', prog], { env: { PATH: `${bin}:/usr/bin:/bin` }, encoding: 'utf8', timeout: 20_000 });
+  const r = spawnSync('bash', ['-c', prog], { env: { PATH: `${bin}:/usr/bin:/bin`, NODE_ENV: 'test' as const }, encoding: 'utf8', timeout: 20_000 });
   const elapsed = Date.now() - started;
   const alert = fs.existsSync(calls) ? fs.readFileSync(calls, 'utf8').split('\n') : null;
   fs.rmSync(dir, { recursive: true, force: true });

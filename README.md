@@ -113,7 +113,7 @@ Claude.ai and ChatGPT take the URL as a custom connector, with no install. Claud
 
 </details>
 
-Rate limits, per address, from `mcp-server.ts`: `/mcp` allows 300 tool calls per 15 minutes (`initialize`, `tools/list` and notifications do not count). Every `/api/v1/*` route shares 120 requests per 15 minutes; on top of that `/api/v1/search` allows 20 a minute and `/api/v1/ask` 30 an hour. A refusal is a 429 with a `Retry-After` header. `https://near-pedia.xyz/api/v1/health` answers whether the server is up.
+Rate limits, per address, from `mcp-server.ts`: `/mcp` allows 300 tool calls per 15 minutes (`initialize`, `tools/list` and notifications do not count). Every `/api/v1/*` route shares 120 requests per 15 minutes; on top of that `/api/v1/search` allows 20 a minute and `/api/v1/ask` 30 an hour and 40 a day. The `RateLimit-*` headers on a route report its own tightest limit (on `/ask`, whichever of the hour and the day has fewer requests left). A refusal is a 429 with a `Retry-After` header. `https://near-pedia.xyz/api/v1/health` answers whether the server is up.
 
 ## Check every pull request
 
@@ -270,7 +270,7 @@ The MCP endpoint, the REST API and the site are free and need no key; the team p
 
 - One server, shared with the team's other sites, runs both processes, the database and the sync schedule. There is no per-request cost.
 - The domain `near-pedia.xyz`, bought on 2 November 2026, behind Cloudflare.
-- NEAR AI Cloud credits for `/ask` (each answer is a model call, capped at 30 an hour per address and a daily total, 300 by default) and for embeddings (about $0.07 for the first index of 17,867 chunks; new items are embedded as they sync).
+- NEAR AI Cloud credits for `/ask` (each answer is a model call, capped at 30 an hour and 40 a day per address and a daily total, 300 by default) and for embeddings (about $0.07 for the first index of 17,867 chunks; new items are embedded as they sync).
 - About 0.0023 NEAR a day of contract storage for the database hash (230 bytes a record, paid by the contract account). Its 0.19 NEAR spare lasts to about late January 2027; after that it needs a plain transfer, which needs no key.
 - `GITHUB_TOKEN` is a free token with no scopes.
 
