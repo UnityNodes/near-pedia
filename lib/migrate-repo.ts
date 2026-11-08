@@ -66,6 +66,7 @@ export function docsFor(db: Database.Database, findings: readonly Finding[]): Ar
 }
 const MANIFEST = /(^|\/)(package\.json|Cargo\.toml)$/;
 const CLONE_TIMEOUT_MS = 120_000;
+export const LONGEST_QUIET_STEP_MS = Math.max(CLONE_TIMEOUT_MS, TRANSIENT_RETRY_MS + REWRITE_TIMEOUT_MS);
 
 export interface RepoRef { owner: string; repo: string; branch: string | null; url: string }
 

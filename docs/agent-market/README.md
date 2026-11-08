@@ -60,7 +60,7 @@ npx tsx scripts/agent-market-worker.ts --dry-run https://github.com/<owner>/<rep
 AGENT_API_TOKEN=aat_... npx tsx scripts/agent-market-worker.ts
 ```
 
-It needs `NEARAI_API_KEY` and the NEARpedia database. On the server it runs as `deploy/nearpedia-agent.service`. Each delivery writes an `agent-market` row to `sync_log`.
+It needs `NEARAI_API_KEY` and the NEARpedia database. On the server it runs as `deploy/nearpedia-agent.service`, a `Type=notify` unit with `WatchdogSec=180`: the worker sends `WATCHDOG=1` after every poll and on each step of a job (raising the limit for the job's longest quiet step), so a worker that stops polling is restarted. Every market call has a 30 s timeout. Outside systemd (`NOTIFY_SOCKET` unset) it skips all of that and just polls. Each delivery writes an `agent-market` row to `sync_log`.
 
 ## Listing
 
