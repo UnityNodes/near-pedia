@@ -23,6 +23,11 @@ BUCKET="${1:-}"
 REPO="/srv/nearpedia"
 [[ -z "$BUCKET" ]] && { echo "usage: $0 {fast|medium|slow|daily|weekly|all}" >&2; exit 2; }
 
+declare -A BUCKET_CAP=([fast]=600 [medium]=600 [slow]=1800 [daily]=7200 [weekly]=7200 [all]=7200)
+KILL_GRACE=30
+CAP="${BUCKET_CAP[$BUCKET]:-}"
+[[ -z "$CAP" ]] && { echo "usage: $0 {fast|medium|slow|daily|weekly|all}" >&2; exit 2; }
+
 # Opening the lock can fail for a reason that is NOT "a run is in progress" (a
 # permission error, a missing /run), and reporting that as "skip" and exiting 0 is
 # a sync that did nothing while reporting the one state in which doing nothing is
@@ -52,9 +57,12 @@ exec_script() {
   local rc=0 err started
   err="$(mktemp)"
   started="$(date -u +%Y-%m-%dT%H:%M:%S.000Z)"
-  npx tsx "scripts/$s.ts" "$@" 2>"$err" || rc=$?
+  timeout -k "$KILL_GRACE" "$CAP" npx tsx "scripts/$s.ts" "$@" 2>"$err" || rc=$?
   cat "$err" >&2
-  if (( rc == 0 )); then
+  if (( rc == 124 || rc == 137 )); then
+    echo "[$BUCKET $(stamp)] $label TIMED OUT after ${CAP}s (exit $rc), killed" >&2
+    timeout 60 npx tsx scripts/alert-crash.ts "$s" "$rc" "$started" "timed out after ${CAP}s in the $BUCKET bucket; $(head -c 600 "$err")" || true
+  elif (( rc == 0 )); then
     echo "[$BUCKET $(stamp)] $label ok"
   else
     echo "[$BUCKET $(stamp)] $label FAILED (exit $rc)" >&2
