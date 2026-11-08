@@ -41,6 +41,16 @@ Demo video, 81 seconds: [youtu.be/L1mbTEWWraE](https://youtu.be/L1mbTEWWraE). Su
 
 The deprecation engine is fed by six signals: archived repositories, "deprecated / do not use" in a README, npm and crates.io deprecation or yank flags, removals in release notes, the docs' own deprecation markers and deleted pages, and long-dormant packages with a live successor. Weak signals are reported as "possibly deprecated". The radar keeps only what is true now: every alert ends when its subject resolves.
 
+### NEAR's role
+
+NEAR is the data and part of the runtime, not a logo:
+
+- The content is NEAR's own: docs.near.org, the GitHub orgs of NEAR, npm and crates.io packages of NEAR, gov.near.org and NEAR Catalog. Without it there is nothing to check code against.
+- NEAR RPC (FastNEAR, then NEAR's own endpoint) gives the protocol version, the validator vote, contract methods and the House of Stake proposals (view calls on `vote.dao` and `venear.dao`). Without it `get_protocol_status`, `get_validators`, `get_contract_info` and the proposal readers serve their last snapshot, marked stale, and `check_code` cannot say whether `DelegateV2`'s removal is live on a network.
+- NEAR AI Cloud runs `/ask` (a model in a TEE whose attestation is verified before an answer is shown) and the embeddings and reranker behind `semantic_search`. Without it `/ask` answers 503 and `semantic_search` matches words only.
+- NEAR mainnet holds one hash of the database a day in `contracts/db-anchor`, an account with no keys. Without it nobody outside this server can check that a copy of the index is the one recorded on a given date.
+- NEAR Agent Market sells the migrator agent (`scripts/agent-market-worker.ts`); without it that agent has no buyers' channel.
+
 ## Three ways in
 
 <p align="center">
@@ -242,6 +252,28 @@ tests/          Vitest
 ```
 
 </details>
+
+## Who pays, what it costs
+
+The MCP endpoint, the REST API and the site are free and need no key; the team pays for what runs them:
+
+- One server, shared with the team's other sites, runs both processes, the database and the sync schedule. There is no per-request cost.
+- The domain `near-pedia.xyz`, bought on 2 November 2026, behind Cloudflare.
+- NEAR AI Cloud credits for `/ask` (each answer is a model call, capped at 30 an hour per address and a daily total, 300 by default) and for embeddings (about $0.07 for the first index of 17,867 chunks; new items are embedded as they sync).
+- About 0.0023 NEAR a day of contract storage for the database hash (230 bytes a record, paid by the contract account). Its 0.19 NEAR spare lasts to about late January 2027; after that it needs a plain transfer, which needs no key.
+- `GITHUB_TOKEN` is a free token with no scopes.
+
+The migrator agent on NEAR Agent Market charges 0.5 USDC a job, paid by whoever hires it through the market's escrow.
+
+## Limits
+
+- `check_code` reads one file per call and only the names written in it. It does not read lockfiles or transitive dependencies, compile or run the code, or catch a behaviour change that has no name in the code (the gas rebate is caught only where `burnt_gas_reward` appears).
+- It knows NEAR only: the packages, repositories, RPC methods, protocol features and hosted services in the deprecation index. Code for other chains passes without findings.
+- An entry is only as current as the last sync: protocol state, releases, the forum and House of Stake every 15 minutes, docs and packages every 6 hours, repositories, READMEs, videos and the catalog once a day. A weak signal (a long-dormant package) is reported as "possibly deprecated", not as a fact.
+- It is not a security scanner or an audit; incidents come from DefiLlama's hacks dataset and are listed, not analysed.
+- `/ask` is told to answer only from the sources it retrieves from this index and to say what is missing when they do not cover a question; it is a model, so check the numbered sources it cites.
+- Not in: Potlock rounds (no working mainnet source on 2026-11-01), forum posts outside the governance, staking, developer, ecosystem and education categories, and closed GitHub issues.
+- The migrator's patch leaves a browser wallet sign-in and manifest changes to a person.
 
 ## What was built before the hackathon, and what during it
 
