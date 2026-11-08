@@ -102,3 +102,27 @@ export function annotation(f) {
   const prop = (s) => esc(s).replace(/:/g, '%3A').replace(/,/g, '%2C');
   return `::${level} file=${prop(f.file)},line=${f.line},title=${prop(`NEARpedia: ${f.matched}`)}::${esc(f.message)}`;
 }
+
+function resetAt(reset) {
+  const at = Number(reset);
+  return Number.isFinite(at) && at > 0 ? ` (it resets at ${new Date(at * 1000).toISOString().slice(0, 16)} UTC)` : '';
+}
+
+export function githubError({ status, path, method = 'GET', body = '', remaining, reset, hasToken = false }) {
+  const text = String(body);
+  const rateLimited = (status === 403 || status === 429) && (remaining === '0' || /rate limit/i.test(text));
+  if (rateLimited && hasToken) return `GitHub ${method} ${path}: ${status}, the token has no calls left this hour${resetAt(reset)}.`;
+  if (rateLimited) return `GitHub ${method} ${path}: ${status}, the unauthenticated rate limit is used up: GitHub allows 60 calls an hour per address without a token${resetAt(reset)}. Run again with env INPUT_GITHUB-TOKEN=<token> (a token with no scopes is enough for a public repository), or wait for the reset.`;
+  if (status === 403) return `GitHub ${method} ${path}: 403, the token has no permission for this: ${text.slice(0, 200)}`;
+  return `GitHub ${method} ${path}: ${status} ${text.slice(0, 200)}`;
+}
+
+export function pullRequestOf(event) {
+  const pr = event?.pull_request;
+  if (!pr) return null;
+  if (typeof pr.number !== 'number') {
+    const why = typeof pr.message === 'string' ? pr.message : 'it has no number';
+    throw new Error(`the event's pull_request is not a pull request (${why}). In a dry run this is the curl that built the event hitting GitHub's rate limit: wait for the reset, or add -H "Authorization: Bearer <token>" to that curl.`);
+  }
+  return pr;
+}

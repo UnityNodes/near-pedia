@@ -3117,7 +3117,7 @@ app.get('/api/v1', (_req, res) => {
   });
 });
 
-app.get('/health', (_req, res) => {
+app.get(['/health', '/api/v1/health'], (_req, res) => {
   res.json({ status:'ok', service:'nearpedia-mcp', version:'1.7.0', commit: MCP_COMMIT || null, tools: MCP_TOOLS_COUNT, endpoint:`${SITE.url}/mcp`, api:`${SITE.url}/api/v1` });
 });
 

@@ -73,10 +73,17 @@ NEAR is the data and part of the runtime, not a logo:
 claude mcp add --transport http nearpedia https://near-pedia.xyz/mcp
 ```
 
-Or, in Claude Code, the plugin: the same server plus a skill that checks NEAR code before and after writing it.
+Or, in Claude Code, the plugin: the same server plus a skill that checks NEAR code before and after writing it. From a shell:
+
+```bash
+claude plugin install nearpedia --marketplace UnityNodes/near-pedia
+```
+
+Or inside a Claude Code session:
 
 ```
-/plugin install nearpedia --marketplace UnityNodes/near-pedia
+/plugin marketplace add UnityNodes/near-pedia
+/plugin install nearpedia@nearpedia
 ```
 
 Then ask Claude Code to write a NEAR contract in JavaScript with meta-transactions and to check it with the nearpedia tools: `check_code` names near-sdk-js and `DelegateV2` with their replacements.
@@ -101,9 +108,11 @@ Cursor, in `~/.cursor/mcp.json` or `.cursor/mcp.json`:
 }
 ```
 
-Claude.ai and ChatGPT take the URL as a custom connector, with no install. Claude Desktop, Cursor, VS Code, Windsurf, Cline, Continue, Zed and JetBrains each name the fields differently; [near-pedia.xyz/for-ai](https://near-pedia.xyz/for-ai) has the exact block for each. The public endpoint allows 300 tool calls per 15 minutes per client.
+Claude.ai and ChatGPT take the URL as a custom connector, with no install. Claude Desktop, Cursor, VS Code, Windsurf, Cline, Continue, Zed and JetBrains each name the fields differently; [near-pedia.xyz/for-ai](https://near-pedia.xyz/for-ai) has the exact block for each.
 
 </details>
+
+Rate limits, per address, from `mcp-server.ts`: `/mcp` allows 300 tool calls per 15 minutes (`initialize`, `tools/list` and notifications do not count). Every `/api/v1/*` route shares 120 requests per 15 minutes; on top of that `/api/v1/search` allows 20 a minute and `/api/v1/ask` 30 an hour. A refusal is a 429 with a `Retry-After` header. `https://near-pedia.xyz/api/v1/health` answers whether the server is up.
 
 ## Check every pull request
 
@@ -163,6 +172,7 @@ curl -s -X POST http://127.0.0.1:3131/api/v1/check-code -H 'Content-Type: applic
   -d '{"filename":"contract.ts","code":"import { near } from \"near-sdk-js\";\nconst a = { DelegateV2: signed };"}'
 curl -s 'http://127.0.0.1:3131/api/v1/protocol?network=mainnet' | head -c 600
 curl -s http://127.0.0.1:3131/api/v1/deprecations/delegate-v2 | head -c 600
+curl -s http://127.0.0.1:3131/api/v1/health
 claude mcp add --transport http nearpedia http://127.0.0.1:3131/mcp
 ```
 
@@ -183,7 +193,7 @@ rm -f data/nearpedia.db    # the seed only fills a new database
 GITHUB_TOKEN=<token> npm run sync:near
 ```
 
-The same curls against `https://near-pedia.xyz` instead of `http://127.0.0.1:3131` answer from the live index. `npm test` runs 938 tests without network or keys; [`docs/TESTING.md`](docs/TESTING.md) says what each part checks.
+The same curls against `https://near-pedia.xyz` instead of `http://127.0.0.1:3131` answer from the live index. `npm test` runs 963 tests without network or keys; [`docs/TESTING.md`](docs/TESTING.md) says what each part checks.
 
 **You need**
 
