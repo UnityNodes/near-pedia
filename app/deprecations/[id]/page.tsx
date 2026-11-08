@@ -7,6 +7,8 @@ import { pageMetadata } from '@/lib/seo';
 import { evidenceOf, getDeprecation, liveLineFor } from '@/lib/deprecations';
 import { PageShell, PgList } from '@/components/page-shell';
 import { STATUS_LABEL, STATUS_TONE } from '@/lib/deprecation-labels';
+import { signalLabel } from '../signal-labels';
+import { splitEffective } from '@/lib/effective-text';
 
 export const revalidate = 300;
 
@@ -38,16 +40,11 @@ export async function generateMetadata({ params }: Props) {
   });
 }
 
-const SIGNAL_LABEL: Record<string, string> = {
-  repo_archived: 'Repository archived', readme_notice: 'README notice', registry_deprecated: 'Registry deprecation flag',
-  registry_yanked: 'Yanked version', release_removal: 'Removed in a release', docs_marker: 'Marked in the docs',
-  docs_removed: 'Docs page removed', dormant: 'Dormant with a live successor', governance: 'Governance decision',
-};
-
 export default async function DeprecationPage({ params }: Props) {
   const r = load((await params).id);
   if (!r) notFound();
   const { d, evidence, live } = r;
+  const effective = splitEffective(d.effective);
   return (
     <PageShell
       href="/deprecations"
@@ -64,7 +61,7 @@ export default async function DeprecationPage({ params }: Props) {
               <div className="pg-row-top">
                 <span className="pg-tag" data-tone={STATUS_TONE[d.status]}>{STATUS_LABEL[d.status]}</span>
                 {d.since && <span className="pg-tag">since {d.since.slice(0, 10)}</span>}
-                {d.effective && <span className="pg-tag" data-tone="lime">effective {d.effective}</span>}
+                {effective && <span className="pg-tag" data-tone="lime">effective {effective.chip}</span>}
                 {d.stale && <span className="pg-tag" data-tone="mute">evidence stale</span>}
                 {d.contested && <span className="pg-tag" data-tone="info">contested</span>}
               </div>
@@ -74,7 +71,8 @@ export default async function DeprecationPage({ params }: Props) {
                   {d.replacement_url ? <a href={d.replacement_url} target="_blank" rel="noopener noreferrer">{d.replacement}</a> : d.replacement}
                 </div>
               )}
-              {live && <div className="pg-row-sub" style={{ overflowWrap: 'anywhere' }}>{live}</div>}
+              {effective?.note && <div className="pg-row-sub">{effective.note}</div>}
+              {live && <div className="pg-row-sub">{live}</div>}
             </div>
           </div>
         </section>
@@ -86,14 +84,14 @@ export default async function DeprecationPage({ params }: Props) {
               <a key={i} href={e.source_url} className="pg-row" target="_blank" rel="noopener noreferrer">
                 <div className="pg-row-main">
                   <div className="pg-row-top">
-                    <span className="pg-tag" data-tone={e.supports ? (e.strength === 'strong' ? 'bad' : 'info') : 'ok'}>{e.supports ? '' : 'Against: '}{SIGNAL_LABEL[e.signal] ?? e.signal}</span>
+                    <span className="pg-tag" data-tone={e.supports ? (e.strength === 'strong' ? 'bad' : 'info') : 'ok'}>{e.supports ? '' : 'Against: '}{signalLabel(e.signal)}</span>
                     <span className="pg-tag">{e.strength}</span>
                     {e.verified === true && <span className="pg-tag" data-tone="ok">confirmed in synced data</span>}
                     {e.verified === false && <span className="pg-tag" data-tone="bad">quote no longer at source</span>}
                     {e.checked && <span className="pg-tag">{e.expired ? `hand check of ${e.checked} expired` : `checked by hand ${e.checked}`}</span>}
                   </div>
                   {e.quote && <div className="pg-row-title" style={{ overflowWrap: 'anywhere' }}>&ldquo;{e.quote}&rdquo;</div>}
-                  <div className="pg-row-sub" style={{ overflowWrap: 'anywhere' }}>{e.source_url}<span className="pg-sr"> (opens in a new tab)</span></div>
+                  <div className="pg-row-sub">{e.source_url}<span className="pg-sr"> (opens in a new tab)</span></div>
                 </div>
                 <div className="pg-row-end">
                   {e.upstream_date && <span className="pg-row-date">{e.upstream_date.slice(0, 10)}</span>}
