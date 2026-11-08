@@ -19,6 +19,8 @@ export const SOURCE_META: Record<string, SourceMeta> = {
   github_repo:       { name: 'GitHub repositories',      href: null, script: 'sync-repos' },
   hos_proposal:      { name: 'House of Stake proposals', href: null, script: 'sync-hos' },
   incident:          { name: 'Security incidents',       href: null, script: 'sync-incidents' },
+  nep_standard:      { name: 'NEPs (NEAR standards)',    href: null, script: 'sync-neps' },
+  radar_item:        { name: 'Radar items',              href: '/radar', script: 'refresh-radar' },
 };
 
 export const BUCKET_CADENCE: Record<string, string> = {

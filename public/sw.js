@@ -3,7 +3,7 @@
    v2: cache invalidation after Cloudflare Email Obfuscation removal —
        stale shells were still injecting cdn-cgi/email-decode script.
    Bumping the version below invalidates all old caches on next load. */
-const VERSION = 'v6';
+const VERSION = 'v7';
 const RUNTIME = `nearpedia-runtime-${VERSION}`;
 const SHELL = `nearpedia-shell-${VERSION}`;
 
@@ -22,6 +22,7 @@ function isBypassed(url) {
   const p = url.pathname;
   return p.startsWith('/api/health')         // always fresh
       || p.startsWith('/api/metrics')        // private
+      || p.startsWith('/api/v1/')
       || p.startsWith('/api/csp-report')     // write-only, never a response worth keeping
       || p.startsWith('/_next/data')         // RSC payloads w/ revalidate
       || p.includes('/opengraph-image')      // dynamic OG generation

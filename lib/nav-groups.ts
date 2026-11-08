@@ -1,5 +1,5 @@
 import {
-  Activity, BookOpen, Boxes, Code2, Database, Gauge, MessageCircleQuestion,
+  Activity, BookOpen, Boxes, Code2, Database, FileCheck2, Gauge, MessageCircleQuestion,
   Landmark, MessagesSquare, PenLine, Plug, Radar, ShieldAlert, Tag,
   type LucideIcon,
 } from 'lucide-react';
@@ -27,6 +27,7 @@ export const NAV_GROUPS: NavGroup[] = [
     key: 'check',
     label: 'Check',
     items: [
+      { href: '/check', label: 'Check code', hint: 'Paste a file, see what NEAR removed in it', Icon: FileCheck2 },
       { href: '/deprecations', label: 'Deprecations', hint: 'What NEAR removed, deprecated or replaced', Icon: ShieldAlert },
       { href: '/ask', label: 'Ask', hint: 'Answered through NEAR AI Cloud, verified', Icon: MessageCircleQuestion },
     ],
