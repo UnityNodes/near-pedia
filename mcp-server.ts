@@ -59,6 +59,7 @@ import { RELEASE_PRODUCT_SPECS } from './lib/release-sources.js';
 import { compareVersions } from './lib/release-version.js';
 import { ACCOUNT_ID_RE, NoSuchAccountError, contractInfo, renderContract } from './lib/contract-info.js';
 import { BusyError, UnverifiedAnswerError, nearAiConfig, verifiedChat } from './lib/near-ai.js';
+import { refuseMcpGet } from './lib/mcp-get.js';
 import { getAnchor, latestAnchor, listAnchors } from './lib/anchors.js';
 import { chainRecord, rpcOf } from './lib/anchor-chain.js';
 import { PARTNERS, parseJson, catalogCategories, catalogSynced, findProjects, projectLine, resolveCategory, getIncident, getPartner, getProject, incidentsSynced, listIncidents, partnerDocsCount, partnerOfProject, renderIncident, renderPartner, renderProject, topByTvl } from './lib/ecosystem-read.js';
@@ -2179,7 +2180,7 @@ const handleMcp = async (req: express.Request, res: express.Response) => {
 };
 
 app.post('/mcp', handleMcp);
-app.get('/mcp', handleMcp);
+app.get('/mcp', refuseMcpGet);
 app.delete('/mcp', handleMcp);
 
 // ── CORS + cache headers for REST API ────────────────────────────────────────
