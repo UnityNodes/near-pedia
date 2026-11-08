@@ -196,6 +196,76 @@ describe('review fixes (check_code)', () => {
   });
 });
 
+describe('check_code on near-api-js 4 code that only calls connect()', () => {
+  beforeEach(() => { resetDb(); seedWorld(); });
+
+  const ids = (code: string, filename = 'a.ts') => checkCode(getDb(), code, { filename }).findings.map((f) => [f.line, f.entry?.id ?? null, f.matched]);
+
+  it('flags connect, Near and the WalletConnection entry when near-api-js is imported', () => {
+    const code = [
+      "import { connect, Near } from 'near-api-js';",
+      "const near = await connect({ networkId: 'testnet', nodeUrl: 'https://rpc.testnet.near.org' });",
+      "const account = await near.account('alice.testnet');",
+    ].join('\n');
+    const found = ids(code).filter(([, id]) => id === 'near-api-js-wallet-connection');
+    expect(found).toEqual([[1, 'near-api-js-wallet-connection', 'connect'], [2, 'near-api-js-wallet-connection', 'connect']]);
+    const f = checkCode(getDb(), code, { filename: 'a.ts' }).findings.find((x) => x.entry?.id === 'near-api-js-wallet-connection');
+    expect(f?.severity).toBe('error');
+  });
+
+  it('flags a namespace call on the near-api-js import', () => {
+    const code = "import * as nearAPI from 'near-api-js';\nconst near = await nearAPI.connect(config);\nconst n = new nearAPI.Near(config);";
+    expect(ids(code).filter(([, id]) => id === 'near-api-js-wallet-connection').map(([line]) => line)).toEqual([2, 3]);
+  });
+
+  it('does not flag the same names without the import', () => {
+    const code = "function connect() { return new Near(); }\nclass Near {}\nconst near = connect();";
+    expect(ids(code)).toEqual([]);
+  });
+
+  it('does not flag a connect() method on another object in modern near-api-js code', () => {
+    const code = "import { JsonRpcProvider } from 'near-api-js';\nimport { NearConnector } from '@hot-labs/near-connect';\nawait connector.connect();";
+    expect(ids(code).filter(([, id]) => id === 'near-api-js-wallet-connection')).toEqual([]);
+  });
+});
+
+describe('check_code on near-sdk 4 era Rust', () => {
+  beforeEach(() => { resetDb(); seedWorld(); });
+
+  const entries = (code: string) => checkCode(getDb(), code, { filename: 'lib.rs' }).findings.map((f) => [f.line, f.entry?.id ?? null, f.matched]);
+
+  it('flags the deprecated env calls, ValidAccountId, Balance and store::UnorderedMap', () => {
+    const code = [
+      'use near_sdk::json_types::ValidAccountId;',
+      'use near_sdk::{env, near_bindgen, Balance};',
+      'use near_sdk::store::UnorderedMap;',
+      'near_sdk::setup_alloc!();',
+      'pub fn height() -> u64 { env::block_index() }',
+      'pub fn hi() { env::log(b"hi"); }',
+      'pub fn price() -> Balance { 1 }',
+    ].join('\n');
+    expect(entries(code)).toEqual(expect.arrayContaining([
+      [1, 'near-sdk-valid-account-id', 'ValidAccountId'],
+      [2, 'near-sdk-5-balance', 'Balance'],
+      [3, 'near-sdk-5-store-unordered', 'store::UnorderedMap'],
+      [4, 'near-sdk-4-env-renames', 'setup_alloc'],
+      [5, 'near-sdk-4-env-renames', 'env::block_index'],
+      [6, 'near-sdk-4-env-renames', 'env::log'],
+      [7, 'near-sdk-5-balance', 'Balance'],
+    ]));
+  });
+
+  it('flags a full near_sdk path with no use line', () => {
+    expect(entries('pub fn h() -> u64 { near_sdk::env::block_index() }')).toEqual([[1, 'near-sdk-4-env-renames', 'env::block_index']]);
+  });
+
+  it('does not flag the near-sdk 5 forms or code without near_sdk', () => {
+    const modern = 'use near_sdk::{env, near, NearToken};\nuse near_sdk::store::IterableMap;\nuse near_sdk::collections::UnorderedMap;\npub fn h() -> u64 { env::log_str("x"); env::block_height() }';
+    expect(entries(modern)).toEqual([]);
+    expect(entries('mod env { pub fn block_index() -> u64 { 0 } }\npub fn h() -> u64 { env::block_index() }\ntype Balance = u128;')).toEqual([]);
+  });
+});
+
 describe('renderCheck hints and sources', () => {
   beforeEach(() => resetDb());
 

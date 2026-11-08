@@ -127,6 +127,41 @@ function fixedNearby(text: string, lines: string[], offset: number, line: number
 
 interface Hit { line: number; matched: string; via: Via; entry: DeprecationRow }
 
+function rustPathUse(text: string, crate: string): boolean {
+  return new RegExp(`(?<![\\w:])${escapeRe(crate)}::`).test(text);
+}
+
+export function importsAny(scan: Scan, modules: readonly string[]): boolean {
+  return modules.some((wanted) => {
+    if (scan.language === 'rust') {
+      const crate = crateKey(wanted);
+      return scan.imports.some((imp) => crateKey(imp.module) === crate) || (/^\w+$/.test(crate) && rustPathUse(scan.text, crate));
+    }
+    return scan.imports.some((imp) => imp.module === wanted || packageOfSpecifier(imp.module) === wanted);
+  });
+}
+
+export function namespaceBindings(text: string, modules: readonly string[]): Set<string> {
+  const out = new Set<string>();
+  for (const mod of modules) {
+    const q = `['"]${escapeRe(mod)}(?:/[^'"]*)?['"]`;
+    const patterns = [
+      new RegExp(`\\bimport\\s+\\*\\s+as\\s+([\\w$]+)\\s+from\\s+${q}`, 'g'),
+      new RegExp(`\\bimport\\s+([\\w$]+)\\s*(?:,\\s*\\{[^}]*\\})?\\s+from\\s+${q}`, 'g'),
+      new RegExp(`\\b(?:const|let|var)\\s+([\\w$]+)\\s*=\\s*(?:await\\s+)?(?:require|import)\\(\\s*${q}\\s*\\)`, 'g'),
+    ];
+    for (const re of patterns) for (const m of text.matchAll(re)) out.add(m[1]);
+  }
+  return out;
+}
+
+function memberOfOther(text: string, offset: number, name: string, bindings: Set<string>): boolean {
+  if (/[-/@]/.test(text[offset - 1] ?? '') || /[-/]/.test(text[offset + name.length] ?? '')) return true;
+  if (text[offset - 1] !== '.') return false;
+  const owner = text.slice(Math.max(0, offset - 200), offset - 1).match(/([\w$]+)\s*$/)?.[1];
+  return !owner || !bindings.has(owner);
+}
+
 function textHits(scan: Scan, entries: readonly DeprecationRow[]): Hit[] {
   const lines = scan.text.split('\n');
   const starts = lineStarts(scan.text);
@@ -145,12 +180,16 @@ function textHits(scan: Scan, entries: readonly DeprecationRow[]): Hit[] {
       ['url', m.urls, 'host'],
       ['import', rustPaths, 'path'],
     ];
+    const gated = m.requiresImport?.length ? !importsAny(scan, m.requiresImport) : false;
+    const bindings = m.requiresImport?.length && scan.language === 'js' ? namespaceBindings(scan.text, m.requiresImport) : null;
     for (const [via, names, kind] of groups) {
+      if (gated && via === 'identifier') continue;
       for (const name of names ?? []) {
         const offsets = kind === 'path'
           ? [...scan.text.matchAll(new RegExp(`(?<![\\w:])${escapeRe(name)}::`, 'g'))].map((x) => x.index!)
           : occurrences(scan.text, name, kind);
         for (const offset of offsets) {
+          if (bindings && via === 'identifier' && memberOfOther(scan.text, offset, name, bindings)) continue;
           const line = lineAtOffset(starts, offset);
           if (m.unlessNearby?.length && fixedNearby(scan.text, lines, offset, line, m.unlessNearby)) continue;
           hits.push({ line, matched: name, via, entry: d });

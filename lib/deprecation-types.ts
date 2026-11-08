@@ -55,6 +55,7 @@ export interface Matchers {
    * `after_key` is the fixed form, not the broken one.
    */
   unlessNearby?: string[];
+  requiresImport?: string[];
 }
 
 export interface Evidence {
