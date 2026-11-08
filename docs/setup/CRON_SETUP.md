@@ -168,9 +168,10 @@ answering. Staleness (data not being refreshed) is a separate concern: `/api/met
 publishes each source's age beside its deadline, and
 `scripts/check-sync-staleness.sh` reads it every hour from the crontab line above.
 It calls `http://127.0.0.1:3130`, which `/api/metrics` lets through without
-`METRICS_TOKEN`, sources `.env.production` for `TELEGRAM_BOT_TOKEN` /
-`TELEGRAM_CHAT_ID` (or `SLACK_WEBHOOK_URL`) and sends the stale list there when
-they are set; without them it only writes `/var/log/nearpedia-staleness.log`.
+`METRICS_TOKEN`, sources `.env.production` and posts the stale list to the ops
+Discord webhook (`OPS_DISCORD_WEBHOOK_URL`, the same one `lib/ops-pager.ts`
+pages through; Slack and Telegram also work if set). Every run also writes
+`/var/log/nearpedia-staleness.log`.
 Exit 1 means stale, 2 means it could not read the metrics at all. Touch
 `/var/run/nearpedia-quiet` to silence alerts during maintenance.
 

@@ -22,6 +22,7 @@
 #   BASE_URL          — defaults to https://near-pedia.xyz
 #   METRICS_TOKEN     — if /api/metrics is auth-gated
 #   FAIL_ON_STALE     — '1' to exit non-zero (default), '0' to log only
+#   OPS_DISCORD_WEBHOOK_URL — POST stale list to Discord (the ops pager's webhook)
 #   SLACK_WEBHOOK_URL — POST stale list to Slack incoming webhook
 #   TELEGRAM_BOT_TOKEN + TELEGRAM_CHAT_ID — Telegram alert
 #   ALERT_QUIET_FILE  — touch this file to suppress alerts (e.g. during
@@ -124,6 +125,14 @@ if [[ ! -f "$QUIET_FILE" ]]; then
   for s in "${stale[@]}"; do
     stale_body+="• ${s}\n"
   done
+
+  if [[ -n "${OPS_DISCORD_WEBHOOK_URL:-}" ]]; then
+    discord_text="$(printf '**NEARpedia stale sources (%s)**\n%b%s' "${#stale[@]}" "$stale_body" "$BASE" | head -c 1900)"
+    jq -nc --arg c "$discord_text" '{content: $c, allowed_mentions: {parse: []}}' \
+      | curl -sS -m 10 -X POST -H 'Content-Type: application/json' --data @- \
+        "$OPS_DISCORD_WEBHOOK_URL" >/dev/null \
+      || echo "[$ts] discord webhook failed" >&2
+  fi
 
   if [[ -n "${SLACK_WEBHOOK_URL:-}" ]]; then
     slack_text="*NEARpedia stale sources (${#stale[@]})*\n${stale_body}_(${BASE})_"
