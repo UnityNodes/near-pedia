@@ -136,14 +136,13 @@ curl -s https://near-pedia.xyz/api/v1/radar | head -c 600
 
 ## Run it yourself
 
-The judge path, from a clean clone:
+The judge path, from a clean clone. It needs no key and, after `npm ci`, no network:
 
 ```bash
 git clone https://github.com/UnityNodes/near-pedia
 cd near-pedia
 npm ci
-npm run db:init
-npm run sync:near          # every source is read live, about 25 minutes
+npm run db:seed            # a local database from scripts/fixtures/near-seed.json, under a second
 npx tsx mcp-server.ts      # MCP and REST on :3131, leave it running
 ```
 
@@ -153,20 +152,33 @@ In another terminal:
 curl -s -X POST http://127.0.0.1:3131/api/v1/check-code -H 'Content-Type: application/json' \
   -d '{"filename":"contract.ts","code":"import { near } from \"near-sdk-js\";\nconst a = { DelegateV2: signed };"}'
 curl -s 'http://127.0.0.1:3131/api/v1/protocol?network=mainnet' | head -c 600
-curl -s -X POST http://127.0.0.1:3131/api/v1/explain-error -H 'Content-Type: application/json' \
-  -d '{"error_text":"wasm execution failed with error: MethodResolveError(MethodNotFound)"}'
-curl -s http://127.0.0.1:3131/api/v1/contracts/intents.near | head -c 600
+curl -s http://127.0.0.1:3131/api/v1/deprecations/delegate-v2 | head -c 600
 claude mcp add --transport http nearpedia http://127.0.0.1:3131/mcp
 ```
 
-No time for the 25-minute sync? The same curls against `https://near-pedia.xyz` instead of `http://127.0.0.1:3131` answer from the live index, and `npm test` needs neither. Without the sync, a local server answers `explain-error` and `contracts` (curated data and live RPC) but has an empty deprecation index and no protocol snapshot yet.
+You see two `check_code` findings (near-sdk-js on line 1, `DelegateV2` on line 2, each with its replacement and sources), the mainnet protocol version with the validator vote and the voting schedule from the nearcore 2.14.0 release notes, and the `DelegateV2` entry with the docs sentence it is built from. `npm run build && npm run start` serves the site on :3130 from the same database, `/protocol` and `/deprecations` included.
 
-You see two `check_code` findings (near-sdk-js on line 1, `DelegateV2` on line 2, each with its sources, dated where the source has a date), the mainnet upgrade with its voting dates and the share of stake that has voted, what the `MethodNotFound` error means and how to fix it, and the methods deployed on `intents.near` read live from RPC. `npm run build && npm run start` serves the site on :3130 from the same database. `npm test` runs 938 tests without network or keys; [`docs/TESTING.md`](docs/TESTING.md) says what each part checks.
+The seed is a copy of real rows, not invented ones: the docs pages and release notes the curated deprecations quote, the NEAR packages and repositories they name, and one protocol snapshot per network, taken from the live syncs by `scripts/build-seed-fixture.ts` on the date in the fixture's `recorded_at`. The deprecation index is built from them by the same engine the server runs, so 21 entries come out instead of about 136, and the protocol snapshot is reported as stale: it is the network as it was on that date. Two steps refresh parts of it from live sources with no key: `npx tsx scripts/sync-protocol.ts` (RPC, about 10 seconds) and `npx tsx scripts/sync-docs.ts` (docs.near.org, a few seconds). `explain-error` and `contracts/:account` answer from curated data and live RPC either way:
+
+```bash
+curl -s -X POST http://127.0.0.1:3131/api/v1/explain-error -H 'Content-Type: application/json' \
+  -d '{"error_text":"wasm execution failed with error: MethodResolveError(MethodNotFound)"}'
+curl -s http://127.0.0.1:3131/api/v1/contracts/intents.near | head -c 600
+```
+
+The full index reads every source live instead. It needs `GITHUB_TOKEN` (a token with no scopes is enough; without one GitHub allows 60 calls an hour, and the run stops before its first step and says so) and takes 45 to 60 minutes, most of it the YouTube step, plus about 50 minutes more with `NEARAI_API_KEY` for the embeddings:
+
+```bash
+rm -f data/nearpedia.db    # the seed only fills a new database
+GITHUB_TOKEN=<token> npm run sync:near
+```
+
+The same curls against `https://near-pedia.xyz` instead of `http://127.0.0.1:3131` answer from the live index. `npm test` runs 938 tests without network or keys; [`docs/TESTING.md`](docs/TESTING.md) says what each part checks.
 
 **You need**
 
 - Node 22 (`better-sqlite3` is built against its ABI, see `.nvmrc`)
-- No key for the steps above. `NEARAI_API_KEY` embeds the corpus for `semantic_search` (otherwise it matches words; embedding adds about 50 minutes) and turns on `/ask`; `GITHUB_TOKEN` adds the open issues and discussions of the NEAR repositories
+- No key for the seed path. `GITHUB_TOKEN` for `npm run sync:near`. `NEARAI_API_KEY` embeds the corpus for `semantic_search` (otherwise it matches words) and turns on `/ask`
 
 ## What is done
 
