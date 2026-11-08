@@ -1,5 +1,5 @@
 import { appendFileSync, readFileSync } from 'node:fs';
-import { MARKER, addedLines, annotation, clip, githubError, isChecked, pullRequestOf, renderComment, shouldFail } from './lib.mjs';
+import { MARKER, UnreachableError, addedLines, annotation, clip, githubError, isChecked, pullRequestOf, renderComment, requestCheck, shouldFail, unreachableOutcome } from './lib.mjs';
 
 const input = (name, fallback = '') => (process.env[`INPUT_${name.toUpperCase().replace(/ /g, '_')}`] ?? fallback).trim() || fallback;
 
@@ -42,21 +42,8 @@ async function pages(path) {
   return out;
 }
 
-async function checkCode(file, code) {
-  for (let attempt = 0; attempt < 3; attempt++) {
-    const res = await fetch(`${site}/api/v1/check-code`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'User-Agent': 'nearpedia-github-action/1' },
-      body: JSON.stringify({ filename: file, code }),
-    });
-    if (res.status === 429 || res.status >= 500) {
-      await sleep(Math.min(Number(res.headers.get('retry-after')) || 5, 30) * 1000);
-      continue;
-    }
-    if (!res.ok) throw new Error(`NEARpedia check-code ${res.status}: ${(await res.text()).slice(0, 200)}`);
-    return res.json();
-  }
-  throw new Error('NEARpedia did not answer after three tries');
+function checkCode(file, code) {
+  return requestCheck({ site, file, code, sleep });
 }
 
 async function upsertComment(repo, number, body) {
@@ -113,6 +100,13 @@ async function main() {
 }
 
 main().catch((e) => {
+  if (e instanceof UnreachableError) {
+    const outcome = unreachableOutcome({ reason: e.message, failOn });
+    if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, outcome.summary);
+    console.log(outcome.annotation);
+    process.exitCode = outcome.exitCode;
+    return;
+  }
   console.log(`::error::NEARpedia check failed: ${e.message}`);
   process.exitCode = 1;
 });

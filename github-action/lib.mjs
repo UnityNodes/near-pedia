@@ -126,3 +126,55 @@ export function pullRequestOf(event) {
   }
   return pr;
 }
+
+export const CHECK_TRIES = 3;
+export const CHECK_TIMEOUT_MS = 30_000;
+const RETRY_DEFAULT_S = 5;
+const RETRY_MAX_S = 30;
+
+export class UnreachableError extends Error {}
+
+export const isRetryableStatus = (status) => status === 429 || status >= 500;
+
+function networkReason(e) {
+  const cause = e?.cause?.code ?? e?.cause?.message;
+  if (e?.name === 'TimeoutError') return `no answer in ${CHECK_TIMEOUT_MS / 1000} s`;
+  return `network error: ${cause ?? e?.message ?? String(e)}`;
+}
+
+export async function requestCheck({ site, file, code, fetchImpl = fetch, sleep, tries = CHECK_TRIES }) {
+  let reason = '';
+  for (let attempt = 0; attempt < tries; attempt++) {
+    let res;
+    try {
+      res = await fetchImpl(`${site}/api/v1/check-code`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'User-Agent': 'nearpedia-github-action/1' },
+        body: JSON.stringify({ filename: file, code }),
+        signal: AbortSignal.timeout(CHECK_TIMEOUT_MS),
+      });
+    } catch (e) {
+      reason = networkReason(e);
+      if (attempt + 1 < tries) await sleep(RETRY_DEFAULT_S * 1000);
+      continue;
+    }
+    if (isRetryableStatus(res.status)) {
+      reason = `HTTP ${res.status}`;
+      if (attempt + 1 < tries) await sleep(Math.min(Number(res.headers.get('retry-after')) || RETRY_DEFAULT_S, RETRY_MAX_S) * 1000);
+      continue;
+    }
+    if (!res.ok) throw new Error(`NEARpedia check-code ${res.status}: ${(await res.text()).slice(0, 200)}`);
+    return res.json();
+  }
+  throw new UnreachableError(`${site} did not answer after ${tries} tries (last: ${reason})`);
+}
+
+export function unreachableOutcome({ reason, failOn }) {
+  const fails = failOn !== 'never';
+  const verdict = fails ? `The job fails because fail-on is ${failOn}.` : 'The job passes; set fail-on to warning or error to fail it instead.';
+  return {
+    summary: `## NEARpedia check\n\nNEARpedia unreachable: ${reason}. No files were checked. ${verdict}\n`,
+    annotation: `::warning::NEARpedia unreachable: ${reason}. No files were checked. ${verdict}`,
+    exitCode: fails ? 1 : 0,
+  };
+}
