@@ -1,7 +1,7 @@
 # Tests
 
 ```bash
-npm test                 # 1027 tests in 98 files, about 5 seconds, no network and no keys
+npm test                 # 1030 tests in 99 files, about 5 seconds, no network and no keys
 npx tsc --noEmit         # the app
 npm run typecheck:scripts
 npm run lint
@@ -65,6 +65,7 @@ CI runs all four on every push to `main` and every pull request (`.github/workfl
 | `lib/sanitize.test.ts`, `lib/safe-token.test.ts`, `lib/csp-*.test.ts`, `api/*.test.ts`, `lib/rate-limit.test.ts` | HTML sanitising, constant-time token checks, the CSP report endpoint, the contact form, rate-limit identity |
 | `lib/mcp-accept.test.ts`, `lib/mcp-negotiation.test.ts`, `lib/for-ai-tool-groups.test.ts` | MCP transport negotiation and the public tool set |
 | `api/ask-limit.test.ts` | `/ask` stops at 30 an hour and 40 a day per address, and its `RateLimit-*` headers report the tighter of the two, not the shared 120 |
+| `deploy/staleness-discord.test.ts` | The hourly staleness check posts only stale sources to the ops Discord webhook, with mentions off, and stays quiet when all are fresh |
 | `deploy/sync-tick-timeout.test.ts` | Every sync bucket has a time cap; a hung script is killed at it, logged as `TIMED OUT` and filed as a crash row |
 | `lib/sd-notify.test.ts` | The agent worker's systemd watchdog: `READY` and `WATCHDOG` as the main pid, the limit raised for a job and put back, nothing at all outside systemd, a timeout on every market call |
 | `lib/version.test.ts` | One version from `package.json` in `serverInfo`, both health endpoints, OpenAPI and `server.json`, never behind the newest release tag |
