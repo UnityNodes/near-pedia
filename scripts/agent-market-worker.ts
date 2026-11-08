@@ -4,12 +4,16 @@ import path from 'node:path';
 import { getDb } from '../lib/db';
 import { logRun } from '../lib/sync-log';
 import { nearAiConfig } from '../lib/near-ai';
-import { MIGRATION_GUIDE_URL, migrateRepo, renderReport, repoFrom, type RepoRef } from '../lib/migrate-repo';
+import { LONGEST_QUIET_STEP_MS, MIGRATION_GUIDE_URL, migrateRepo, renderReport, repoFrom, type RepoRef } from '../lib/migrate-repo';
+import { notifier } from '../lib/sd-notify';
+import { heartbeat } from '../lib/agent-heartbeat';
 import { REPORT_FILE, confirmMessage, fitDeliverable, isUnreadableRepo, nextStep, unreadableRepoMessage, withChanges, type AssignmentRow } from '../lib/agent-market';
 
 const BASE = (process.env.MARKET_BASE_URL ?? 'https://market.near.ai').replace(/\/+$/, '');
 const TOKEN = process.env.AGENT_API_TOKEN ?? '';
 const POLL_MS = 45_000;
+const FETCH_TIMEOUT_MS = 30_000;
+const JOB_QUIET_MS = 2 * LONGEST_QUIET_STEP_MS;
 const MAX_TRIES = 3;
 const RETRY_AFTER_MS = 5 * 60_000;
 const PATCH_NAME = 'nearpedia-migration.patch';
@@ -21,6 +25,7 @@ async function api<T>(method: string, route: string, body?: unknown): Promise<T>
     method,
     headers: { authorization: `Bearer ${TOKEN}`, ...(body ? { 'content-type': 'application/json' } : {}) },
     body: body ? JSON.stringify(body) : undefined,
+    signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
   });
   const text = await res.text();
   if (!res.ok) throw new Error(`${method} ${route} -> ${res.status} ${text.slice(0, 300)}`);
@@ -32,27 +37,28 @@ async function upload(name: string, content: string, type: string): Promise<stri
   const slot = await api<{ fileId: string; fileUrl: string | null; uploadUrl: string }>('POST', '/v1/files', { filename: name, byteSize: bytes.length, link: true });
   const put = await fetch(slot.uploadUrl.startsWith('http') ? slot.uploadUrl : `${BASE}${slot.uploadUrl}`, {
     method: 'PUT', headers: { authorization: `Bearer ${TOKEN}`, 'content-type': type }, body: bytes,
+    signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
   });
   if (!put.ok) throw new Error(`upload ${name} -> ${put.status}`);
-  const done = await fetch(`${BASE}/v1/files/${slot.fileId}/complete`, { method: 'POST', headers: { authorization: `Bearer ${TOKEN}` } });
+  const done = await fetch(`${BASE}/v1/files/${slot.fileId}/complete`, { method: 'POST', headers: { authorization: `Bearer ${TOKEN}` }, signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
   const reply = await done.text();
   if (!done.ok && !(done.status === 409 && reply.includes('upload_not_pending'))) throw new Error(`complete ${name} -> ${done.status} ${reply.slice(0, 200)}`);
   return slot.fileUrl ?? slot.fileId;
 }
 
 async function guide(): Promise<string> {
-  const res = await fetch(MIGRATION_GUIDE_URL);
+  const res = await fetch(MIGRATION_GUIDE_URL, { signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
   if (!res.ok) throw new Error(`migration guide ${res.status}`);
   return res.text();
 }
 
-async function migrate(repo: RepoRef, id: string, feedback?: string) {
+async function migrate(repo: RepoRef, id: string, feedback?: string, beat: () => void = () => {}) {
   const cfg = nearAiConfig();
   if (!cfg) throw new Error('NEARAI_API_KEY is not set');
-  return migrateRepo(getDb(), cfg, repo, { workdir: path.join(WORK_ROOT, id), guide: await guide(), feedback, log: (l) => console.log(l) });
+  return migrateRepo(getDb(), cfg, repo, { workdir: path.join(WORK_ROOT, id), guide: await guide(), feedback, log: (l) => { beat(); console.log(l); } });
 }
 
-async function work(row: AssignmentRow, mark: string, feedback?: string): Promise<void> {
+async function work(row: AssignmentRow, mark: string, beat: () => void, feedback?: string): Promise<void> {
   const id = row.assignment.assignmentId;
   const repo = repoFrom(`${row.job.description}\n${row.latestMessage?.body ?? ''}`);
   if (!repo) {
@@ -86,7 +92,11 @@ async function work(row: AssignmentRow, mark: string, feedback?: string): Promis
 const done = new Set<string>();
 const failures = new Map<string, { tries: number; at: number }>();
 
-async function poll(): Promise<void> {
+const notify = notifier();
+const pulse = heartbeat(notify);
+
+async function poll(): Promise<number> {
+  let worked = 0;
   const { assignments } = await api<{ assignments: AssignmentRow[] }>('GET', '/v1/agents/me/assignments?status=in_progress');
   for (const row of assignments) {
     const a = row.assignment;
@@ -95,9 +105,12 @@ async function poll(): Promise<void> {
     const failed = failures.get(step.mark);
     if (failed && (failed.tries >= MAX_TRIES || Date.now() - failed.at < RETRY_AFTER_MS)) continue;
     done.add(step.mark);
+    worked += 1;
     try {
-      if (!a.startedAt) await api('POST', `/v1/assignments/${a.assignmentId}/start`);
-      await work(row, step.mark, step.feedback);
+      await pulse.job(JOB_QUIET_MS, async (beat) => {
+        if (!a.startedAt) await api('POST', `/v1/assignments/${a.assignmentId}/start`);
+        await work(row, step.mark, beat, step.feedback);
+      });
     } catch (e) {
       done.delete(step.mark);
       failures.set(step.mark, { tries: (failed?.tries ?? 0) + 1, at: Date.now() });
@@ -105,6 +118,7 @@ async function poll(): Promise<void> {
       console.error(`[agent] ${a.assignmentId}: ${(e as Error).message}`);
     }
   }
+  return worked;
 }
 
 async function dryRun(url: string, out: string): Promise<void> {
@@ -121,9 +135,15 @@ async function main(): Promise<void> {
   const i = process.argv.indexOf('--dry-run');
   if (i > 0) return dryRun(process.argv[i + 1], process.argv[i + 2] ?? path.join(WORK_ROOT, 'out'));
   if (!/^aat_[0-9a-f]{32}$/.test(TOKEN)) throw new Error('AGENT_API_TOKEN (aat_…) is not set');
-  console.log(`[agent] polling ${BASE} every ${POLL_MS / 1000}s`);
+  console.log(`[agent] polling ${BASE} every ${POLL_MS / 1000}s${notify.enabled ? ', systemd watchdog on' : ''}`);
+  notify.ready();
   for (;;) {
-    await poll().catch((e) => console.error(`[agent] poll: ${(e as Error).message}`));
+    const worked = await poll().catch((e) => {
+      console.error(`[agent] poll: ${(e as Error).message}`);
+      return null;
+    });
+    const note = pulse.afterPoll(worked);
+    if (note) console.log(note);
     await new Promise((r) => setTimeout(r, POLL_MS));
   }
 }

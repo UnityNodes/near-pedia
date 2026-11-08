@@ -19,11 +19,13 @@ sudo -n crontab -l -u root
 45 3 * * *     /srv/nearpedia/deploy/sync-tick.sh daily  >> /var/log/nearpedia-sync.log 2>&1
 50 4 * * 1     /srv/nearpedia/deploy/sync-tick.sh weekly >> /var/log/nearpedia-sync.log 2>&1
 * * * * *      /usr/local/bin/nearpedia-watchdog.sh
+# NEARpedia: hourly staleness check against /api/metrics on the box (see Watchdog below)
+27 * * * *     bash -c 'set -a; . /srv/nearpedia/.env.production; set +a; BASE_URL=http://127.0.0.1:3130 /srv/nearpedia/scripts/check-sync-staleness.sh' >> /var/log/nearpedia-staleness.log 2>&1
 # NEARpedia — daily DB backup, local + off-box to gdrive:nearpedia-backups (docs/setup/CRON_SETUP.md)
 20 5 * * *     PEDIA_OFFBOX_REMOTE=gdrive:nearpedia-backups RCLONE_CONFIG=/home/claude/.config/rclone/rclone.conf /srv/nearpedia/scripts/backup-db.sh >> /var/log/nearpedia-backup.log 2>&1
 ```
 
-The buckets are offset from the other projects on this box (`2-59/5`, `7-59/15`, `:20`, `03:45`, `04:50`), and the backup runs at 05:20 UTC, after the other projects' backups (03:00 to 04:30) and outside the Monday weekly bucket. `scripts/check-sync-staleness.sh` exists but is not installed.
+The buckets are offset from the other projects on this box (`2-59/5`, `7-59/15`, `:20`, `03:45`, `04:50`), and the backup runs at 05:20 UTC, after the other projects' backups (03:00 to 04:30) and outside the Monday weekly bucket. The staleness check runs at :27, clear of the other projects' hourly checks (:00, :12, :17) and of the backup freshness check at :40.
 
 ## What each bucket does
 
@@ -141,7 +143,12 @@ ls -la /run/nearpedia-sync-*.lock
 A run that "should have happened" but didn't touch `sync_log` or the log file
 usually means the *previous* run of that same bucket was still holding the
 lock (a slow upstream fetch, a hung network call) — `sync-tick.sh` logs
-`previous run still going, skip` in that case rather than queuing. The locks are `/run`
+`previous run still going, skip` in that case rather than queuing. A hung
+script cannot hold the lock for ever: `exec_script` runs each one under
+`timeout -k 30 $CAP`, with `CAP` from `BUCKET_CAP` at the top of the script
+(fast and medium 600 s, slow 1800 s, daily and weekly 7200 s). A script that hits
+the cap is logged as `<script> TIMED OUT after <CAP>s` and gets an error row in
+`sync_log` through `alert-crash`. The locks are `/run`
 (tmpfs), so they don't survive a reboot — that's intentional, a fresh boot
 should never start up already "locked".
 
@@ -159,7 +166,13 @@ This restarts the **web app or MCP server process**, not a sync — it has
 nothing to do with whether data is fresh, only whether the two services are
 answering. Staleness (data not being refreshed) is a separate concern: `/api/metrics`
 publishes each source's age beside its deadline, and
-`scripts/check-sync-staleness.sh` reads it, but that script is not installed in cron.
+`scripts/check-sync-staleness.sh` reads it every hour from the crontab line above.
+It calls `http://127.0.0.1:3130`, which `/api/metrics` lets through without
+`METRICS_TOKEN`, sources `.env.production` for `TELEGRAM_BOT_TOKEN` /
+`TELEGRAM_CHAT_ID` (or `SLACK_WEBHOOK_URL`) and sends the stale list there when
+they are set; without them it only writes `/var/log/nearpedia-staleness.log`.
+Exit 1 means stale, 2 means it could not read the metrics at all. Touch
+`/var/run/nearpedia-quiet` to silence alerts during maintenance.
 
 ## Troubleshooting checklist
 

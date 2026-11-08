@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getDb } from '@/lib/db';
 import { isLocalCall } from '@/lib/request-origin';
+import { VERSION } from '@/lib/version';
 
 export const dynamic = 'force-dynamic';
 
@@ -40,11 +41,9 @@ export async function GET(req: Request) {
     uptime_s: Math.floor((Date.now() - START) / 1000),
     db: { ok: false, docs: 0, last_sync: null, embeddings: 0 },
     build_time: process.env.BUILD_TIME,
-    // package.json's version isn't maintained (semver tags are), so this
-    // reported 0.1.0 forever and answered nothing. The commit the bundle was
-    // built from is the fact an operator actually needs, and
+    // The commit the bundle was built from is the fact an operator needs, and
     // scripts/check-deployed.ts compares it to HEAD.
-    version: process.env.npm_package_version,
+    version: VERSION,
     // The exact commit is a fingerprint: it maps a running instance to a
     // public source tree, which is a shortcut for anyone looking for a known
     // issue in a specific build. It stays for callers on the box - the public

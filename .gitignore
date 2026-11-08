@@ -101,3 +101,6 @@ contracts/*/target/
 
 # Submission drafts: the X post and the form text are published by hand, not committed
 docs/submission-drafts/
+
+*.mp4
+*.zip

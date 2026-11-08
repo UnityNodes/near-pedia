@@ -3,7 +3,9 @@ Description=NEARpedia migration agent for NEAR Agent Market (polls for hires, de
 After=network.target
 
 [Service]
-Type=simple
+Type=notify
+NotifyAccess=main
+WatchdogSec=180
 User=root
 Group=root
 WorkingDirectory=/srv/nearpedia
@@ -11,7 +13,7 @@ Environment=NODE_ENV=production
 Environment=NODE_OPTIONS=--dns-result-order=ipv4first
 Environment=AGENT_WORKDIR=/var/lib/nearpedia-agent
 EnvironmentFile=-/srv/nearpedia/.env.production
-ExecStart=/root/.nvm/versions/node/v22.18.0/bin/node /srv/nearpedia/node_modules/.bin/tsx scripts/agent-market-worker.ts
+ExecStart=/root/.nvm/versions/node/v22.18.0/bin/node --import tsx scripts/agent-market-worker.ts
 Restart=on-failure
 RestartSec=30
 StandardOutput=journal

@@ -65,6 +65,7 @@ running. Minimum to get syncs flowing:
 15 3 * * *   /srv/nearpedia/deploy/sync-tick.sh daily  >> /var/log/nearpedia-sync.log 2>&1
 30 4 * * 1   /srv/nearpedia/deploy/sync-tick.sh weekly >> /var/log/nearpedia-sync.log 2>&1
 * * * * *    /usr/local/bin/nearpedia-watchdog.sh
+27 * * * *   bash -c 'set -a; . /srv/nearpedia/.env.production; set +a; BASE_URL=http://127.0.0.1:3130 /srv/nearpedia/scripts/check-sync-staleness.sh' >> /var/log/nearpedia-staleness.log 2>&1
 ```
 The watchdog is its own script, not an inline curl — it checks *both* ports:
 ```bash
