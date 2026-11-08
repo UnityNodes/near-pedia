@@ -58,7 +58,8 @@ import { findNeps, getNepRow, nepNumber, renderNep, replacedBy } from './lib/nep
 import { RELEASE_PRODUCT_SPECS } from './lib/release-sources.js';
 import { compareVersions } from './lib/release-version.js';
 import { ACCOUNT_ID_RE, NoSuchAccountError, contractInfo, renderContract } from './lib/contract-info.js';
-import { BusyError, UnverifiedAnswerError, nearAiConfig, verifiedChat } from './lib/near-ai.js';
+import { nearAiConfig, verifiedChat } from './lib/near-ai.js';
+import { askFailure } from './lib/ask-failure.js';
 import { refuseMcpGet } from './lib/mcp-get.js';
 import { getAnchor, latestAnchor, listAnchors } from './lib/anchors.js';
 import { chainRecord, rpcOf } from './lib/anchor-chain.js';
@@ -2381,12 +2382,12 @@ app.post('/api/v1/ask', async (req, res) => {
     const { text, truncated, receipt } = await verifiedChat(cfg, askMessages(question, ctx, code, history), { maxTokens: 1200 });
     res.json({ answer: text, truncated, sources: ctx.sources, check_code: ctx.check, receipt, db_anchor: latestAnchor(db) });
   } catch (e) {
-    const msg = (e as Error).message;
-    // The pasted code is never echoed into a log line: only the failure.
-    if (e instanceof BusyError) return res.status(503).json({ error: msg });
-    console.error(`[ask] ${e instanceof UnverifiedAnswerError ? 'unverified' : 'failed'}: ${msg.slice(0, 300)}`);
-    if (e instanceof UnverifiedAnswerError) return res.status(502).json({ error: 'NEAR AI answered, but the response signature did not verify; no answer is shown', detail: msg.slice(0, 300) });
-    return res.status(502).json({ error: 'NEAR AI did not answer this time. Try again in a moment.', detail: msg.slice(0, 300) });
+    const failure = askFailure(e);
+    if (failure.record) {
+      console.error(`[ask] ${failure.record.kind}: ${failure.record.detail}`);
+      recordFailure(getLogDb(), 'ask', failure.record.kind, failure.record.detail, Date.now(), mcpCaller(req));
+    }
+    return res.status(failure.status).json(failure.body);
   }
 });
 
