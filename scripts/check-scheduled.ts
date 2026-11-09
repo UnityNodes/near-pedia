@@ -51,6 +51,7 @@ const MANUAL: Record<string, string> = {
   'cleanup-docs': 'one-off corpus cleanup (dead redirects, near-empty pages), re-run by hand',
   'cleanup-doc-html': 'one-off HTML-artifact cleanup in doc_pages, re-run by hand',
   'build-embeddings': 'invoked directly by sync-tick.sh via the embed() helper, not through run()',
+  'build-seed-fixture': 'rebuilds scripts/fixtures/near-seed.json from a synced database, run by hand when the curated entries cite a new source',
   'check-db': 'diagnostic',
   'check-tables': 'diagnostic',
   'check-rag-sources': 'diagnostic',

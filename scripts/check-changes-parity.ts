@@ -17,6 +17,7 @@
  */
 
 import { KIND_SQL } from '../lib/blog';
+import { kindMismatches } from '../lib/changes-parity';
 import { startScratchMcp } from '../lib/mcp-probe';
 import { logRun } from '../lib/sync-log';
 import { getDb } from '../lib/db';
@@ -61,10 +62,12 @@ async function main(): Promise<void> {
       if (VERBOSE) console.error(`  ${days}d: anchor=${anchorTotal} REST=${rest.total} MCP=${mcpTotal} restItems=${rest.items.length} mcpItems=${mcpItems.length}`);
 
       // 1. same set of kinds
-      const restKinds = new Set(rest.items.map(i => i.kind));
-      const mcpKinds = new Set(mcpItems.map(i => i.kind));
-      for (const k of restKinds) if (!mcpKinds.has(k)) record(`${days}d: kind "${k}" present in /api/v1/changes but not get_recent_changes`);
-      for (const k of mcpKinds) if (!restKinds.has(k)) record(`${days}d: kind "${k}" present in get_recent_changes but not /api/v1/changes`);
+      const kinds = kindMismatches(
+        { items: rest.items, total: rest.total },
+        { items: mcpItems, total: Number.isNaN(mcpTotal) ? mcpItems.length : mcpTotal },
+      );
+      for (const k of kinds.onlyRest) record(`${days}d: kind "${k}" present in /api/v1/changes but not get_recent_changes`);
+      for (const k of kinds.onlyMcp) record(`${days}d: kind "${k}" present in get_recent_changes but not /api/v1/changes`);
 
       // 2. newest-first by parsed time, both roads
       if (!ordered(rest.items.map(i => i.when))) record(`${days}d: /api/v1/changes is not newest-first by parsed time`);
