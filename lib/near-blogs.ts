@@ -102,3 +102,11 @@ export function parsePost(html: string, url: string, source: BlogSource): BlogPo
     tags: source.label,
   };
 }
+
+export type PostRead = { kind: 'post'; post: BlogPost } | { kind: 'no-text' } | { kind: 'unreadable' };
+
+export function readPost(html: string | null, url: string, source: BlogSource): PostRead {
+  if (!html || !extractMain(html)) return { kind: 'unreadable' };
+  const post = parsePost(html, url, source);
+  return post ? { kind: 'post', post } : { kind: 'no-text' };
+}

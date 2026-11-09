@@ -19,7 +19,7 @@ import { SITE } from '../lib/site.config';
 import { politeFetch } from '../lib/polite-fetch';
 import { prune } from '../lib/prune';
 import { pruneConfirmingUrls } from '../lib/confirm-gone';
-import { BLOG_SOURCES, parsePost, postUrls, type BlogSource } from '../lib/near-blogs';
+import { BLOG_SOURCES, postUrls, readPost, type BlogSource } from '../lib/near-blogs';
 
 const UA = `${SITE.slug}-sync/1.0 (+${SITE.publisher.url})`;
 const FULL = process.argv.includes('--full');
@@ -48,19 +48,28 @@ async function syncSource(source: BlogSource, problems: string[]): Promise<numbe
     ON CONFLICT(id) DO UPDATE SET title = excluded.title, excerpt = excluded.excerpt, content_text = excluded.content_text,
       author = excluded.author, published_at = COALESCE(excluded.published_at, blog_posts.published_at), url = excluded.url,
       tags = excluded.tags, synced_at = excluded.synced_at`);
+  const dropShell = db.prepare('DELETE FROM blog_posts WHERE url = ? AND tags = ?');
   let written = 0;
   let unreadable = 0;
+  let shells = 0;
   for (const url of todo) {
     await sleep(PACE_MS);
     let html: string | null = null;
     try { html = await text(url); } catch (e) { console.warn(`  ${url}: ${(e as Error).message}`); }
-    const post = html ? parsePost(html, url, source) : null;
-    if (!post) { unreadable++; continue; }
+    const read = readPost(html, url, source);
+    if (read.kind === 'no-text') {
+      shells++;
+      dropShell.run(url, source.label);
+      continue;
+    }
+    if (read.kind === 'unreadable') { unreadable++; continue; }
+    const { post } = read;
     upsert.run({ ...post, synced_at: new Date().toISOString() });
     written++;
     if (written % 50 === 0) console.log(`  ${source.label}: ${written}/${todo.length}`);
   }
   if (unreadable) problems.push(`${source.label}: ${unreadable} of ${todo.length} post pages unreadable`);
+  if (shells) console.log(`  ${source.label}: ${shells} post pages carry no article text (video or link-only posts), not stored`);
 
   const { result, report } = await pruneConfirmingUrls(
     { table: 'blog_posts', keyColumn: 'url', scopeColumn: 'tags', scopeValue: source.label, liveKeys: urls, maxDeleteRatio: MAX_PRUNE_RATIO },
