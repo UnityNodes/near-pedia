@@ -14,5 +14,28 @@
       "url": "https://near-pedia.xyz/mcp"
     }
   ],
-  "title": "NEARpedia"
+  "title": "NEARpedia",
+  "icons": [
+    {
+      "src": "https://near-pedia.xyz/icon-512.png",
+      "mimeType": "image/png",
+      "sizes": [
+        "512x512"
+      ]
+    },
+    {
+      "src": "https://near-pedia.xyz/icon-192.png",
+      "mimeType": "image/png",
+      "sizes": [
+        "192x192"
+      ]
+    },
+    {
+      "src": "https://near-pedia.xyz/favicon.svg",
+      "mimeType": "image/svg+xml",
+      "sizes": [
+        "any"
+      ]
+    }
+  ]
 }

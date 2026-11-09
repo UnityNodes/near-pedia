@@ -31,7 +31,9 @@ curl -s 'https://registry.modelcontextprotocol.io/v0/servers?search=near-pedia'
 ```
 
 `server.json` at the repository root (schema 2025-12-11): name
-`io.github.UnityNodes/near-pedia`, one remote, Streamable HTTP. The
+`io.github.UnityNodes/near-pedia`, one remote, Streamable HTTP, and icons
+served from the site (`tests/lib/server-json.test.ts` checks each one is a
+file in `public/` with the declared type and size). The
 `io.github.UnityNodes/` namespace belongs to the organisation, so the
 publisher must log in as one of its Owners with a credential that can read
 the organisation role. The interactive `mcp-publisher login github` cannot;
