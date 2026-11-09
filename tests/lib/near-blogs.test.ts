@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { BLOG_SOURCES, articleText, parsePost, postUrls } from '@/lib/near-blogs';
+import { BLOG_SOURCES, articleText, parsePost, postUrls, readPost } from '@/lib/near-blogs';
 
 const fixture = (f: string) => fs.readFileSync(path.join(__dirname, '../fixtures/near-blogs', f), 'utf8');
 const [nearOrg, nearAi] = BLOG_SOURCES;
@@ -64,5 +64,19 @@ describe('articleText', () => {
 
   it('keeps a word like Share inside a sentence', () => {
     expect(articleText('Share your thoughts on the forum.', org)).toBe('Share your thoughts on the forum.');
+  });
+});
+
+describe('readPost', () => {
+  it('tells a video post with no article text apart from an unreadable page', () => {
+    const url = 'https://www.near.org/blog/near-protocol-at-nuevahacks-2019-hackathon';
+    expect(readPost(fixture('near-org-video-post.html'), url, nearOrg).kind).toBe('no-text');
+    expect(readPost(null, url, nearOrg).kind).toBe('unreadable');
+    expect(readPost('', url, nearOrg).kind).toBe('unreadable');
+  });
+
+  it('returns the post for a page with an article', () => {
+    const r = readPost(fixture('near-org-post.html'), 'https://www.near.org/blog/chain-signatures-tee', nearOrg);
+    expect(r.kind).toBe('post');
   });
 });
