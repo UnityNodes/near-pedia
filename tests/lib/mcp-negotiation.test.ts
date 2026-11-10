@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isTransportProbe, isVersionNegotiation } from '../../lib/mcp-negotiation';
+import { isTransportProbe, isVersionNegotiation, refusalDetail } from '../../lib/mcp-negotiation';
 
 const unsupported = {
   jsonrpc: '2.0',
@@ -39,5 +39,25 @@ describe('isTransportProbe', () => {
     expect(isTransportProbe('POST', 406)).toBe(false);
     expect(isTransportProbe('GET', 500)).toBe(false);
     expect(isTransportProbe('DELETE', 405)).toBe(false);
+  });
+});
+
+describe('refusalDetail', () => {
+  it('names the error the caller got, so the daily report shows why', () => {
+    const frame = { jsonrpc: '2.0', id: 1, error: { code: -32020, message: 'Bad Request: the body names method tools/list but the required Mcp-Method header is absent' } };
+    expect(refusalDetail(400, 'POST', '2026-07-28', [frame]))
+      .toBe('HTTP 400 on POST /mcp (protocol 2026-07-28): -32020 Bad Request: the body names method tools/list but the required Mcp-Method header is absent');
+  });
+
+  it('keeps the bare status line when the body has no error text', () => {
+    expect(refusalDetail(400, 'POST', undefined, [])).toBe('HTTP 400 on POST /mcp (protocol none)');
+    expect(refusalDetail(404, 'POST', '2026-07-28', [null, 'x', { error: { code: -32601 } }, { error: { message: '  ' } }]))
+      .toBe('HTTP 404 on POST /mcp (protocol 2026-07-28)');
+  });
+
+  it('flattens and caps a long or multi-line message', () => {
+    const detail = refusalDetail(400, 'POST', 'none', [{ error: { message: `a\n\nb ${'x'.repeat(500)}` } }]);
+    expect(detail.startsWith('HTTP 400 on POST /mcp (protocol none): a b x')).toBe(true);
+    expect(detail.length).toBeLessThan(260);
   });
 });
