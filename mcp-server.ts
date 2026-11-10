@@ -8,7 +8,7 @@ import express from 'express';
 import { McpServer, createMcpHandler, isLegacyRequest } from '@modelcontextprotocol/server';
 import { NodeStreamableHTTPServerTransport } from '@modelcontextprotocol/node';
 import { registrarFor } from './lib/mcp-registrar.js';
-import { isTransportProbe, isVersionNegotiation } from './lib/mcp-negotiation.js';
+import { isTransportProbe, isVersionNegotiation, refusalDetail } from './lib/mcp-negotiation.js';
 import { z } from 'zod';
 import Database from 'better-sqlite3';
 import path from 'path';
@@ -2025,8 +2025,9 @@ function recordMcpFailures(req: express.Request, httpStatus: number, payload: st
   const surfaceOf = (m: { method?: string; params?: { name?: string } }) =>
     m.method === 'tools/call' ? String(m.params?.name ?? 'unknown') : String(m.method ?? `${req.method} /mcp`);
   if (httpStatus >= 400) {
-    if (isVersionNegotiation(httpStatus, payloadFrames(payload)) || isTransportProbe(req.method, httpStatus)) return;
-    const why = `HTTP ${httpStatus} on ${req.method} /mcp (protocol ${req.get('mcp-protocol-version') ?? 'none'})`;
+    const frames = payloadFrames(payload);
+    if (isVersionNegotiation(httpStatus, frames) || isTransportProbe(req.method, httpStatus)) return;
+    const why = refusalDetail(httpStatus, req.method, req.get('mcp-protocol-version'), frames);
     for (const m of messages.length > 0 ? messages : [{}]) recordFailure(db, surfaceOf(m), 'rejected', why, Date.now(), caller);
     return;
   }

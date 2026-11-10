@@ -1,4 +1,4 @@
-import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import express from 'express';
 import type { AddressInfo } from 'net';
 import http, { type Server } from 'http';
@@ -18,13 +18,15 @@ function app() {
 let server: Server;
 let base: string;
 
-beforeAll(async () => {
+beforeEach(async () => {
   server = app().listen(0, '127.0.0.1');
   await new Promise((r) => server.once('listening', r));
   base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
 });
-afterAll(() => new Promise((r) => server.close(r)));
-afterEach(() => vi.useRealTimers());
+afterEach(async () => {
+  vi.useRealTimers();
+  await new Promise((r) => server.close(r));
+});
 
 interface Reply { status: number; headers: http.IncomingHttpHeaders; body: unknown }
 
