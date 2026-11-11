@@ -423,7 +423,7 @@ export const SEEDS: readonly Seed[] = [
     title: 'NEAR Wallet (wallet.near.org)',
     kind: 'service',
     status: 'removed',
-    summary: 'wallet.near.org is discontinued; accounts live on chain and work in any NEAR wallet. Connect wallets through @hot-labs/near-connect.',
+    summary: 'wallet.near.org is no longer a wallet, only a list of other wallets; accounts live on chain and work in any NEAR wallet. Connect wallets through @hot-labs/near-connect.',
     replacement: '@hot-labs/near-connect and the wallets it lists',
     replacement_url: 'https://docs.near.org/tools/near-connect',
     since: null,
@@ -431,7 +431,7 @@ export const SEEDS: readonly Seed[] = [
     matchers: { urls: ['wallet.near.org'] },
     subjects: ['github:near/near-wallet'],
     evidence: [
-      { signal: 'docs_statement', strength: 'strong', source_url: 'https://docs.near.org/communities', quote: 'wallet.near.org will be discontinued.', upstream_date: null },
+      { signal: 'docs_statement', strength: 'strong', source_url: 'https://docs.near.org/communities', quote: 'wallet.near.org is now a wallet hub: a curated list of the wallets available in our ecosystem.', upstream_date: null },
       { signal: 'probe', strength: 'medium', source_url: 'https://wallet.near.org', quote: 'Serves "NEAR Ecosystem Wallets", a list of other wallets, instead of a wallet', upstream_date: null, checked: '2026-11-01' },
     ],
   },
