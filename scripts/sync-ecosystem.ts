@@ -23,6 +23,7 @@ import { isEntrypoint } from '../lib/is-entrypoint';
 import { SITE } from '../lib/site.config';
 import { politeGetJson } from '../lib/polite-fetch';
 import { recordEvents } from '../lib/change-events';
+import { prune } from '../lib/prune';
 import {
   CATALOG_DETAIL_URL, CATALOG_LIST_URL, CATALOG_PAGE_URL, PROTOCOLS_URL, SLUG_RE, fromCatalog, tagCounts, tvlByProject,
   type CatalogList, type CatalogProject, type Profile, type RawProtocol,
@@ -64,6 +65,19 @@ async function fetchDetails(slugs: readonly string[]): Promise<{ details: Map<st
     }
   }));
   return { details, failed };
+}
+
+async function confirmRemoved(slugs: readonly string[]): Promise<string[]> {
+  const gone: string[] = [];
+  for (const slug of slugs) {
+    try {
+      const d = await politeGetJson<unknown>(CATALOG_DETAIL_URL(slug), { userAgent: UA, timeoutMs: 30_000 });
+      if (d === false) gone.push(slug);
+    } catch (e) {
+      console.warn(`[sync-ecosystem] removal probe ${slug}: ${(e as Error).message}`);
+    }
+  }
+  return gone;
 }
 
 async function fetchProtocols(): Promise<RawProtocol[] | null> {
@@ -149,13 +163,28 @@ async function main(): Promise<number> {
     }
   })();
 
-  const partial = failed.length > 0 || !tvl;
+  const listed = new Set(projects.map((p) => p.slug));
+  const unlisted = [...stored.keys()].filter((slug) => !listed.has(slug));
+  const removed = new Set(await confirmRemoved(unlisted));
+  const pruned = prune({
+    table: 'ecosystem_projects', keyColumn: 'slug', scopeColumn: 'source', scopeValue: SOURCE,
+    liveKeys: [...listed, ...unlisted.filter((slug) => !removed.has(slug))],
+    confirmedGone: [...removed],
+  }, db);
+  const kept = unlisted.length - removed.size;
+
+  const partial = failed.length > 0 || !tvl || pruned.refused || kept > 0;
   logRun('ecosystem', {
     status: partial ? 'partial' : 'success',
     items: projects.length,
-    ...(partial ? { error: [failed.length ? `${failed.length} project details failed` : '', tvl ? '' : 'DefiLlama TVL unavailable or joined to no project, TVL kept from the last run'].filter(Boolean).join('; ') } : {}),
+    ...(partial ? { error: [
+      failed.length ? `${failed.length} project details failed` : '',
+      tvl ? '' : 'DefiLlama TVL unavailable or joined to no project, TVL kept from the last run',
+      pruned.refused ? `prune refused: ${pruned.reason}` : '',
+      kept > 0 ? `${kept} project(s) gone from the list but their detail still answers, kept: ${unlisted.filter((slug) => !removed.has(slug)).join(', ')}` : '',
+    ].filter(Boolean).join('; ') } : {}),
   }, db);
-  console.log(`[sync-ecosystem] ${projects.length} projects, ${details.size}/${want.length} details read, ${tvl ? `${tvl.size} with TVL` : 'TVL skipped'}`);
+  console.log(`[sync-ecosystem] ${projects.length} projects, ${details.size}/${want.length} details read, ${tvl ? `${tvl.size} with TVL` : 'TVL skipped'}, ${pruned.deleted} removed from the catalog`);
   return projects.length;
 }
 

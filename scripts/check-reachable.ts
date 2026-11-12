@@ -109,6 +109,7 @@ function identifierColumns(db: import('better-sqlite3').Database): Column[] {
 }
 
 const isNumeric = (t: string) => /INT/i.test(t);
+const quotes = (answer: string, value: string | number) => answer.includes(String(value));
 
 /**
  * Parameters this probe structurally cannot classify, each answered
@@ -207,12 +208,18 @@ async function main(): Promise<void> {
         const numeric = spec.type === 'number' || spec.type === 'integer';
         const send = (v: string) => ({ [param]: numeric ? Number(v) : v });
 
-        const refusal = learnRefusal(
-          await mcp.callTool(tool, numeric ? { [param]: absentA } : { [param]: IMPOSSIBLE_A }),
-          await mcp.callTool(tool, numeric ? { [param]: absentB } : { [param]: IMPOSSIBLE_B }),
-        );
+        const valueA = numeric ? absentA : IMPOSSIBLE_A;
+        const valueB = numeric ? absentB : IMPOSSIBLE_B;
+        const answerA = await mcp.callTool(tool, { [param]: valueA });
+        const answerB = await mcp.callTool(tool, { [param]: valueB });
+        const refusal = learnRefusal(answerA, answerB);
         if (refusal.exact === null && !refusal.prefix && !refusal.suffix) {
           notes.push(`${tool}.${param}: two impossible values produced answers with nothing in common, so acceptance cannot be read`);
+          continue;
+        }
+        if (refusal.exact === null && !(quotes(answerA, valueA) && quotes(answerB, valueB))) {
+          notes.push(`${tool}.${param}: two impossible values got different answers that do not quote them back, so they were answered, not refused`);
+          examined++;
           continue;
         }
 
