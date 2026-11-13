@@ -34,7 +34,18 @@ describe('mergeActivityStream', () => {
     expect(stream.counts.change_event).toBe(12);
     expect(stream.counts.new_release).toBe(3);
     expect(stream.items.length).toBe(5);   // overall cap applied
-    expect(stream.total).toBe(5);          // total reflects the served slice
+    expect(stream.total).toBe(15);
+  });
+
+  it('takes per-kind counts and total from the totals the caller counted, not from the capped lists', () => {
+    const stream = mergeActivityStream(30, {
+      change_event: Array.from({ length: 3 }, (_, i) => make('change_event', `2026-06-03T0${i}:00:00Z`, `c${i}`)),
+      new_release: [make('new_release', '2026-06-02T00:00:00Z', 'r0')],
+    }, 2, { change_event: 520, new_release: 42 });
+    expect(stream.counts.change_event).toBe(520);
+    expect(stream.counts.new_release).toBe(42);
+    expect(stream.total).toBe(562);
+    expect(stream.items.length).toBe(2);
   });
 
   it('caps items at the requested limit', () => {
