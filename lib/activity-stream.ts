@@ -52,6 +52,7 @@ export function mergeActivityStream(
   windowDays: number,
   sources: Partial<Record<ActivityKind, ActivityItem[]>>,
   limit: number,
+  totals: Partial<Record<ActivityKind, number>> = {},
 ): ActivityStream {
   const counts: Record<ActivityKind, number> = { ...EMPTY_COUNTS };
   const merged: ActivityItem[] = [];
@@ -60,6 +61,7 @@ export function mergeActivityStream(
     counts[kind] = list.length;
     for (const item of list) merged.push(item);
   }
+  for (const [kind, n] of Object.entries(totals) as [ActivityKind, number][]) counts[kind] = n;
 
   merged.sort((a, b) => {
     // Descending by ISO timestamp string - lexicographic compare is
@@ -69,5 +71,6 @@ export function mergeActivityStream(
   });
 
   const items = merged.slice(0, limit);
-  return { window_days: windowDays, total: items.length, counts, items };
+  const total = Object.values(counts).reduce((a, b) => a + b, 0);
+  return { window_days: windowDays, total, counts, items };
 }
