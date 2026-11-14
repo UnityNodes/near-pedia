@@ -23,6 +23,36 @@ Built for the NEAR Hackathon (1–14 November 2026, tracks `open` and `agents`).
 
 Demo video, 81 seconds: [youtu.be/L1mbTEWWraE](https://youtu.be/L1mbTEWWraE). Submission post on X, with a 45-second promo: [x.com/UnityNodes/status/2118447685397291123](https://x.com/UnityNodes/status/2118447685397291123).
 
+## Verify in 60 seconds
+
+Three calls to the live API, no install and no key (`curl` and `jq`). The output below was captured on 14 November 2026; the protocol and radar lines follow the chain and the news, so their values move.
+
+```bash
+# 1. a file written from memory: one finding per stale line, with its replacement
+curl -s -X POST https://near-pedia.xyz/api/v1/check-code -H 'Content-Type: application/json' \
+  -d '{"filename":"contract.ts","code":"import { NearBindgen } from \"near-sdk-js\";\nconst d = { DelegateV2: signed };\nconst ks = new keyStores.InMemoryKeyStore();"}' \
+  | jq -c '.findings[] | {line, matched, status: .entry.status, replacement: .entry.replacement}'
+
+# 2. the mainnet protocol, read from NEAR RPC
+curl -s 'https://near-pedia.xyz/api/v1/protocol?network=mainnet' | jq -c '.networks[0].snapshot | {protocol_version, node_version, block_height}'
+
+# 3. what is changing now
+curl -s https://near-pedia.xyz/api/v1/radar | jq -c '.items[0:2][] | {level, title}'
+```
+
+```text
+{"line":1,"matched":"near-sdk-js","status":"deprecated","replacement":"near-sdk (Rust)"}
+{"line":2,"matched":"DelegateV2","status":"removed","replacement":"Delegate, signed with a regular access key"}
+{"line":3,"matched":"keyStores","status":"deprecated","replacement":"a KeyPairSigner, or a KeyPairString passed to new Account()"}
+
+{"protocol_version":88,"node_version":"2.14.1","block_height":224573066}
+
+{"level":"critical","title":"nearcore 2.14.1: security release"}
+{"level":"ecosystem","title":"House of Stake HSP-029 passed, in timelock: Establish a 24-Month Issuance Ramp to a 1.6% Target Rate Of NEAR Token Emissions"}
+```
+
+The daily database hash is on NEAR mainnet: the last three records are [`DHv94S7U…`](https://nearblocks.io/txns/DHv94S7UFGa9fZBvs3iV5PSa7dETXTt73rsbnvuExq5j) (2026-11-14), [`DTchjnJ2…`](https://nearblocks.io/txns/DTchjnJ2tLRN1Sv83kg293ZmKnXq4L3miFgVSeHgxKUM) (2026-11-13) and [`2w4gKRAG…`](https://nearblocks.io/txns/2w4gKRAGUZVpjdYP2txtdRD2GEbxiJwXfppF9E75CTYp) (2026-11-12), each a `record` call to the contract carrying that day's hash. `curl -s https://near-pedia.xyz/api/v1/anchors | jq -c '.items[0] | {date, hash, tx_hash}'` shows the latest.
+
 > [!TIP]
 > Agents write NEAR code from what they remember, and NEAR keeps moving. A few changes from the last year, the first two in the weeks before this hackathon, that a model trained earlier cannot know about:
 >
@@ -285,6 +315,7 @@ The migrator agent on NEAR Agent Market charges 0.5 USDC a job, paid by whoever 
 - `/ask` is told to answer only from the sources it retrieves from this index and to say what is missing when they do not cover a question; it is a model, so check the numbered sources it cites.
 - Not in: Potlock rounds (no working mainnet source on 2026-11-01), forum posts outside the governance, staking, developer, ecosystem and education categories, and closed GitHub issues.
 - The migrator's patch leaves a browser wallet sign-in and manifest changes to a person.
+- Most index entries carry no date. On 14 November 2026, 34 of the 154 have one (`since` or `effective`); the other 120 say what changed and link the evidence, but not when it changed. Count: `curl -s 'https://near-pedia.xyz/api/v1/deprecations?limit=500' | jq '[.items[] | select(.since or .effective)] | length'`.
 
 ## What was built before the hackathon, and what during it
 
@@ -298,11 +329,24 @@ Hackathon rules count work from 19 October 2026; anything earlier is a baseline 
 
 **Third-party code.** Open-source libraries listed in `package.json` (Next.js, React, better-sqlite3, sqlite-vec, the MCP SDK, Express, zod, `@nearai/inference-sdk`, `near-api-js` and others) and `contracts/db-anchor/Cargo.toml` (`near-sdk`), each under its own license. Two Lottie animations are credited in `public/animations/CREDITS.txt`. The site and the images in `assets/` use Space Grotesk and JetBrains Mono, both under the SIL Open Font License 1.1.
 
-**AI assistance.** The code in this repository, the baseline included, was written with Claude Code.
+**AI assistance.** The code in this repository, the baseline included, was written with Claude Code, then read, run and deployed by the author. That covers:
+
+- the TypeScript: `app/`, `components/`, `lib/`, `scripts/`, `mcp-server.ts`, `middleware.ts` and the config files;
+- the tests in `tests/`;
+- the Rust contract in `contracts/db-anchor`;
+- the GitHub Action in `github-action/` and the workflows in `.github/`;
+- the deploy files in `deploy/` and the plugin in `plugin/`;
+- the SVG images in `assets/`, this README and `docs/`.
+
+Not AI-written: the third-party libraries and fonts listed above and the two credited Lottie animations.
 
 ## Not an official project
 
 NEARpedia is an independent community project. It is not a product of the NEAR Foundation, NEAR AI or House of Stake; it reads their public sources and links back to each.
+
+## Other project by the author
+
+[Psephex](https://psephex.xyz) ([repository](https://github.com/UnityNodes/psephex)): a court for deals between AI agents, where three models in a TEE judge a dispute and a NEAR contract accepts the verdict only with two of the three signatures.
 
 ## License
 
