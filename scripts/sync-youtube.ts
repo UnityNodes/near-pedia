@@ -303,7 +303,7 @@ async function backfillDescriptions(db: ReturnType<typeof getDb>): Promise<{ enr
   const update = db.prepare(`UPDATE youtube_videos SET
     description = CASE WHEN description IS NULL OR @description <> '' THEN @description ELSE description END,
     published_at = CASE WHEN published_at IS NULL OR published_at > @now THEN @published_at ELSE published_at END,
-    title = COALESCE(@title, title) WHERE id = @id`);
+    title = COALESCE(@title, title), synced_at = @now WHERE id = @id`);
   console.log(`\n=== Backfill: ${rows.length} held video(s) without a description or a publish date ===`);
   let enriched = 0;
   let fails = 0;
