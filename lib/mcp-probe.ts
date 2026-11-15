@@ -17,6 +17,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import net from 'node:net';
 import { spawn, type ChildProcess } from 'node:child_process';
 import Database from 'better-sqlite3';
 import { repoPath } from './repo-root';
@@ -68,12 +69,21 @@ function sweepStaleWorkDirs(label: string): void {
   if (cleaned) console.warn(`[mcp-probe] swept ${cleaned} stale ${label}-* work dir(s) from a previous crashed run`);
 }
 
+export function freePort(): Promise<number> {
+  return new Promise((resolve, reject) => {
+    const srv = net.createServer();
+    srv.once('error', reject);
+    srv.listen(0, '127.0.0.1', () => {
+      const addr = srv.address();
+      srv.close(() => (addr && typeof addr === 'object' ? resolve(addr.port) : reject(new Error('no port assigned'))));
+    });
+  });
+}
+
 export async function startScratchMcp(opts: StartOptions): Promise<ScratchMcp> {
   const callTimeoutMs = opts.callTimeoutMs ?? 30_000;
   sweepStaleWorkDirs(opts.label);
-  // Derived from the pid so two checks running at once do not collide, and
-  // well clear of 3130/3131.
-  const port = 38000 + (process.pid % 900);
+  const port = await freePort();
 
   const work = fs.mkdtempSync(path.join(os.tmpdir(), `${opts.label}-`));
   const copy = path.join(work, 'audit.db');

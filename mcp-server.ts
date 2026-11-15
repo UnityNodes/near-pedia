@@ -3127,7 +3127,11 @@ app.use((err: unknown, req: express.Request, res: express.Response, _next: expre
 const PORT = process.env.MCP_PORT ? parseInt(process.env.MCP_PORT) : 3131;
 onRerankFallback((provider, why) => recordFailure(getLogDb(), 'reranker', 'degraded', `${provider}: ${why}`));
 
-app.listen(PORT, '127.0.0.1', () => {
+app.listen(PORT, '127.0.0.1', (err?: Error) => {
+  if (err) {
+    console.error(`${SITE.name} MCP Server could not listen on 127.0.0.1:${PORT}: ${err.message}`);
+    process.exit(1);
+  }
   console.log(`${SITE.name} MCP Server on http://127.0.0.1:${PORT}/mcp`);
   console.log(`${SITE.name} REST API on http://127.0.0.1:${PORT}/api/v1`);
   console.log(`MCP tools registered: ${MCP_TOOLS_COUNT}`);
