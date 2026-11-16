@@ -29,7 +29,7 @@
  * tool, source, status, duration_ms) does not capture call parameters at all,
  * so there is nothing to show beyond the tool name, count, and rate.
  *
- * Reads mcp_calls only: no network, no MCP calls, no rate limit. ~1s.
+ * Reads mcp_calls and failure_events: no network, no MCP calls, no rate limit. ~1s.
  *
  *   npx tsx scripts/check-agent-errors.ts
  */
@@ -38,6 +38,7 @@ import { PUBLIC_TOOLS } from '../lib/mcp-toolset';
 import { getDb } from '../lib/db';
 import { logRun } from '../lib/sync-log';
 import { isoNowSql } from '../lib/formats';
+import { discountSweepers, sweeperRejections, SWEEP_TOOLS } from '../lib/agent-errors';
 
 const WINDOW_DAYS = 7;
 const MIN_ERRORS = 5;   // enough real calls to be a signal, not a one-off
@@ -56,13 +57,15 @@ function main(): void {
       .filter(t => PUBLIC_TOOLS.has(t)),
   );
 
-  const rows = db.prepare(`
+  const raw = db.prepare(`
     SELECT tool, COUNT(*) AS calls, SUM(status != 'ok') AS errs
     FROM mcp_calls
     WHERE ts > ${since}
       AND tool NOT IN ('tools/list', 'tools/call', 'initialize')
     GROUP BY tool
   `).all() as Array<{ tool: string; calls: number; errs: number }>;
+  const swept = sweeperRejections(db, Date.now() - WINDOW_DAYS * 86_400_000);
+  const rows = discountSweepers(raw, swept);
 
   const failing: string[] = [];
   const phantom: string[] = [];
@@ -83,7 +86,7 @@ function main(): void {
     }
   }
 
-  console.log(`[check-agent-errors] ${WINDOW_DAYS}d window: ${rows.length} tool(s) called, ${failing.length} failing, ${phantom.length} phantom name(s)`);
+  console.log(`[check-agent-errors] ${WINDOW_DAYS}d window: ${rows.length} tool(s) called, ${failing.length} failing, ${phantom.length} phantom name(s), ${[...swept.values()].reduce((a, b) => a + b, 0)} rejection(s) from callers sweeping ${SWEEP_TOOLS}+ tools set aside`);
   for (const f of failing) console.error(`  FAILING   ${f}`);
   for (const p of phantom) console.warn(`  PHANTOM   ${p}`);
 
