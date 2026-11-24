@@ -189,6 +189,32 @@ export async function probeReranker(): Promise<RerankProbe> {
   }
 }
 
+export const PROBE_ATTEMPTS = 3;
+
+export interface SteadyProbe {
+  provider: RerankProvider | null;
+  ok: boolean;
+  runs: RerankProbe[];
+}
+
+export async function probeRerankerSteady(
+  probe: () => Promise<RerankProbe> = probeReranker,
+  attempts = PROBE_ATTEMPTS,
+): Promise<SteadyProbe> {
+  const needed = Math.floor(attempts / 2) + 1;
+  const runs: RerankProbe[] = [];
+  let passed = 0;
+  while (runs.length < attempts) {
+    const p = await probe();
+    runs.push(p);
+    if (p.provider === null) return { provider: null, ok: false, runs };
+    if (p.ok) passed++;
+    if (passed >= needed) return { provider: p.provider, ok: true, runs };
+    if (runs.length - passed >= needed) return { provider: p.provider, ok: false, runs };
+  }
+  return { provider: runs[runs.length - 1]?.provider ?? null, ok: passed >= needed, runs };
+}
+
 export type RerankFallbackListener = (provider: string, why: string) => void;
 
 let fallbackListener: RerankFallbackListener | null = null;
